@@ -1,0 +1,119 @@
+# ─────────────────────────────────────────────────────────────
+#  Sovereign Brain — Central Configuration
+#  Copy this file and edit it. Do not commit your personal copy.
+# ─────────────────────────────────────────────────────────────
+
+# ── Hardware ──────────────────────────────────────────────────
+hardware:
+  # Options: cpu | nvidia | metal
+  # metal = Apple Silicon (GPU unavailable inside Docker, CPU fallback used)
+  # nvidia = requires NVIDIA container toolkit installed on host
+  gpu: cpu
+
+# ── Network ───────────────────────────────────────────────────
+network:
+  # Address Docker services bind to.
+  # 127.0.0.1 = loopback only (recommended, prevents LAN/cross-site exposure)
+  # 0.0.0.0   = all interfaces (only use on a trusted isolated LAN)
+  bind_host: "127.0.0.1"
+
+  ports:
+    chromadb: 8000
+    # Reserve ports for future services here
+    # agent_service: 8001
+
+# ── Paths ─────────────────────────────────────────────────────
+paths:
+  # Absolute path to your Obsidian vault.
+  # This is mounted read-only into the Docker container.
+  # Mac USB example:  /Volumes/OBSIDIAN_USB/Vault
+  # Windows example:  E:/Vault
+  vault: "/path/to/your/obsidian/vault"
+
+  # Directory containing your .gguf model files
+  # Should be the same directory JAN symlinks point to
+  model_store: "/path/to/your/ModelStore"
+
+  # Where to write the sync manifest SQLite DB (tracks indexed files)
+  # Defaults to ~/.sovereign_brain/manifest/ if left as null
+  manifest_dir: null
+
+# ── Embedding ─────────────────────────────────────────────────
+embedding:
+  # Filename of the embedding model inside model_store
+  model_file: "nomic-embed-text-v1.5.Q4_K_M.gguf"
+
+  # Token context window for the embedding model
+  n_ctx: 2048
+
+  # How many layers to offload to GPU (-1 = all, 0 = CPU only)
+  # Ignored when hardware.gpu is 'cpu'
+  n_gpu_layers: -1
+
+  # Markdown headers used to split notes into chunks
+  # Order matters: coarser splits first
+  split_headers:
+    - ["#", "h1"]
+    - ["##", "h2"]
+    - ["###", "h3"]
+
+# ── ChromaDB ──────────────────────────────────────────────────
+chromadb:
+  collection_name: "obsidian_vault"
+
+  # shared  = all vaults in one collection, metadata.vault_name distinguishes them
+  # per_vault = separate collection per vault, named obsidian_<vault_folder_name>
+  multi_vault_mode: "shared"
+
+  distance_metric: "cosine"
+
+  # Auth token — CHANGE THIS before first run
+  # Generate one with: python3 -c "import secrets; print(secrets.token_hex(32))"
+  auth_token: "CHANGE_ME"
+
+# ── Vault Sync ────────────────────────────────────────────────
+sync:
+  vault_mode: "local" # local | usb
+
+  # Multiple vaults supported — all indexed into Chroma
+  # Each vault gets its own collection or shares one (see chroma.multi_vault_mode)
+  vault_paths:
+    - "/path/to/VaultOne"
+    - "/path/to/VaultTwo"
+
+  # usb mode only — checked in order, first existing path wins per vault
+  usb_vault_candidates:
+    mac:
+      - "/Volumes/OBSIDIAN_USB/VaultOne"
+      - "/Volumes/OBSIDIAN_USB/VaultTwo"
+    windows:
+      - "E:/VaultOne"
+      - "E:/VaultTwo"
+
+  exclude_patterns:
+    - ".obsidian/**"
+    - ".trash/**"
+    - "templates/**"
+    - "*.canvas"
+
+  prune_deleted: true
+  embed_batch_size: 32
+
+  # How long after Obsidian closes before sync fires (seconds)
+  # Gives OS time to flush file buffers
+  post_close_delay: 5
+
+# ── JAN Integration ───────────────────────────────────────────
+jan:
+  base_url: "http://127.0.0.1:1337/v1"
+
+  # Model IDs as they appear in JAN's model registry
+  # Used to generate AnythingLLM / OpenCode config snippets
+  inference_model: "qwen2.5-7b"
+  embedding_model: "nomic-embed-text-v1.5"
+
+# ── Future Services (uncomment to activate) ───────────────────
+# agent_service:
+#   enabled: false
+#   framework: "langchain"   # langchain | llamaindex
+#   port: 8001

@@ -1,0 +1,41 @@
+# docker-compose.yml
+services:
+
+  chromadb:
+    image: chromadb/chroma:0.5.0   # pin the version for reproducibility
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - CHROMA_SERVER_AUTH_CREDENTIALS=${CHROMA_TOKEN}
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenConfigServerAuthCredentialsProvider
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+      - ANONYMIZED_TELEMETRY=false
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["http://localhost"]
+    volumes:
+      - chroma_data:/chroma/chroma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      retries: 3
+
+  sync_worker:
+    build: .        # your Dockerfile lives here
+    environment:
+      - CHROMA_TOKEN=${CHROMA_TOKEN}
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - EMBED_MODEL_PATH=/models/nomic-embed-text-v1.5.Q4_K_M.gguf
+    volumes:
+      - ${VAULT_PATH}:/vault:ro           # read-only vault bind mount
+      - ${MODEL_STORE}:/models:ro         # your local ModelStore
+      - sync_manifest:/app/manifest       # persistent manifest DB
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    profiles:
+      - sync    # only runs when explicitly called, not on `compose up`
+
+volumes:
+  chroma_data:
+  sync_manifest:
