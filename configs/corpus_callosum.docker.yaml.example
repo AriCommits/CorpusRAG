@@ -1,0 +1,32 @@
+paths:
+  vault: /app/vault
+  chromadb_store: /app/chroma_store
+
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2
+
+model:
+  endpoint: http://host.docker.internal:11434/api/generate
+  name: llama3
+  timeout_seconds: 120.0
+  max_flashcard_context_chars: 12000
+
+chunking:
+  size: 500
+  overlap: 50
+
+retrieval:
+  top_k_semantic: 10
+  top_k_bm25: 10
+  top_k_final: 5
+  rrf_k: 60
+
+server:
+  host: 0.0.0.0
+  port: 8080
+
+chroma:
+  mode: http
+  host: chroma
+  port: 8000
+  ssl: false

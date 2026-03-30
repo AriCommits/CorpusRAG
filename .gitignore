@@ -209,4 +209,7 @@ __marimo__/
 
 
 # configs
-configs/
+configs/*
+!configs/.gitkeep
+!configs/corpus_callosum.yaml.example
+!configs/corpus_callosum.docker.yaml.example

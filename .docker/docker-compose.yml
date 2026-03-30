@@ -1,0 +1,34 @@
+services:
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: corpus-chroma
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+    volumes:
+      - chroma_data:/chroma/chroma
+
+  corpus_api:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    container_name: corpus-api
+    restart: unless-stopped
+    depends_on:
+      - chroma
+    ports:
+      - "8080:8080"
+    environment:
+      - CORPUS_CALLOSUM_CONFIG=/app/configs/corpus_callosum.docker.yaml
+      - PYTHONPATH=/app/src
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./vault:/app/vault
+
+volumes:
+  chroma_data:
