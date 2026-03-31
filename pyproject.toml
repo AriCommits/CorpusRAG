@@ -20,6 +20,23 @@ dependencies = [
   "pypdf>=5.1.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-cov>=4.1.0",
+  "ruff>=0.4.0",
+  "mypy>=1.10.0",
+  "types-PyYAML>=6.0.0",
+]
+observability = [
+  "opentelemetry-api>=1.20.0",
+  "opentelemetry-sdk>=1.20.0",
+  "opentelemetry-exporter-otlp>=1.20.0",
+  "opentelemetry-instrumentation-fastapi>=0.41b0",
+  "opentelemetry-instrumentation-httpx>=0.41b0",
+  "openllmetry>=0.3.0",
+]
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
@@ -29,3 +46,78 @@ where = ["src"]
 [project.scripts]
 corpus-api = "corpus_callosum.api:main"
 corpus-ingest = "corpus_callosum.ingest:main"
+corpus-setup = "corpus_callosum.setup:main"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+  "E",      # pycodestyle errors
+  "W",      # pycodestyle warnings
+  "F",      # Pyflakes
+  "I",      # isort
+  "B",      # flake8-bugbear
+  "C4",     # flake8-comprehensions
+  "UP",     # pyupgrade
+  "ARG",    # flake8-unused-arguments
+  "SIM",    # flake8-simplify
+  "PTH",    # flake8-use-pathlib
+  "ERA",    # eradicate (commented-out code)
+  "PL",     # Pylint
+  "RUF",    # Ruff-specific rules
+]
+ignore = [
+  "E501",    # line too long (handled by formatter)
+  "PLR0913", # too many arguments
+  "PLR2004", # magic value comparison
+  "PLR0915", # too many statements
+  "PLW0603", # global statement (valid for module-level singletons)
+  "SIM108",  # use ternary operator (not always more readable)
+  "PLC0415", # import not at top level (intentional for optional deps)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_smoke.py" = ["E402"]  # imports after sys.path manipulation
+
+[tool.ruff.lint.isort]
+known-first-party = ["corpus_callosum"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = [
+  "chromadb.*",
+  "sentence_transformers.*",
+  "rank_bm25.*",
+  "httpx.*",
+  "opentelemetry.*",
+  "openllmetry.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+filterwarnings = [
+  "ignore::DeprecationWarning",
+]

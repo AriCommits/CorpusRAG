@@ -9,11 +9,10 @@ Optional environment variables:
 
 from __future__ import annotations
 
-from pathlib import Path
 import os
 import sys
 import tempfile
-
+from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SRC_PATH = PROJECT_ROOT / "src"

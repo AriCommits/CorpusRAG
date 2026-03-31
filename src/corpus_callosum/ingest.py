@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
 from hashlib import sha1
 from pathlib import Path
 from typing import Any
-import argparse
 
 from sentence_transformers import SentenceTransformer
 
 from .chroma import create_chroma_client
 from .config import Config, get_config
-
 
 SUPPORTED_EXTENSIONS = {".md", ".txt", ".pdf"}
 
@@ -57,6 +56,33 @@ class Ingester:
             raise FileNotFoundError(f"Path does not exist: {source}")
         if not collection_name.strip():
             raise ValueError("collection_name cannot be empty")
+
+        # Security: Prevent obvious directory traversal attacks
+        # Don't allow paths with parent directory references that would escape intended directories
+        # We allow reasonable use of .. but prevent escapes that would go outside intended boundaries
+        resolved_path = source.resolve()
+        # Check for any attempt to access sensitive system directories
+        sensitive_paths = ["/etc", "/var", "/usr", "/root", "/proc", "/sys"]
+        for sensitive in sensitive_paths:
+            try:
+                resolved_path.relative_to(sensitive)
+                raise ValueError(
+                    f"Path {source} attempts to access sensitive directory {sensitive}. "
+                    f"This is not allowed for security reasons."
+                )
+            except ValueError:
+                # This is expected if the path is NOT under the sensitive directory
+                pass
+
+        # Additional check: prevent paths that try to escape by going up too many levels
+        # This is a basic heuristic - if we have more than 5 consecutive .. components,
+        # it's likely an attempt to traverse excessively
+        path_str = str(source)
+        if path_str.count("/../") > 3 or (path_str.endswith("/..") and path_str.count("/..") > 3):
+            raise ValueError(
+                f"Path {source} contains excessive parent directory references that may indicate "
+                f"an attempt to traverse directories maliciously."
+            )
 
         files = list(self._iter_source_files(source))
         chunk_records: list[ChunkRecord] = []

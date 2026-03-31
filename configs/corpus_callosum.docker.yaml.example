@@ -30,3 +30,25 @@ chroma:
   host: chroma
   port: 8000
   ssl: false
+
+# Security settings (optional - defaults shown)
+security:
+  # Rate limiting
+  rate_limit_enabled: true
+  requests_per_minute: 60
+  requests_per_hour: 1000
+  burst_limit: 10  # max requests per second
+
+  # API key authentication (disabled by default)
+  auth_enabled: false
+  api_keys: []  # List of API keys (or hashed keys if api_keys_hashed is true)
+  api_keys_hashed: false  # Set to true if keys in api_keys are SHA-256 hashes
+
+# Observability settings (OpenTelemetry + OpenLLMetry)
+# Requires: pip install corpus-callosum[observability]
+observability:
+  enabled: false  # Set to true to enable tracing
+  service_name: corpus-callosum
+  otlp_endpoint: null  # e.g., "http://otel-collector:4317" for OTLP collector
+  console_exporter: false  # Set to true for development debugging
+  openllmetry_enabled: true  # Enable LLM-specific tracing

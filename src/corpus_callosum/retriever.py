@@ -190,5 +190,5 @@ class HybridRetriever:
     def _get_existing_collection(self, collection_name: str) -> Any | None:
         try:
             return self.client.get_collection(name=collection_name)
-        except Exception:  # noqa: BLE001
+        except Exception:
             return None

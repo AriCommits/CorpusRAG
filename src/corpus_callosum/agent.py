@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 import json
+from typing import TYPE_CHECKING
 
 import httpx
 
 from .config import Config, get_config
 from .retriever import HybridRetriever, RetrievedChunk
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class RagAgent:
@@ -63,11 +66,13 @@ class RagAgent:
             timeout=timeout,
         ) as response:
             response.raise_for_status()
-            for line in response.iter_lines():
-                if not line:
+            for raw_line in response.iter_lines():
+                if not raw_line:
                     continue
-                if isinstance(line, bytes):
-                    line = line.decode("utf-8", errors="ignore")
+                if isinstance(raw_line, bytes):
+                    line = raw_line.decode("utf-8", errors="ignore")
+                else:
+                    line = raw_line
 
                 data = self._parse_stream_line(line)
                 if not data:
