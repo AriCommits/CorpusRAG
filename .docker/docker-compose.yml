@@ -57,7 +57,7 @@ services:
       - "4318:4318"   # OTLP HTTP
       - "8888:8888"   # Prometheus metrics
     depends_on:
-      jaeger:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/"]
@@ -66,21 +66,25 @@ services:
       retries: 3
       start_period: 10s
 
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: jaeger
+  postgres:
+    image: postgres:16-alpine
+    container_name: observability-db
     restart: unless-stopped
-    ports:
-      - "16686:16686"  # Jaeger UI
-      - "14268:14268"  # Jaeger thrift
     environment:
-      - COLLECTOR_OTLP_ENABLED=true
+      - POSTGRES_USER=otel
+      - POSTGRES_PASSWORD=otel_password
+      - POSTGRES_DB=otel_traces
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:14269/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "pg_isready -U otel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 10s
 
 volumes:
   chroma_data:
+  postgres_data:

@@ -23,10 +23,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "model": "sentence-transformers/all-MiniLM-L6-v2",
     },
     "model": {
-        "endpoint": "http://localhost:11434/api/generate",
+        "endpoint": "http://localhost:11434",
         "name": "llama3",
+        "backend": "ollama",
+        "api_key": None,
         "timeout_seconds": 120.0,
         "max_flashcard_context_chars": 12000,
+        "fallback_models": [],
     },
     "chunking": {
         "size": 500,
@@ -64,6 +67,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "console_exporter": False,
         "openllmetry_enabled": True,
     },
+    "mcp": {
+        "enabled": False,
+        "transport": "http",
+        "port": 8081,
+    },
 }
 
 
@@ -82,8 +90,11 @@ class EmbeddingConfig:
 class ModelConfig:
     endpoint: str
     name: str
+    backend: str
+    api_key: str | None
     timeout_seconds: float
     max_flashcard_context_chars: int
+    fallback_models: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +146,13 @@ class ObservabilityConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class McpConfig:
+    enabled: bool
+    transport: str
+    port: int
+
+
+@dataclass(frozen=True, slots=True)
 class Config:
     paths: PathsConfig
     embedding: EmbeddingConfig
@@ -145,6 +163,7 @@ class Config:
     chroma: ChromaConfig
     security: SecurityConfig
     observability: ObservabilityConfig
+    mcp: McpConfig
     config_path: Path
 
     @classmethod
@@ -164,6 +183,7 @@ class Config:
         chroma = data.get("chroma", {})
         security = data.get("security", {})
         observability = data.get("observability", {})
+        mcp = data.get("mcp", {})
 
         parsed = cls(
             paths=PathsConfig(
@@ -173,21 +193,15 @@ class Config:
                 ),
             ),
             embedding=EmbeddingConfig(
-                model=str(
-                    embedding.get(
-                        "model", DEFAULT_CONFIG["embedding"]["model"]
-                    )
-                )
+                model=str(embedding.get("model", DEFAULT_CONFIG["embedding"]["model"]))
             ),
             model=ModelConfig(
-                endpoint=str(
-                    model.get("endpoint", DEFAULT_CONFIG["model"]["endpoint"])
-                ),
+                endpoint=str(model.get("endpoint", DEFAULT_CONFIG["model"]["endpoint"])),
                 name=str(model.get("name", DEFAULT_CONFIG["model"]["name"])),
+                backend=str(model.get("backend", DEFAULT_CONFIG["model"]["backend"])),
+                api_key=model.get("api_key", DEFAULT_CONFIG["model"]["api_key"]),
                 timeout_seconds=float(
-                    model.get(
-                        "timeout_seconds", DEFAULT_CONFIG["model"]["timeout_seconds"]
-                    )
+                    model.get("timeout_seconds", DEFAULT_CONFIG["model"]["timeout_seconds"])
                 ),
                 max_flashcard_context_chars=int(
                     model.get(
@@ -195,32 +209,25 @@ class Config:
                         DEFAULT_CONFIG["model"]["max_flashcard_context_chars"],
                     )
                 ),
+                fallback_models=tuple(
+                    model.get("fallback_models", DEFAULT_CONFIG["model"]["fallback_models"])
+                ),
             ),
             chunking=ChunkingConfig(
                 size=int(chunking.get("size", DEFAULT_CONFIG["chunking"]["size"])),
-                overlap=int(
-                    chunking.get("overlap", DEFAULT_CONFIG["chunking"]["overlap"])
-                ),
+                overlap=int(chunking.get("overlap", DEFAULT_CONFIG["chunking"]["overlap"])),
             ),
             retrieval=RetrievalConfig(
                 top_k_semantic=int(
-                    retrieval.get(
-                        "top_k_semantic", DEFAULT_CONFIG["retrieval"]["top_k_semantic"]
-                    )
+                    retrieval.get("top_k_semantic", DEFAULT_CONFIG["retrieval"]["top_k_semantic"])
                 ),
                 top_k_bm25=int(
-                    retrieval.get(
-                        "top_k_bm25", DEFAULT_CONFIG["retrieval"]["top_k_bm25"]
-                    )
+                    retrieval.get("top_k_bm25", DEFAULT_CONFIG["retrieval"]["top_k_bm25"])
                 ),
                 top_k_final=int(
-                    retrieval.get(
-                        "top_k_final", DEFAULT_CONFIG["retrieval"]["top_k_final"]
-                    )
+                    retrieval.get("top_k_final", DEFAULT_CONFIG["retrieval"]["top_k_final"])
                 ),
-                rrf_k=int(
-                    retrieval.get("rrf_k", DEFAULT_CONFIG["retrieval"]["rrf_k"])
-                ),
+                rrf_k=int(retrieval.get("rrf_k", DEFAULT_CONFIG["retrieval"]["rrf_k"])),
             ),
             server=ServerConfig(
                 host=str(server.get("host", DEFAULT_CONFIG["server"]["host"])),
@@ -254,13 +261,9 @@ class Config:
                 auth_enabled=bool(
                     security.get("auth_enabled", DEFAULT_CONFIG["security"]["auth_enabled"])
                 ),
-                api_keys=tuple(
-                    security.get("api_keys", DEFAULT_CONFIG["security"]["api_keys"])
-                ),
+                api_keys=tuple(security.get("api_keys", DEFAULT_CONFIG["security"]["api_keys"])),
                 api_keys_hashed=bool(
-                    security.get(
-                        "api_keys_hashed", DEFAULT_CONFIG["security"]["api_keys_hashed"]
-                    )
+                    security.get("api_keys_hashed", DEFAULT_CONFIG["security"]["api_keys_hashed"])
                 ),
             ),
             observability=ObservabilityConfig(
@@ -282,9 +285,15 @@ class Config:
                 ),
                 openllmetry_enabled=bool(
                     observability.get(
-                        "openllmetry_enabled", DEFAULT_CONFIG["observability"]["openllmetry_enabled"]
+                        "openllmetry_enabled",
+                        DEFAULT_CONFIG["observability"]["openllmetry_enabled"],
                     )
                 ),
+            ),
+            mcp=McpConfig(
+                enabled=bool(mcp.get("enabled", DEFAULT_CONFIG["mcp"]["enabled"])),
+                transport=str(mcp.get("transport", DEFAULT_CONFIG["mcp"]["transport"])),
+                port=int(mcp.get("port", DEFAULT_CONFIG["mcp"]["port"])),
             ),
             config_path=config_path,
         )
@@ -324,11 +333,7 @@ def _resolve_path(value: str | Path, project_root: Path) -> Path:
 def _deep_merge(base: dict[str, Any], updates: dict[str, Any]) -> dict[str, Any]:
     result = deepcopy(base)
     for key, value in updates.items():
-        if (
-            key in result
-            and isinstance(result[key], dict)
-            and isinstance(value, dict)
-        ):
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
             result[key] = _deep_merge(result[key], value)
         else:
             result[key] = value
@@ -342,9 +347,7 @@ def _default_config_path() -> Path:
 def load_config(path: str | Path | None = None) -> Config:
     # Determine the config path to use
     if path is None:
-        config_path = Path(
-            os.getenv("CORPUS_CALLOSUM_CONFIG", str(_default_config_path()))
-        )
+        config_path = Path(os.getenv("CORPUS_CALLOSUM_CONFIG", str(_default_config_path())))
     else:
         config_path = Path(path)
 
@@ -371,9 +374,7 @@ def load_config(path: str | Path | None = None) -> Config:
     else:
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-    return Config.from_dict(
-        merged_data, project_root=PROJECT_ROOT, config_path=config_path
-    )
+    return Config.from_dict(merged_data, project_root=PROJECT_ROOT, config_path=config_path)
 
 
 @lru_cache(maxsize=1)

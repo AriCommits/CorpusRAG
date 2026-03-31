@@ -40,6 +40,44 @@
 
 ## Medium-term Features (1-3 months)
 
+### Implementation Order
+
+#### Phase 1: Model Flexibility (foundation)
+- [x] Create pluggable LLM backend abstraction (Ollama, OpenAI-compatible, Anthropic-compatible)
+- [x] Add per-request model selection via API
+- [x] Add embedding model selection (local and remote)
+- [x] Implement fallback model chain
+
+#### Phase 2: Conversation Memory (highest user impact)
+- [x] Add in-memory conversation history with session IDs
+- [x] Support multi-turn follow-up queries
+- [x] Add configurable context window size
+
+#### Phase 3: OTel Metrics & Structured Logging
+- [x] Add custom RAG metrics (query duration, chunk count, token usage, errors)
+- [x] Add Prometheus exporter to OTel Collector
+- [ ] Implement structured logging with trace context
+- [ ] Enrich span context for each RAG pipeline stage
+- [ ] Create Grafana dashboard JSON
+
+#### Phase 4: Query Expansion & Summarization
+- [ ] Implement query expansion via LLM-generated alternative phrasings
+- [x] Add `/summarize` endpoint for collection summarization (via MCP tool)
+- [ ] Add metadata filtering to retrieval
+
+#### Phase 5: Optional Enhancements
+- [ ] Web search integration (DuckDuckGo/SearXNG)
+- [ ] Document topic extraction
+- [ ] Agent-like capabilities for complex tasks
+
+#### Phase 6: MCP Integration
+- [x] Create MCP server with stdio transport (Claude Desktop, Cursor, Windsurf)
+- [x] Create MCP server with HTTP transport (remote access)
+- [x] Expose 6 tools: query_documents, ingest_documents, list_collections, critique_writing, generate_flashcards, summarize_collection
+- [x] Expose 2 resources: collection contents, collection metadata
+- [x] Mount MCP endpoint on existing FastAPI app
+- [x] Add MCP CLI entry point (corpus-mcp)
+
 ### 1. Enhanced Retrieval
 - [ ] Add reranking models for improved relevance
 - [ ] Implement query expansion techniques

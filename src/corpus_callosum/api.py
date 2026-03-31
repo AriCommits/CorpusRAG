@@ -200,6 +200,16 @@ class QueryRequest(BaseModel):
         description="Collection to search",
         examples=["biology101"],
     )
+    model: str | None = Field(
+        default=None,
+        description="Override the default model for this request",
+        examples=["llama3", "mistral"],
+    )
+    session_id: str | None = Field(
+        default=None,
+        description="Session ID for conversation memory (multi-turn follow-ups)",
+        examples=["session-abc123"],
+    )
 
 
 class CritiqueRequest(BaseModel):
@@ -344,6 +354,8 @@ def query(request: QueryRequest) -> StreamingResponse:
         tokens, _chunks = agent.query(
             query=request.query,
             collection_name=request.collection,
+            model=request.model,
+            session_id=request.session_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -441,6 +453,25 @@ def main() -> None:
         port=config.server.port,
         reload=False,
     )
+
+
+def _mount_mcp() -> None:
+    """Mount MCP HTTP transport if configured."""
+    config = get_config()
+    if not config.mcp.enabled:
+        return
+    try:
+        from .mcp import mount_mcp as _mount
+
+        _mount(app)
+        logger.info("MCP server mounted at /mcp")
+    except ImportError:
+        logger.warning(
+            "MCP enabled but package not installed. Run: pip install corpus-callosum[mcp]"
+        )
+
+
+_mount_mcp()
 
 
 if __name__ == "__main__":

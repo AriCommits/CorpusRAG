@@ -52,3 +52,10 @@ observability:
   otlp_endpoint: http://otel-collector:4317  # e.g., "http://otel-collector:4317" for OTLP collector
   console_exporter: false  # Set to true for development debugging
   openllmetry_enabled: true  # Enable LLM-specific tracing
+
+# MCP server settings
+# Requires: pip install corpus-callosum[mcp]
+mcp:
+  enabled: true  # Mount MCP endpoint on the API server
+  transport: http  # "stdio" for CLI, "http" for remote access
+  port: 8081  # HTTP port (only used when transport is "http")

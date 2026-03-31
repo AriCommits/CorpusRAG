@@ -312,3 +312,84 @@ cp configs/corpus_callosum.yaml.example configs/corpus_callosum.yaml
 pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp \
   opentelemetry-instrumentation-fastapi opentelemetry-instrumentation-httpx
 ```
+
+## MCP (Model Context Protocol)
+
+CorpusCallosum exposes its capabilities as an MCP server, allowing AI clients like Claude Desktop, Cursor, and Windsurf to directly interact with your knowledge base.
+
+### Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `query_documents` | Query a collection with RAG |
+| `ingest_documents` | Ingest files/directories into a collection |
+| `list_collections` | List all available collections |
+| `critique_writing` | Get AI writing feedback |
+| `generate_flashcards` | Generate study flashcards |
+| `summarize_collection` | Summarize collection content |
+
+### MCP Resources
+
+| Resource | URI Template |
+|----------|-------------|
+| Collection contents | `collection://{name}` |
+| Collection metadata | `collection://{name}/meta` |
+
+### Setup
+
+Install the MCP dependency:
+
+```bash
+pip install corpus-callosum[mcp]
+```
+
+### Claude Desktop
+
+Add to your Claude Desktop MCP config (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "corpus-callosum": {
+      "command": "corpus-mcp",
+      "args": ["--config", "/path/to/corpus_callosum.yaml"]
+    }
+  }
+}
+```
+
+### Cursor / Windsurf
+
+Add an MCP server with:
+- **Command**: `corpus-mcp`
+- **Args**: `--config /path/to/corpus_callosum.yaml`
+- **Transport**: stdio
+
+### HTTP Transport (Remote)
+
+For remote access, run the MCP server with HTTP transport:
+
+```bash
+corpus-mcp --transport http --host 0.0.0.0 --port 8081
+```
+
+Or enable it in your API server config:
+
+```yaml
+mcp:
+  enabled: true
+  transport: http
+  port: 8081
+```
+
+The MCP endpoint will be available at `http://localhost:8080/mcp`.
+
+### MCP Inspector
+
+Test your MCP server with the official inspector:
+
+```bash
+npx -y @modelcontextprotocol/inspector
+```
+
+Then connect to `http://localhost:8081` (HTTP mode) or run `corpus-mcp` and connect via stdio.

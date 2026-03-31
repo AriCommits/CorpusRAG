@@ -12,10 +12,13 @@ processors:
     send_batch_size: 100
 
 exporters:
-  otlp/jaeger:
-    endpoint: jaeger:4317
-    tls:
-      insecure: true
+  postgres:
+    driver: postgres
+    dsn: postgresql://otel:otel_password@postgres:5432/otel_traces
+    table: traces
+
+  prometheus:
+    endpoint: 0.0.0.0:8889
 
   debug:
     verbosity: detailed
@@ -25,11 +28,11 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/jaeger, debug]
+      exporters: [postgres, debug]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug]
+      exporters: [prometheus, debug]
     logs:
       receivers: [otlp]
       processors: [batch]

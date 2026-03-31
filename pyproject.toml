@@ -36,6 +36,9 @@ observability = [
   "opentelemetry-instrumentation-httpx>=0.41b0",
   "openllmetry>=0.3.0",
 ]
+mcp = [
+  "mcp>=1.0.0",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -47,6 +50,7 @@ where = ["src"]
 corpus-api = "corpus_callosum.api:main"
 corpus-ingest = "corpus_callosum.ingest:main"
 corpus-setup = "corpus_callosum.setup:main"
+corpus-mcp = "corpus_callosum.mcp:main"
 
 [tool.ruff]
 target-version = "py311"
@@ -110,6 +114,7 @@ module = [
   "httpx.*",
   "opentelemetry.*",
   "openllmetry.*",
+  "mcp.*",
 ]
 ignore_missing_imports = true
 
