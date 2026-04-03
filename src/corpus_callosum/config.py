@@ -24,7 +24,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "model": {
         "endpoint": "http://localhost:11434",
-        "name": "llama3",
+        "name": None,  # Auto-detect from Ollama if not specified
         "backend": "ollama",
         "api_key": None,
         "timeout_seconds": 120.0,
@@ -84,7 +84,7 @@ class EmbeddingConfig:
 @dataclass(frozen=True, slots=True)
 class ModelConfig:
     endpoint: str
-    name: str
+    name: str | None  # None = auto-detect from inference endpoint
     backend: str
     api_key: str | None
     timeout_seconds: float
@@ -183,7 +183,7 @@ class Config:
             ),
             model=ModelConfig(
                 endpoint=str(model.get("endpoint", DEFAULT_CONFIG["model"]["endpoint"])),
-                name=str(model.get("name", DEFAULT_CONFIG["model"]["name"])),
+                name=model.get("name", DEFAULT_CONFIG["model"]["name"]),  # Keep as None if not set
                 backend=str(model.get("backend", DEFAULT_CONFIG["model"]["backend"])),
                 api_key=model.get("api_key", DEFAULT_CONFIG["model"]["api_key"]),
                 timeout_seconds=float(

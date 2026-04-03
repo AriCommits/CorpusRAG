@@ -42,7 +42,7 @@ class LLMResponse:
 class LLMConfig:
     backend: LLMBackendType = LLMBackendType.OLLAMA
     endpoint: str = "http://localhost:11434"
-    model: str = "llama3"
+    model: str | None = None  # None = auto-detect from inference endpoint
     timeout_seconds: float = 120.0
     api_key: str | None = None
     fallback_models: list[str] = field(default_factory=list)
@@ -71,8 +71,10 @@ class LLMBackend(ABC):
 class OllamaBackend(LLMBackend):
     """Ollama /api/generate backend."""
 
+    _cached_default_model: str | None = None
+
     def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
-        model_name = model or self.config.model
+        model_name = model or self.config.model or self._get_default_model()
         payload = {
             "model": model_name,
             "prompt": prompt,
@@ -80,13 +82,41 @@ class OllamaBackend(LLMBackend):
         }
         yield from self._stream_request(payload)
 
+    def _get_default_model(self) -> str:
+        """Auto-detect the first available model from Ollama."""
+        if OllamaBackend._cached_default_model:
+            return OllamaBackend._cached_default_model
+
+        try:
+            response = httpx.get(
+                f"{self.config.endpoint}/api/tags",
+                timeout=httpx.Timeout(10.0),
+            )
+            response.raise_for_status()
+            data = response.json()
+            models = data.get("models", [])
+            if models:
+                model_name = models[0].get("name", "")
+                if model_name:
+                    OllamaBackend._cached_default_model = model_name
+                    logger.info("Auto-detected Ollama model: %s", model_name)
+                    return model_name
+        except Exception as e:
+            logger.warning("Failed to auto-detect Ollama model: %s", e)
+
+        raise ValueError(
+            "No model specified and auto-detection failed. "
+            "Please specify a model with --model or in the config file, "
+            "or ensure Ollama has at least one model installed (ollama pull llama3.2)"
+        )
+
     def chat_completion(
         self,
         messages: list[dict[str, str]],
         *,
         model: str | None = None,
     ) -> Iterator[str]:
-        model_name = model or self.config.model
+        model_name = model or self.config.model or self._get_default_model()
         payload = {
             "model": model_name,
             "messages": messages,

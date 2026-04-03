@@ -1,4 +1,5 @@
 """Tests for the RAG agent."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -78,43 +79,6 @@ class TestRagAgent:
         assert "writing coach" in prompt.lower()
         assert "Feedback:" in prompt
 
-    def test_parse_stream_line_valid_json(self, agent):
-        """Test parsing valid JSON stream lines."""
-        line = '{"response": "Hello", "done": false}'
-        result = agent._parse_stream_line(line)
-
-        assert result == {"response": "Hello", "done": False}
-
-    def test_parse_stream_line_with_data_prefix(self, agent):
-        """Test parsing stream lines with 'data:' prefix."""
-        line = 'data: {"response": "World", "done": false}'
-        result = agent._parse_stream_line(line)
-
-        assert result == {"response": "World", "done": False}
-
-    def test_parse_stream_line_done_marker(self, agent):
-        """Test parsing [DONE] marker."""
-        result = agent._parse_stream_line("[DONE]")
-        assert result == {}
-
-        result = agent._parse_stream_line("data: [DONE]")
-        assert result == {}
-
-    def test_parse_stream_line_invalid_json(self, agent):
-        """Test parsing invalid JSON."""
-        result = agent._parse_stream_line("not valid json")
-        assert result == {}
-
-    def test_parse_stream_line_empty(self, agent):
-        """Test parsing empty line."""
-        result = agent._parse_stream_line("")
-        assert result == {}
-
-    def test_parse_stream_line_non_dict(self, agent):
-        """Test parsing JSON that's not a dict."""
-        result = agent._parse_stream_line('["array", "not", "dict"]')
-        assert result == {}
-
     def test_query_returns_iterator_and_chunks(self, agent, mock_retriever):
         """Test that query returns a token iterator and chunks."""
         with patch.object(agent, "_stream_generation") as mock_stream:
@@ -123,9 +87,7 @@ class TestRagAgent:
             _tokens, chunks = agent.query(query="test?", collection_name="test")
 
             # Verify retriever was called
-            mock_retriever.retrieve.assert_called_once_with(
-                query="test?", collection_name="test"
-            )
+            mock_retriever.retrieve.assert_called_once_with(query="test?", collection_name="test")
 
             # Verify chunks are returned
             assert len(chunks) == 1

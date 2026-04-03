@@ -6,8 +6,8 @@ embedding:
   model: sentence-transformers/all-MiniLM-L6-v2
 
 model:
-  endpoint: http://localhost:11434/api/generate
-  name: llama3
+  endpoint: http://localhost:11434
+  # name: llama3  # Optional - auto-detects first available model from Ollama if not specified
   timeout_seconds: 120.0
   max_flashcard_context_chars: 12000
 
