@@ -19,7 +19,9 @@ from corpus_callosum.security import (
 )
 
 
-def make_mock_request(client_host: str = "127.0.0.1", forwarded_for: str | None = None) -> MagicMock:
+def make_mock_request(
+    client_host: str = "127.0.0.1", forwarded_for: str | None = None
+) -> MagicMock:
     """Create a mock FastAPI Request object."""
     request = MagicMock()
     request.client.host = client_host

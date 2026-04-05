@@ -223,7 +223,7 @@ def setup_observability(
     # Build config from parameters or defaults
     if config is None:
         config = ObservabilityConfig(
-            service_name=service_name or os.getenv("OTEL_SERVICE_NAME", "corpus-callosum"),
+            service_name=service_name or os.getenv("OTEL_SERVICE_NAME") or "corpus-callosum",
             otlp_endpoint=otlp_endpoint or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
             console_exporter=console_exporter
             if console_exporter is not None

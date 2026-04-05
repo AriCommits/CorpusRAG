@@ -53,8 +53,8 @@ class HtmlConverter(BaseConverter):
         # Clean up excessive whitespace
         lines = []
         prev_empty = False
-        for line in markdown.split("\n"):
-            line = line.rstrip()
+        for raw_line in markdown.split("\n"):
+            line = raw_line.rstrip()
             is_empty = not line
             if is_empty and prev_empty:
                 continue

@@ -63,8 +63,8 @@ class FileConverter:
                     groups[ext].append(file_path)
 
         # Sort files within each group
-        for ext in groups:
-            groups[ext].sort()
+        for _ext, files in groups.items():
+            files.sort()
 
         return dict(groups)
 
@@ -173,7 +173,7 @@ class FileConverter:
         results: list[ConversionResult] = []
         used_names: set[str] = set()
 
-        for ext, files in file_groups.items():
+        for _ext, files in file_groups.items():
             for file_path in files:
                 # Skip files already in the output directory
                 try:
@@ -283,7 +283,7 @@ def main() -> None:
 
     if args.dry_run:
         print("\n[Dry run] Would convert:")
-        for ext, files in sorted(convertible.items()):
+        for _ext, files in sorted(convertible.items()):
             for f in files:
                 flat_name = converter.flatten_filename(source_path, f)
                 print(f"  {f.name} → {args.output_dir}/{flat_name}")

@@ -26,6 +26,6 @@ class RtfConverter(BaseConverter):
             ) from exc
 
         rtf_content = source.read_text(encoding="utf-8", errors="ignore")
-        text = rtf_to_text(rtf_content)
+        text: str = rtf_to_text(rtf_content)
 
         return text.strip()

@@ -7,11 +7,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from corpus_callosum.llm_backends import (
+    AnthropicCompatibleBackend,
     LLMBackendType,
     LLMConfig,
     OllamaBackend,
     OpenAICompatibleBackend,
-    AnthropicCompatibleBackend,
     create_backend,
 )
 

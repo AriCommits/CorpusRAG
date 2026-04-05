@@ -261,11 +261,11 @@ def _warn_unsupported_files(path: Path, unsupported: dict[str, list[Path]]) -> N
     ext_list = ", ".join(f"{count} {ext}" for ext, count in sorted(convertible_found.items()))
 
     print(f"\nWarning: Found {total} file(s) that cannot be directly ingested: {ext_list}")
-    print(f"These files can be converted to markdown first.")
-    print(f"\nTo convert and then ingest, run:")
+    print("These files can be converted to markdown first.")
+    print("\nTo convert and then ingest, run:")
     print(f"  corpus-convert {path}")
     print(f"  corpus-ingest --path {path}/corpus_converted --collection <collection_name>")
-    print(f"\nOr use the --convert flag to do both automatically:")
+    print("\nOr use the --convert flag to do both automatically:")
     print(f"  corpus-ingest --path {path} --collection <collection_name> --convert\n")
 
 

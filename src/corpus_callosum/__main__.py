@@ -47,7 +47,7 @@ def main() -> None:
 
     command = sys.argv[1]
     # Remove the command from argv so subcommands see correct args
-    sys.argv = [f"corpus-{command}"] + sys.argv[2:]
+    sys.argv = [f"corpus-{command}", *sys.argv[2:]]
 
     if command == "ask":
         from .cli import ask_main

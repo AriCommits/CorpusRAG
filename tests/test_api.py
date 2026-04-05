@@ -1,4 +1,5 @@
 """Integration tests for API endpoints."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -14,8 +15,10 @@ from corpus_callosum.security import RateLimitConfig, RateLimiter
 
 
 @pytest.fixture(autouse=True)
-def reset_rate_limiter():
-    """Reset rate limiter before each test to avoid cross-test interference."""
+def reset_security():
+    """Reset rate limiter and auth before each test to avoid cross-test interference."""
+    from corpus_callosum.security import APIKeyAuth, AuthConfig
+
     # Create a fresh rate limiter with high limits for testing
     api_module._rate_limiter = RateLimiter(
         RateLimitConfig(
@@ -25,9 +28,12 @@ def reset_rate_limiter():
             burst_limit=100,
         )
     )
+    # Disable auth for tests
+    api_module._api_key_auth = APIKeyAuth(AuthConfig(enabled=False))
     yield
     # Clean up after test
     api_module._rate_limiter = None
+    api_module._api_key_auth = None
 
 
 @pytest.fixture
@@ -90,7 +96,7 @@ class TestIngestEndpoint:
             assert "Path not found" in response.json()["detail"]
 
     def test_ingest_validation_error(self, client):
-        """Test ingest with invalid parameters."""
+        """Test ingest with validation error from ingester."""
         with patch("corpus_callosum.api._get_ingester") as mock_get:
             mock_ingester = MagicMock()
             mock_ingester.ingest_path.side_effect = ValueError("Invalid collection name")
@@ -98,10 +104,11 @@ class TestIngestEndpoint:
 
             response = client.post(
                 "/ingest",
-                json={"file_path": "./vault", "collection": ""},
+                json={"file_path": "./vault", "collection": "valid_name"},
             )
 
             assert response.status_code == 400
+            assert "Invalid collection name" in response.json()["detail"]
 
     def test_ingest_missing_fields(self, client):
         """Test ingest with missing required fields."""

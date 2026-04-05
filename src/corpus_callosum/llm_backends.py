@@ -12,7 +12,7 @@ import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 import httpx
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class LLMBackendType(str, Enum):
+class LLMBackendType(StrEnum):
     OLLAMA = "ollama"
     OPENAI_COMPATIBLE = "openai_compatible"
     ANTHROPIC_COMPATIBLE = "anthropic_compatible"
@@ -96,7 +96,7 @@ class OllamaBackend(LLMBackend):
             data = response.json()
             models = data.get("models", [])
             if models:
-                model_name = models[0].get("name", "")
+                model_name: str = models[0].get("name", "")
                 if model_name:
                     OllamaBackend._cached_default_model = model_name
                     logger.info("Auto-detected Ollama model: %s", model_name)
@@ -296,7 +296,7 @@ class AnthropicCompatibleBackend(LLMBackend):
 
 def create_backend(config: LLMConfig) -> LLMBackend:
     """Factory function to create the appropriate backend."""
-    backends = {
+    backends: dict[LLMBackendType, type[LLMBackend]] = {
         LLMBackendType.OLLAMA: OllamaBackend,
         LLMBackendType.OPENAI_COMPATIBLE: OpenAICompatibleBackend,
         LLMBackendType.ANTHROPIC_COMPATIBLE: AnthropicCompatibleBackend,

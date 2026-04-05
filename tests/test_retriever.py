@@ -1,4 +1,5 @@
 """Tests for the hybrid retriever."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -103,7 +104,11 @@ class TestHybridRetriever:
         collection.get.return_value = {
             "ids": ["id1", "id2", "id3"],
             "documents": ["doc one content", "doc two content", "doc three content"],
-            "metadatas": [{"source_file": "a.md"}, {"source_file": "b.md"}, {"source_file": "c.md"}],
+            "metadatas": [
+                {"source_file": "a.md"},
+                {"source_file": "b.md"},
+                {"source_file": "c.md"},
+            ],
         }
         collection.query.return_value = {
             "ids": [["id1", "id2"]],

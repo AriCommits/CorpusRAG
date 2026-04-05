@@ -1,4 +1,5 @@
 """Tests for configuration management."""
+
 from __future__ import annotations
 
 import tempfile
@@ -31,9 +32,7 @@ def test_config_validation_creates_directories():
 
         # This should create the directories
         _config = Config.from_dict(
-            config_data,
-            project_root=tmp_path,
-            config_path=tmp_path / "test_config.yaml"
+            config_data, project_root=tmp_path, config_path=tmp_path / "test_config.yaml"
         )
 
         # Verify directories were created
@@ -50,6 +49,7 @@ def test_load_config_missing_file_error():
 
         # Monkey patch the _default_config_path function to return our temp path
         import corpus_callosum.config as config_module
+
         config_module._default_config_path = lambda: tmp_path / "configs" / "corpus_callosum.yaml"
 
         # Ensure file doesn't exist

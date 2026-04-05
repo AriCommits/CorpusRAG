@@ -152,9 +152,17 @@ class TestStreamGeneration:
     """Tests for stream generation with mocked HTTP responses."""
 
     @pytest.fixture
-    def agent(self):
+    def mock_retriever(self):
+        """Create a mock retriever for stream testing."""
+        retriever = MagicMock()
+        retriever.retrieve.return_value = []
+        retriever.collection_documents.return_value = []
+        return retriever
+
+    @pytest.fixture
+    def agent(self, mock_retriever):
         """Create an agent for stream testing."""
-        return RagAgent()
+        return RagAgent(retriever=mock_retriever)
 
     def test_stream_generation_yields_tokens(self, agent):
         """Test that stream generation yields tokens correctly."""

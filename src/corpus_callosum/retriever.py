@@ -106,9 +106,9 @@ class HybridRetriever:
             return []
 
         scores = bm25.get_scores(query_tokens)
-        ranked_indices = sorted(
-            range(len(ids)), key=lambda idx: float(scores[idx]), reverse=True
-        )[: self.config.retrieval.top_k_bm25]
+        ranked_indices = sorted(range(len(ids)), key=lambda idx: float(scores[idx]), reverse=True)[
+            : self.config.retrieval.top_k_bm25
+        ]
 
         output: list[RetrievedChunk] = []
         for rank, idx in enumerate(ranked_indices, start=1):
@@ -150,7 +150,9 @@ class HybridRetriever:
                 k + float(chunk.bm25_rank or 0)
             )
 
-        ranked = sorted(merged.values(), key=lambda chunk: rrf_scores.get(chunk.id, 0.0), reverse=True)
+        ranked = sorted(
+            merged.values(), key=lambda chunk: rrf_scores.get(chunk.id, 0.0), reverse=True
+        )
         output: list[RetrievedChunk] = []
         for chunk in ranked[: self.config.retrieval.top_k_final]:
             output.append(

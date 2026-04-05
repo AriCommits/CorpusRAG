@@ -1,58 +1,63 @@
 """Tests for document ingestion."""
+
 from __future__ import annotations
 
 import tempfile
 from dataclasses import replace
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
 from corpus_callosum.ingest import Ingester, IngestResult
 
 
+@pytest.fixture
+def mock_chroma_client():
+    """Create a mock ChromaDB client."""
+    client = MagicMock()
+    client.get_or_create_collection.return_value = MagicMock()
+    return client
+
+
 def test_ingest_result_dataclass():
     """Test IngestResult dataclass creation."""
-    result = IngestResult(
-        collection="test_collection",
-        files_indexed=5,
-        chunks_indexed=10
-    )
+    result = IngestResult(collection="test_collection", files_indexed=5, chunks_indexed=10)
 
     assert result.collection == "test_collection"
     assert result.files_indexed == 5
     assert result.chunks_indexed == 10
 
 
-def test_ingester_initialization():
+def test_ingester_initialization(mock_chroma_client):
     """Test that Ingester initializes correctly."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
     assert ingester.config is not None
     assert ingester.client is not None
     # embedding_model is lazily loaded, so accessing the property will load it
     # We just test that the attribute exists (it's a property that loads on access)
-    assert hasattr(ingester, '_embedding_model')
+    assert hasattr(ingester, "_embedding_model")
 
 
-def test_chunk_text_empty():
+def test_chunk_text_empty(mock_chroma_client):
     """Test chunking empty text."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
     chunks = ingester._chunk_text("")
     assert chunks == []
 
 
-def test_chunk_text_short():
+def test_chunk_text_short(mock_chroma_client):
     """Test chunking text shorter than chunk size."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
     # Create a custom config for testing (can't modify frozen dataclass)
 
     # Create a copy of the config with different chunking settings
     custom_config = replace(
-        ingester.config,
-        chunking=replace(ingester.config.chunking, size=100, overlap=20)
+        ingester.config, chunking=replace(ingester.config.chunking, size=100, overlap=20)
     )
 
     # Create ingester with custom config
-    ingester_custom = Ingester(config=custom_config)
+    ingester_custom = Ingester(config=custom_config, chroma_client=mock_chroma_client)
 
     text = "This is a short text."
     chunks = ingester_custom._chunk_text(text)
@@ -60,19 +65,18 @@ def test_chunk_text_short():
     assert chunks[0] == text
 
 
-def test_chunk_text_long():
+def test_chunk_text_long(mock_chroma_client):
     """Test chunking text longer than chunk size."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
     # Create a custom config for testing (can't modify frozen dataclass)
 
     # Create a copy of the config with different chunking settings
     custom_config = replace(
-        ingester.config,
-        chunking=replace(ingester.config.chunking, size=10, overlap=2)
+        ingester.config, chunking=replace(ingester.config.chunking, size=10, overlap=2)
     )
 
     # Create ingester with custom config
-    ingester_custom = Ingester(config=custom_config)
+    ingester_custom = Ingester(config=custom_config, chroma_client=mock_chroma_client)
 
     text = "This is a longer text that should be split into multiple chunks."
     chunks = ingester_custom._chunk_text(text)
@@ -92,15 +96,12 @@ def test_chunk_text_long():
     assert len(original_words & joined_words) >= len(original_words) * 0.8
 
 
-def test_build_chunk_id():
+def test_build_chunk_id(mock_chroma_client):
     """Test chunk ID generation."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
 
     chunk_id = ingester._build_chunk_id(
-        collection_name="test",
-        source_file="doc.pdf",
-        chunk_index=0,
-        text="Hello world"
+        collection_name="test", source_file="doc.pdf", chunk_index=0, text="Hello world"
     )
 
     # Should follow format: collection:source_file:chunk_index:hash
@@ -112,9 +113,9 @@ def test_build_chunk_id():
     assert len(parts[3]) == 12  # SHA1 truncated to 12 chars
 
 
-def test_iter_source_files_file():
+def test_iter_source_files_file(mock_chroma_client):
     """Test _iter_source_files with a single file."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
@@ -142,9 +143,9 @@ def test_iter_source_files_file():
         assert len(files) == 0  # .csv is not in SUPPORTED_EXTENSIONS
 
 
-def test_iter_source_files_directory():
+def test_iter_source_files_directory(mock_chroma_client):
     """Test _iter_source_files with a directory."""
-    ingester = Ingester()
+    ingester = Ingester(chroma_client=mock_chroma_client)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)

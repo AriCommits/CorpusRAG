@@ -143,8 +143,7 @@ def setup_config() -> Path | None:
     # Paths configuration
     print(bold("─── Paths ───"))
     vault_path = prompt_string(
-        "Document vault directory (for storing your documents)",
-        default="./vault"
+        "Document vault directory (for storing your documents)", default="./vault"
     )
     config_data["paths"] = {
         "vault": vault_path,
@@ -166,14 +165,8 @@ def setup_config() -> Path | None:
         print("  Please install Ollama from https://ollama.ai")
         print("  Or configure a different LLM endpoint below.")
 
-    endpoint = prompt_string(
-        "LLM API endpoint",
-        default="http://localhost:11434/api/generate"
-    )
-    model_name = prompt_string(
-        "Model name",
-        default="llama3"
-    )
+    endpoint = prompt_string("LLM API endpoint", default="http://localhost:11434/api/generate")
+    model_name = prompt_string("Model name", default="llama3")
 
     config_data["model"] = {
         "endpoint": endpoint,
@@ -195,8 +188,7 @@ def setup_config() -> Path | None:
     # ChromaDB configuration
     print(bold("\n─── ChromaDB Configuration ───"))
     use_docker = prompt_yes_no(
-        "Will you use the Docker ChromaDB setup (recommended for production)?",
-        default=False
+        "Will you use the Docker ChromaDB setup (recommended for production)?", default=False
     )
 
     if use_docker:
@@ -281,8 +273,9 @@ def generate_password(length: int = 16) -> str:
     """Generate a random password."""
     import secrets
     import string
+
     alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 def setup_docker() -> bool:
@@ -292,7 +285,6 @@ def setup_docker() -> bool:
     docker_config = PROJECT_ROOT / "configs" / "corpus_callosum.docker.yaml"
     docker_example = PROJECT_ROOT / "configs" / "corpus_callosum.docker.yaml.example"
     env_file = PROJECT_ROOT / "configs" / ".env"
-    env_example = PROJECT_ROOT / "configs" / ".env.example"
 
     # Setup docker config
     config_created = False
@@ -321,14 +313,11 @@ def setup_docker() -> bool:
 
     # Generate or prompt for password
     default_password = generate_password()
-    print(f"\nPostgres is used for observability (traces storage).")
-    
+    print("\nPostgres is used for observability (traces storage).")
+
     postgres_user = prompt_string("Postgres username", default="otel")
-    
-    use_generated = prompt_yes_no(
-        f"Generate a secure random password? (recommended)",
-        default=True
-    )
+
+    use_generated = prompt_yes_no("Generate a secure random password? (recommended)", default=True)
     if use_generated:
         postgres_password = default_password
         print(f"  Generated password: {yellow(postgres_password)}")
@@ -372,13 +361,13 @@ def print_next_steps(docker_setup: bool) -> None:
     print("3. " + bold("Ingest documents:"))
     print("   " + blue("curl -X POST http://localhost:8080/ingest \\"))
     print("        -H 'Content-Type: application/json' \\")
-    print("        -d '{\"file_path\": \"./vault/my_docs\", \"collection\": \"my_collection\"}'")
+    print('        -d \'{"file_path": "./vault/my_docs", "collection": "my_collection"}\'')
     print()
 
     print("4. " + bold("Query your documents:"))
     print("   " + blue("curl -X POST http://localhost:8080/query \\"))
     print("        -H 'Content-Type: application/json' \\")
-    print("        -d '{\"query\": \"What is...\", \"collection\": \"my_collection\"}'")
+    print('        -d \'{"query": "What is...", "collection": "my_collection"}\'')
     print()
 
     if docker_setup:

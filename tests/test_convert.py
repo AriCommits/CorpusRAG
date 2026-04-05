@@ -15,7 +15,6 @@ from corpus_callosum.convert import (
     format_scan_summary,
 )
 from corpus_callosum.converters import ConversionResult
-from corpus_callosum.converters.base import BaseConverter
 from corpus_callosum.converters.docx import DocxConverter
 from corpus_callosum.converters.html import HtmlConverter
 from corpus_callosum.converters.pdf import PdfConverter
@@ -89,6 +88,7 @@ class TestPdfConverter:
             path = Path(f.name)
 
         # Create a minimal valid PDF
+        # Note: PDF xref entries require trailing spaces (20 bytes each)
         pdf_content = b"""%PDF-1.4
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
@@ -98,11 +98,11 @@ BT /F1 12 Tf 100 700 Td (Test content) Tj ET
 endstream endobj
 xref
 0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000214 00000 n 
+0000000000 65535 f\x20
+0000000009 00000 n\x20
+0000000058 00000 n\x20
+0000000115 00000 n\x20
+0000000214 00000 n\x20
 trailer << /Size 5 /Root 1 0 R >>
 startxref
 307
@@ -413,7 +413,7 @@ class TestFileConverter:
             (subdir / "nested.txt").write_text("nested content")
 
             converter = FileConverter()
-            results = converter.convert_directory(tmp_path)
+            converter.convert_directory(tmp_path)
 
             output_dir = tmp_path / DEFAULT_OUTPUT_DIR
             # Check flattened name
