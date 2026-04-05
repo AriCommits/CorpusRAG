@@ -34,9 +34,9 @@ def test_ingester_initialization(mock_chroma_client):
     ingester = Ingester(chroma_client=mock_chroma_client)
     assert ingester.config is not None
     assert ingester.client is not None
-    # embedding_model is lazily loaded, so accessing the property will load it
+    # embedding_backend is lazily loaded, so accessing the property will load it
     # We just test that the attribute exists (it's a property that loads on access)
-    assert hasattr(ingester, "_embedding_model")
+    assert hasattr(ingester, "_embedding_backend")
 
 
 def test_chunk_text_empty(mock_chroma_client):

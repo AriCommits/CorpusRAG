@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from rank_bm25 import BM25Okapi
-from sentence_transformers import SentenceTransformer
 
 from .chroma import create_chroma_client
 from .config import Config, get_config
+from .embeddings import EmbeddingBackend, create_embedding_backend
 
 
 @dataclass(slots=True, frozen=True)
@@ -38,17 +38,17 @@ class HybridRetriever:
         *,
         config: Config | None = None,
         chroma_client: Any | None = None,
-        embedding_model: SentenceTransformer | None = None,
+        embedding_backend: EmbeddingBackend | None = None,
     ) -> None:
         self.config = config or get_config()
         self.client = chroma_client or create_chroma_client(self.config)
-        self._embedding_model = embedding_model
+        self._embedding_backend = embedding_backend
 
     @property
-    def embedding_model(self) -> SentenceTransformer:
-        if self._embedding_model is None:
-            self._embedding_model = SentenceTransformer(self.config.embedding.model)
-        return self._embedding_model
+    def embedding_backend(self) -> EmbeddingBackend:
+        if self._embedding_backend is None:
+            self._embedding_backend = create_embedding_backend(self.config)
+        return self._embedding_backend
 
     def semantic_search(self, *, query: str, collection_name: str) -> list[RetrievedChunk]:
         collection = self._get_existing_collection(collection_name)
@@ -58,7 +58,7 @@ class HybridRetriever:
         if collection.count() == 0:
             return []
 
-        query_embedding = self.embedding_model.encode([query], show_progress_bar=False).tolist()
+        query_embedding = self.embedding_backend.encode([query])
         top_k = self.config.retrieval.top_k_semantic
 
         result = collection.query(

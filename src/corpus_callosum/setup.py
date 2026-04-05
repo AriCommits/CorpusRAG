@@ -222,23 +222,61 @@ def setup_config() -> tuple[Path | None, bool]:
 
     # Embedding model configuration
     print(bold("\n─── Embedding Model ───"))
-    print("Embeddings convert your documents into vectors for semantic search.\n")
-    print(f"  {bold('1. all-MiniLM-L6-v2')} (default)")
+    print("Embeddings convert your documents into vectors for semantic search.")
+    print(
+        "Choose between Ollama (uses same service as your LLM) or sentence-transformers (local HuggingFace models).\n"
+    )
+    print(f"  {bold('Ollama Models')} (requires Ollama running)")
+    print(f"  {bold('1.')} nomic-embed-text (default)")
+    print("     - 768 dimensions, optimized for longer context")
+    print("     - Excellent quality, fast\n")
+    print(f"  {bold('2.')} mxbai-embed-large")
+    print("     - 1024 dimensions, state-of-the-art quality")
+    print("     - Higher quality, slightly slower\n")
+    print(f"  {bold('3.')} all-minilm")
+    print("     - 384 dimensions, lightweight")
+    print("     - Fast and efficient\n")
+    print(f"  {bold('sentence-transformers Models')} (downloads from HuggingFace)")
+    print(f"  {bold('4.')} all-MiniLM-L6-v2")
     print("     - 384 dimensions, ~80MB download")
     print("     - Fast and lightweight\n")
-    print(f"  {bold('2. all-mpnet-base-v2')}")
+    print(f"  {bold('5.')} all-mpnet-base-v2")
     print("     - 768 dimensions, ~420MB download")
     print("     - Higher quality, slower\n")
+    print(f"  {bold('6.')} Custom model")
+    print("     - Specify any Ollama or sentence-transformers model\n")
 
-    use_larger_model = prompt_yes_no("Use the larger, higher-quality model?", default=False)
-
-    if use_larger_model:
-        embedding_model = "sentence-transformers/all-mpnet-base-v2"
-    else:
-        embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+    while True:
+        choice = prompt_string("Select embedding model (1/2/3/4/5/6)", default="1")
+        if choice == "1":
+            embedding_model = "nomic-embed-text"
+            break
+        elif choice == "2":
+            embedding_model = "mxbai-embed-large"
+            break
+        elif choice == "3":
+            embedding_model = "all-minilm"
+            break
+        elif choice == "4":
+            embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+            break
+        elif choice == "5":
+            embedding_model = "sentence-transformers/all-mpnet-base-v2"
+            break
+        elif choice == "6":
+            print("\nEnter the model name:")
+            print("  - For Ollama: model name (e.g., 'nomic-embed-text')")
+            print(
+                "  - For sentence-transformers: org/model (e.g., 'sentence-transformers/all-MiniLM-L6-v2')"
+            )
+            embedding_model = prompt_string("Model name")
+            break
+        else:
+            print(yellow("Please enter 1, 2, 3, 4, 5, or 6."))
 
     config_data["embedding"] = {
         "model": embedding_model,
+        "backend": None,  # Auto-detect from model name
     }
 
     # Advanced options

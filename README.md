@@ -18,7 +18,7 @@ corpus-setup
 The setup wizard will guide you through:
 - **Storage mode**: Local (no Docker) or Docker-based ChromaDB
 - **LLM configuration**: Ollama endpoint and model selection
-- **Embedding model**: Choose between fast (MiniLM) or high-quality (MPNet)
+- **Embedding model**: Ollama (default) or sentence-transformers from HuggingFace
 
 ### Option 2: Manual Setup
 
@@ -182,7 +182,25 @@ chroma:
 
 ### Embedding Models
 
-Embeddings are computed locally using `sentence-transformers`. The model is configured once per collection - changing models requires re-ingesting documents.
+CorpusCallosum supports two embedding backends:
+
+#### Ollama (Recommended - Default)
+Uses the same Ollama service as your LLM. No separate downloads needed.
+
+| Model | Dimensions | Quality | Notes |
+|-------|------------|---------|-------|
+| `nomic-embed-text` | 768 | Excellent | Optimized for longer context |
+| `mxbai-embed-large` | 1024 | State-of-art | Higher quality, slightly slower |
+| `all-minilm` | 384 | Good | Fast and efficient |
+
+```yaml
+embedding:
+  model: nomic-embed-text
+  backend: null  # Auto-detects Ollama from model name
+```
+
+#### sentence-transformers (HuggingFace)
+Downloads models locally from HuggingFace Hub. Runs entirely offline after first download.
 
 | Model | Dimensions | Size | Quality |
 |-------|------------|------|---------|
@@ -192,7 +210,10 @@ Embeddings are computed locally using `sentence-transformers`. The model is conf
 ```yaml
 embedding:
   model: sentence-transformers/all-MiniLM-L6-v2
+  backend: null  # Auto-detects sentence-transformers from model name
 ```
+
+**Note**: The embedding model is locked per collection. Changing models requires deleting and re-ingesting the collection.
 
 ### Full Config Example
 
@@ -202,7 +223,8 @@ paths:
   chromadb_store: ./chroma_store
 
 embedding:
-  model: sentence-transformers/all-MiniLM-L6-v2
+  model: nomic-embed-text  # Or: sentence-transformers/all-MiniLM-L6-v2
+  backend: null  # Auto-detects from model name
 
 model:
   endpoint: http://localhost:11434  # Ollama endpoint (code appends /api/generate)
@@ -222,11 +244,6 @@ chunking:
 
 retrieval:
   top_k_final: 10
-
-security:
-  rate_limit_enabled: true
-  auth_enabled: false
-  api_keys: []  # SHA-256 hashed keys when auth_enabled: true
 ```
 
 ## API Authentication

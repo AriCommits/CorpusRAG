@@ -124,19 +124,19 @@ class TestHybridRetriever:
         return client
 
     @pytest.fixture
-    def mock_embedding_model(self):
-        """Create a mock embedding model."""
-        model = MagicMock()
-        # Return a numpy array that has tolist() method
-        model.encode.return_value = np.array([[0.1, 0.2, 0.3]])
-        return model
+    def mock_embedding_backend(self):
+        """Create a mock embedding backend."""
+        backend = MagicMock()
+        # Return a list of lists (not numpy array)
+        backend.encode.return_value = [[0.1, 0.2, 0.3]]
+        return backend
 
     @pytest.fixture
-    def retriever(self, mock_chroma_client, mock_embedding_model):
+    def retriever(self, mock_chroma_client, mock_embedding_backend):
         """Create a retriever with mocked dependencies."""
         return HybridRetriever(
             chroma_client=mock_chroma_client,
-            embedding_model=mock_embedding_model,
+            embedding_backend=mock_embedding_backend,
         )
 
     def test_semantic_search_returns_chunks(self, retriever):
@@ -149,7 +149,7 @@ class TestHybridRetriever:
         assert result[1].id == "id2"
         assert result[1].semantic_rank == 2
 
-    def test_semantic_search_empty_collection(self, mock_chroma_client, mock_embedding_model):
+    def test_semantic_search_empty_collection(self, mock_chroma_client, mock_embedding_backend):
         """Test semantic search on empty collection."""
         collection = MagicMock()
         collection.count.return_value = 0
@@ -157,18 +157,20 @@ class TestHybridRetriever:
 
         retriever = HybridRetriever(
             chroma_client=mock_chroma_client,
-            embedding_model=mock_embedding_model,
+            embedding_backend=mock_embedding_backend,
         )
         result = retriever.semantic_search(query="test", collection_name="empty")
         assert result == []
 
-    def test_semantic_search_nonexistent_collection(self, mock_chroma_client, mock_embedding_model):
+    def test_semantic_search_nonexistent_collection(
+        self, mock_chroma_client, mock_embedding_backend
+    ):
         """Test semantic search on non-existent collection."""
         mock_chroma_client.get_collection.side_effect = Exception("Collection not found")
 
         retriever = HybridRetriever(
             chroma_client=mock_chroma_client,
-            embedding_model=mock_embedding_model,
+            embedding_backend=mock_embedding_backend,
         )
         result = retriever.semantic_search(query="test", collection_name="nonexistent")
         assert result == []
@@ -252,12 +254,12 @@ class TestHybridRetrieverRRF:
 
         mock_client.get_collection.return_value = collection
 
-        mock_model = MagicMock()
-        mock_model.encode.return_value = np.array([[0.1, 0.2]])
+        mock_backend = MagicMock()
+        mock_backend.encode.return_value = [[0.1, 0.2]]
 
         retriever = HybridRetriever(
             chroma_client=mock_client,
-            embedding_model=mock_model,
+            embedding_backend=mock_backend,
         )
 
         result = retriever.retrieve(query="first", collection_name="test")

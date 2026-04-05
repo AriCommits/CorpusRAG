@@ -8,12 +8,14 @@ from collections import defaultdict
 from dataclasses import dataclass
 from hashlib import sha1
 from pathlib import Path
-from typing import Any
-
-from sentence_transformers import SentenceTransformer
+from typing import TYPE_CHECKING, Any
 
 from .chroma import create_chroma_client
 from .config import Config, get_config
+from .embeddings import EmbeddingBackend, create_embedding_backend
+
+if TYPE_CHECKING:
+    pass
 
 SUPPORTED_EXTENSIONS = {".md", ".txt", ".pdf"}
 
@@ -40,17 +42,17 @@ class Ingester:
         *,
         config: Config | None = None,
         chroma_client: Any | None = None,
-        embedding_model: SentenceTransformer | None = None,
+        embedding_backend: EmbeddingBackend | None = None,
     ) -> None:
         self.config = config or get_config()
         self.client = chroma_client or create_chroma_client(self.config)
-        self._embedding_model = embedding_model
+        self._embedding_backend = embedding_backend
 
     @property
-    def embedding_model(self) -> SentenceTransformer:
-        if self._embedding_model is None:
-            self._embedding_model = SentenceTransformer(self.config.embedding.model)
-        return self._embedding_model
+    def embedding_backend(self) -> EmbeddingBackend:
+        if self._embedding_backend is None:
+            self._embedding_backend = create_embedding_backend(self.config)
+        return self._embedding_backend
 
     def ingest_path(self, path: str | Path, collection_name: str) -> IngestResult:
         source = Path(path).expanduser().resolve()
@@ -178,7 +180,7 @@ class Ingester:
         ids = [chunk.chunk_id for chunk in chunks]
         documents = [chunk.text for chunk in chunks]
         metadatas = [chunk.metadata for chunk in chunks]
-        embeddings = self.embedding_model.encode(documents, show_progress_bar=False).tolist()
+        embeddings = self.embedding_backend.encode(documents)
 
         if hasattr(collection, "upsert"):
             collection.upsert(

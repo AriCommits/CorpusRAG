@@ -21,6 +21,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "embedding": {
         "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "backend": None,  # Auto-detect: "sentence-transformers" or "ollama"
     },
     "model": {
         "endpoint": "http://localhost:11434",
@@ -79,6 +80,7 @@ class PathsConfig:
 @dataclass(frozen=True, slots=True)
 class EmbeddingConfig:
     model: str
+    backend: str | None  # None = auto-detect from model name
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,7 +181,8 @@ class Config:
                 ),
             ),
             embedding=EmbeddingConfig(
-                model=str(embedding.get("model", DEFAULT_CONFIG["embedding"]["model"]))
+                model=str(embedding.get("model", DEFAULT_CONFIG["embedding"]["model"])),
+                backend=embedding.get("backend", DEFAULT_CONFIG["embedding"]["backend"]),
             ),
             model=ModelConfig(
                 endpoint=str(model.get("endpoint", DEFAULT_CONFIG["model"]["endpoint"])),
