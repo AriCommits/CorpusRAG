@@ -64,24 +64,52 @@ class SentenceTransformersBackend(EmbeddingBackend):
 class OllamaEmbeddingBackend(EmbeddingBackend):
     """Embedding backend using Ollama's /api/embeddings endpoint."""
 
+    # Maximum token limit for most Ollama embedding models (conservative estimate)
+    MAX_TOKENS = 512  # Most embedding models support 512-2048 tokens
+    CHARS_PER_TOKEN = 4  # Rough estimate: 1 token ≈ 4 characters
+
     def __init__(self, model_name: str, endpoint: str = "http://localhost:11434") -> None:
         self.model_name = model_name
         self.endpoint = endpoint.rstrip("/")
+        self.max_chars = self.MAX_TOKENS * self.CHARS_PER_TOKEN
 
     def encode(self, texts: list[str]) -> list[list[float]]:
-        """Encode texts using Ollama's embedding API."""
+        """Encode texts using Ollama's embedding API.
+
+        Automatically truncates texts that exceed the model's context window.
+        """
         embeddings = []
         url = f"{self.endpoint}/api/embeddings"
 
-        for text in texts:
-            response = httpx.post(
-                url,
-                json={"model": self.model_name, "prompt": text},
-                timeout=60.0,
-            )
-            response.raise_for_status()
-            data = response.json()
-            embeddings.append(data["embedding"])
+        for idx, text in enumerate(texts):
+            # Truncate text if it's too long
+            truncated_text = text[: self.max_chars] if len(text) > self.max_chars else text
+
+            try:
+                response = httpx.post(
+                    url,
+                    json={"model": self.model_name, "prompt": truncated_text},
+                    timeout=60.0,
+                )
+                response.raise_for_status()
+                data = response.json()
+                embeddings.append(data["embedding"])
+            except httpx.HTTPStatusError as e:
+                # Show detailed error information
+                error_detail = ""
+                try:
+                    error_data = e.response.json()
+                    error_detail = f" - {error_data.get('error', 'Unknown error')}"
+                except Exception:
+                    error_detail = f" - Response: {e.response.text[:200]}"
+
+                raise RuntimeError(
+                    f"Ollama embedding failed for document {idx + 1}/{len(texts)}: "
+                    f"HTTP {e.response.status_code}{error_detail}\n"
+                    f"Model: {self.model_name}, Endpoint: {url}\n"
+                    f"Text length: {len(text)} chars (truncated to {len(truncated_text)})\n"
+                    f"Text preview: {truncated_text[:100]}..."
+                ) from e
 
         return embeddings
 
