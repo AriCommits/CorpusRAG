@@ -114,8 +114,13 @@ def check_ollama() -> tuple[bool, str | None]:
         return False, None
 
 
-def setup_config() -> Path | None:
-    """Interactive setup for configuration file."""
+def setup_config() -> tuple[Path | None, bool]:
+    """Interactive setup for configuration file.
+
+    Returns:
+        Tuple of (config_path, use_docker_chroma).
+        config_path is None if setup failed.
+    """
     print(bold("\n📋 Configuration Setup\n"))
 
     config_dir = PROJECT_ROOT / "configs"
@@ -127,13 +132,17 @@ def setup_config() -> Path | None:
         print(f"Configuration file already exists at: {config_path}")
         if not prompt_yes_no("Do you want to overwrite it?", default=False):
             print(green("✓ Keeping existing configuration."))
-            return config_path
+            # Check existing config to determine if Docker mode
+            with config_path.open(encoding="utf-8") as f:
+                existing = yaml.safe_load(f) or {}
+            use_docker = existing.get("chroma", {}).get("mode") == "http"
+            return config_path, use_docker
 
     # Check if example exists
     if not example_path.exists():
         print(red(f"✗ Example config not found at: {example_path}"))
         print("  Please ensure you have the complete repository.")
-        return None
+        return None, False
 
     # Build configuration interactively
     print("\nLet's configure CorpusCallosum:\n")
@@ -186,10 +195,18 @@ def setup_config() -> Path | None:
     }
 
     # ChromaDB configuration
-    print(bold("\n─── ChromaDB Configuration ───"))
-    use_docker = prompt_yes_no(
-        "Will you use the Docker ChromaDB setup (recommended for production)?", default=False
-    )
+    print(bold("\n─── ChromaDB Storage ───"))
+    print("ChromaDB stores your document embeddings. Choose how to run it:\n")
+    print(f"  {bold('1. Local (recommended for personal use)')}")
+    print("     - No Docker required")
+    print("     - Data stored in ./chroma_store/ folder")
+    print("     - Simple setup, works out of the box\n")
+    print(f"  {bold('2. Docker (recommended for production/servers)')}")
+    print("     - Requires Docker to be installed")
+    print("     - Runs ChromaDB as a separate service")
+    print("     - Better for multi-user or containerized deployments\n")
+
+    use_docker = prompt_yes_no("Use Docker for ChromaDB?", default=False)
 
     if use_docker:
         config_data["chroma"] = {
@@ -201,10 +218,28 @@ def setup_config() -> Path | None:
     else:
         config_data["chroma"] = {
             "mode": "persistent",
-            "host": "localhost",
-            "port": 8000,
-            "ssl": False,
         }
+
+    # Embedding model configuration
+    print(bold("\n─── Embedding Model ───"))
+    print("Embeddings convert your documents into vectors for semantic search.\n")
+    print(f"  {bold('1. all-MiniLM-L6-v2')} (default)")
+    print("     - 384 dimensions, ~80MB download")
+    print("     - Fast and lightweight\n")
+    print(f"  {bold('2. all-mpnet-base-v2')}")
+    print("     - 768 dimensions, ~420MB download")
+    print("     - Higher quality, slower\n")
+
+    use_larger_model = prompt_yes_no("Use the larger, higher-quality model?", default=False)
+
+    if use_larger_model:
+        embedding_model = "sentence-transformers/all-mpnet-base-v2"
+    else:
+        embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+
+    config_data["embedding"] = {
+        "model": embedding_model,
+    }
 
     # Advanced options
     print(bold("\n─── Advanced Options ───"))
@@ -237,7 +272,7 @@ def setup_config() -> Path | None:
         yaml.dump(config_data, f, default_flow_style=False, sort_keys=False)
 
     print(green(f"✓ Configuration saved to: {config_path}"))
-    return config_path
+    return config_path, use_docker
 
 
 def setup_directories(config_path: Path) -> bool:
@@ -343,7 +378,7 @@ POSTGRES_DB={postgres_db}
     return True
 
 
-def print_next_steps(docker_setup: bool) -> None:
+def print_next_steps(use_docker_chroma: bool) -> None:
     """Print next steps for the user."""
     print(bold("\n" + "═" * 60))
     print(bold("✅ Setup Complete!"))
@@ -351,28 +386,26 @@ def print_next_steps(docker_setup: bool) -> None:
 
     print(bold("\n📖 Next Steps:\n"))
 
-    print("1. " + bold("Start the server:"))
-    print("   " + blue("corpus-api"))
-    print("   " + "or: PYTHONPATH=src python -m corpus_callosum.api\n")
-
-    print("2. " + bold("Add documents to your vault:"))
-    print("   Copy .md, .pdf, or .txt files to the vault directory\n")
-
-    print("3. " + bold("Ingest documents:"))
-    print("   " + blue("curl -X POST http://localhost:8080/ingest \\"))
-    print("        -H 'Content-Type: application/json' \\")
-    print('        -d \'{"file_path": "./vault/my_docs", "collection": "my_collection"}\'')
-    print()
-
-    print("4. " + bold("Query your documents:"))
-    print("   " + blue("curl -X POST http://localhost:8080/query \\"))
-    print("        -H 'Content-Type: application/json' \\")
-    print('        -d \'{"query": "What is...", "collection": "my_collection"}\'')
-    print()
-
-    if docker_setup:
-        print("5. " + bold("Or use Docker Compose:"))
-        print("   " + blue("docker compose -f .docker/docker-compose.yml up"))
+    if use_docker_chroma:
+        print("1. " + bold("Start Docker services:"))
+        print("   " + blue("docker compose -f .docker/docker-compose.yml up -d"))
+        print()
+        print("2. " + bold("Add documents to your vault:"))
+        print("   Copy .md, .pdf, or .txt files to the vault directory\n")
+        print("3. " + bold("Ingest documents (via API):"))
+        print("   " + blue("curl -X POST http://localhost:8080/ingest \\"))
+        print("        -H 'Content-Type: application/json' \\")
+        print('        -d \'{"file_path": "./vault/my_docs", "collection": "my_collection"}\'')
+        print()
+    else:
+        print("1. " + bold("Ingest documents (CLI):"))
+        print("   " + blue("corpus-ingest --path ./vault/my_docs --collection my_collection"))
+        print()
+        print("2. " + bold("Query your documents (CLI):"))
+        print("   " + blue("corpus-query --collection my_collection"))
+        print("   Then type your question at the prompt.\n")
+        print("3. " + bold("Or start the API server:"))
+        print("   " + blue("corpus-api"))
         print()
 
     print(bold("📚 Documentation:"))
@@ -390,7 +423,7 @@ def main() -> int:
         return 0
 
     # Step 1: Configuration
-    config_path = setup_config()
+    config_path, use_docker_chroma = setup_config()
     if not config_path:
         print(red("\n✗ Setup failed during configuration."))
         return 1
@@ -400,11 +433,12 @@ def main() -> int:
         print(red("\n✗ Setup failed during directory creation."))
         return 1
 
-    # Step 3: Docker (optional)
-    docker_setup = setup_docker()
+    # Step 3: Docker (optional) - only if user chose Docker mode
+    if use_docker_chroma:
+        setup_docker()
 
     # Final steps
-    print_next_steps(docker_setup)
+    print_next_steps(use_docker_chroma)
 
     return 0
 

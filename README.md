@@ -2,17 +2,36 @@
 
 Local-first RAG service for personal knowledge management.
 
-## Quick Start (30 seconds)
+## Quick Start
+
+### Option 1: Interactive Setup (Recommended)
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Run the setup wizard
+corpus-setup
+# Or: python -m corpus_callosum setup
+```
+
+The setup wizard will guide you through:
+- **Storage mode**: Local (no Docker) or Docker-based ChromaDB
+- **LLM configuration**: Ollama endpoint and model selection
+- **Embedding model**: Choose between fast (MiniLM) or high-quality (MPNet)
+
+### Option 2: Manual Setup
 
 ```bash
 # 1. Install
 pip install -r requirements.txt
 
-# 2. Copy config
+# 2. Copy and edit config
 cp configs/corpus_callosum.yaml.example configs/corpus_callosum.yaml
 
 # 3. Start Ollama (if not running)
-ollama serve && ollama pull llama3
+ollama serve
+ollama pull llama3
 ```
 
 ## Basic Usage (CLI)
@@ -136,22 +155,78 @@ API docs available at `/docs` (Swagger) and `/redoc`.
 
 Config is loaded from `configs/corpus_callosum.yaml` or `CORPUS_CALLOSUM_CONFIG` env var.
 
-Key settings:
+### Storage Modes
+
+CorpusCallosum supports two storage modes for ChromaDB:
+
+| Mode | Use Case | Docker Required |
+|------|----------|-----------------|
+| `persistent` | Personal use, CLI | No |
+| `http` | Production, multi-user | Yes |
+
+**Local mode** (default): Data stored in `./chroma_store/` folder. No server needed.
 
 ```yaml
+chroma:
+  mode: persistent
+```
+
+**Docker mode**: Connects to ChromaDB running as a separate service.
+
+```yaml
+chroma:
+  mode: http
+  host: chroma  # Docker service name
+  port: 8000
+```
+
+### Embedding Models
+
+Embeddings are computed locally using `sentence-transformers`. The model is configured once per collection - changing models requires re-ingesting documents.
+
+| Model | Dimensions | Size | Quality |
+|-------|------------|------|---------|
+| `sentence-transformers/all-MiniLM-L6-v2` | 384 | ~80MB | Good, fast |
+| `sentence-transformers/all-mpnet-base-v2` | 768 | ~420MB | Better, slower |
+
+```yaml
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2
+```
+
+### Full Config Example
+
+```yaml
+paths:
+  vault: ./vault
+  chromadb_store: ./chroma_store
+
+embedding:
+  model: sentence-transformers/all-MiniLM-L6-v2
+
 model:
-  endpoint: http://localhost:11434  # Ollama endpoint
-  name: llama3                       # Model name
-  backend: ollama                    # ollama, openai, or anthropic
+  endpoint: http://localhost:11434  # Ollama endpoint (code appends /api/generate)
+  name: llama3
+  timeout_seconds: 120.0
+
+chroma:
+  mode: persistent  # or 'http' for Docker
 
 server:
   host: 127.0.0.1
   port: 8080
 
+chunking:
+  size: 1000
+  overlap: 100
+
+retrieval:
+  top_k_final: 10
+
 security:
   rate_limit_enabled: true
-  auth_enabled: true
-  api_keys: []  # SHA-256 hashed API keys
+  auth_enabled: false
+  api_keys: []  # SHA-256 hashed keys when auth_enabled: true
 ```
 
 ## API Authentication
@@ -164,12 +239,22 @@ curl -H "X-API-Key: your-key" http://localhost:8080/health
 
 ## Docker
 
+Docker is **optional** - only needed if you want to run ChromaDB as a service or deploy with observability.
+
 ```bash
+# 1. Create Docker config
 cp configs/corpus_callosum.docker.yaml.example configs/corpus_callosum.docker.yaml
+
+# 2. Start services (from project root)
 docker compose -f .docker/docker-compose.yml up --build
 ```
 
-Includes ChromaDB, OpenTelemetry Collector, and Jaeger at `http://localhost:16686`.
+Includes:
+- **ChromaDB**: Vector database service
+- **OpenTelemetry Collector**: Metrics and traces
+- **Jaeger**: Trace visualization at `http://localhost:16686`
+
+> **Note**: When running inside Docker, use `chroma.mode: http` with `host: chroma`. When running CLI outside Docker, use `chroma.mode: persistent`.
 
 ## Project Structure
 
@@ -203,6 +288,10 @@ mypy src
 
 **Ollama not running**: Start with `ollama serve` and pull a model: `ollama pull llama3`
 
-**Config not found**: Copy the example: `cp configs/corpus_callosum.yaml.example configs/corpus_callosum.yaml`
+**Config not found**: Run `corpus-setup` or copy the example: `cp configs/corpus_callosum.yaml.example configs/corpus_callosum.yaml`
+
+**ChromaDB connection error**: If using `mode: http`, ensure Docker is running. For local use, switch to `mode: persistent`.
+
+**Embedding dimension mismatch**: Changing embedding models requires deleting the collection and re-ingesting. Delete `./chroma_store/` to start fresh.
 
 **Observability errors**: Install optional deps: `pip install corpus-callosum[observability]`
