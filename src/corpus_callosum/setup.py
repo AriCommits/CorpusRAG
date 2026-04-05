@@ -165,7 +165,7 @@ def setup_config() -> Path | None:
         print("  Please install Ollama from https://ollama.ai")
         print("  Or configure a different LLM endpoint below.")
 
-    endpoint = prompt_string("LLM API endpoint", default="http://localhost:11434/api/generate")
+    endpoint = prompt_string("LLM API endpoint", default="http://localhost:11434")
     model_name = prompt_string("Model name", default="llama3")
 
     config_data["model"] = {
