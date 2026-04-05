@@ -41,10 +41,11 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_SERVICE_NAME=corpus-callosum
       - POSTGRES_USER=${POSTGRES_USER:-otel}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-corpuscallosum}
       - POSTGRES_DB=${POSTGRES_DB:-otel_traces}
     env_file:
-      - ../.env
+      - path: ../configs/.env
+        required: false
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -77,10 +78,11 @@ services:
       - "127.0.0.1:8888:8888"
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-otel}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-corpuscallosum}
       - POSTGRES_DB=${POSTGRES_DB:-otel_traces}
     env_file:
-      - ../.env
+      - path: ../configs/.env
+        required: false
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,10 +106,11 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-otel}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-corpuscallosum}
       - POSTGRES_DB=${POSTGRES_DB:-otel_traces}
     env_file:
-      - ../.env
+      - path: ../configs/.env
+        required: false
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

@@ -53,3 +53,9 @@ observability:
   console_exporter: false  # Set to true for development debugging
   openllmetry_enabled: true  # Enable LLM-specific tracing
 
+# Postgres settings (for observability backend)
+postgres:
+  user: otel
+  password: changeme_secure_password
+  database: otel_traces
+
