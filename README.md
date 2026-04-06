@@ -65,6 +65,7 @@ corpus-setup
 | `corpus-flashcards --collection <name>` | Generate flashcards |
 | `corpus-collections` | List all collections |
 | `corpus-convert <path>` | Convert documents to markdown |
+| `corpus-sync <subcommand>` | Synchronize collections between local and remote storage |
 | `corpus-setup` | Interactive setup wizard |
 | `corpus-api` | Start the REST API server |
 
@@ -80,6 +81,7 @@ corpus-ask "question" -c collection      # Short form
 corpus-ask -q "question" -c collection   # Alternative
 corpus-ask "question" -c col -m mistral  # Override model
 corpus-ask "question" -c col -s session1 # Multi-turn conversation
+corpus-ask "question" -c col -k 5        # Retrieve top 5 results instead of default
 
 # corpus-flashcards
 corpus-flashcards -c collection              # Print to stdout
@@ -94,6 +96,13 @@ corpus-collections --json  # JSON output
 corpus-convert ./documents                          # Convert to corpus_converted/
 corpus-convert ./docs --output-dir my_markdown      # Custom output directory
 corpus-convert ./docs --dry-run                    # Preview without converting
+
+# corpus-sync
+corpus-sync status -c notes         # Check sync status
+corpus-sync diff -c notes           # Show differences between local and remote
+corpus-sync pull -c notes           # Pull from remote to local
+corpus-sync push -c notes           # Push from local to remote
+corpus-sync bidirectional -c notes  # Two-way sync
 ```
 
 ## Python Module Interface
@@ -106,6 +115,9 @@ python -m corpus_callosum ingest --path ./vault/my-notes --collection notes
 
 # Ask a question
 python -m corpus_callosum ask "What is photosynthesis?" --collection notes
+
+# Ask with dynamic retrieval count
+python -m corpus_callosum ask "What is photosynthesis?" -c notes -k 5
 
 # Generate flashcards
 python -m corpus_callosum flashcards --collection notes
@@ -121,13 +133,19 @@ python -m corpus_callosum setup
 
 # Start API server
 python -m corpus_callosum api
+
+# Sync collections (scaffolded - remote backends pending)
+python -m corpus_callosum sync status -c notes
+python -m corpus_callosum sync pull -c notes
 ```
 
 Run `python -m corpus_callosum` without arguments to see all available commands.
 
 ## Features
 
-- Hybrid retrieval (semantic + BM25 + RRF fusion)
+- **Hybrid retrieval** (semantic + BM25 + RRF fusion)
+- **Dynamic vector retrieval** - Adjust result count per query with `-k` parameter
+- **Synchronization** - Sync collections between local and remote storage (scaffolded)
 - Supports PDF, Markdown, TXT files
 - Multi-turn conversations with session memory
 - Flashcard generation and writing critique
@@ -244,6 +262,56 @@ retrieval:
   top_k_final: 10
 ```
 
+## Dynamic Vector Retrieval
+
+Control the number of results retrieved per query using the `-k` / `--top-k` parameter:
+
+```bash
+# Retrieve only top 3 most relevant results
+corpus-ask "What is machine learning?" -c ml-notes -k 3
+
+# Default behavior (uses config's top_k_final value)
+corpus-ask "What is machine learning?" -c ml-notes
+
+# Python module interface
+python -m corpus_callosum ask "question" -c collection -k 5
+```
+
+This parameter overrides the default `top_k_final` setting from your config on a per-query basis, allowing you to:
+- Get more focused results with lower k values (e.g., `-k 3`)
+- Retrieve comprehensive context with higher k values (e.g., `-k 20`)
+- Optimize for specific use cases without changing your config
+
+## Synchronization (Beta)
+
+CorpusCallosum includes a synchronization framework for backing up and sharing collections between storage backends:
+
+```bash
+# Check sync status
+corpus-sync status -c my-notes
+
+# View differences between local and remote
+corpus-sync diff -c my-notes
+
+# Pull from remote to local
+corpus-sync pull -c my-notes
+
+# Push from local to remote
+corpus-sync push -c my-notes
+
+# Bidirectional sync
+corpus-sync bidirectional -c my-notes
+```
+
+**Current Status**: The sync infrastructure is scaffolded with:
+- Storage abstraction layer (`StorageBackend` interface)
+- Local storage backend implementation
+- Sync engine with diff/merge logic and conflict resolution strategies
+- CLI commands for sync operations
+
+**Pending**: Remote storage backend implementations (S3, HTTP API, etc.)
+
+
 ## API Authentication
 
 When `auth_enabled: true`, include your API key:
@@ -276,7 +344,7 @@ Includes:
 ```
 src/corpus_callosum/
   __main__.py     # Python module entry point
-  cli.py          # CLI commands (ask, flashcards, collections)
+  cli.py          # CLI commands (ask, flashcards, collections, sync)
   api.py          # FastAPI REST endpoints
   agent.py        # RAG orchestration
   retriever.py    # Hybrid search (semantic + BM25)
@@ -288,6 +356,11 @@ src/corpus_callosum/
   security.py     # Rate limiting, auth
   observability.py # OpenTelemetry tracing
   converters/     # Format converters (pdf, docx, html, rtf)
+  storage/        # Storage abstraction layer
+    base.py       # StorageBackend interface
+    local.py      # LocalStorageBackend implementation
+  sync/           # Synchronization engine
+    engine.py     # SyncEngine with diff/merge logic
 ```
 
 ## Development
