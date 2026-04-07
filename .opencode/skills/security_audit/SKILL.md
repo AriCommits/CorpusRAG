@@ -25,5 +25,6 @@ Draft your findings in Markdown. For every vulnerability found, you MUST include
 Run the following command in `bash` to get the target file path:
 `python3 ~/.config/opencode/skills/security-audit/get_next_audit.py`
 
-## Step 4: Save and Confirm
-Write your Markdown report to the exact file path output in Step 3. Confirm with the user once the file is saved, highlighting any "Critical" or "High" severity issues immediately in the chat.
+## Step 4: Save the File
+Read the output from the script in Step 3. That output is your exact target file path (e.g., `.opencode/security/security-audit-001.md`). 
+Write your Markdown plan from Step 1 directly to that file path using your file writing tool. Confirm with the user once the file is saved, highlighting any "Critical" or "High" severity issues immediately in the chat.

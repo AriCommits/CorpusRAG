@@ -1,5 +1,5 @@
 """
-MCP Server implementation using FastMCP.
+MCP Server implementation using FastMCP with authentication.
 
 Exposes all Corpus Callosum tools as MCP resources and tools.
 """
@@ -7,22 +7,25 @@ Exposes all Corpus Callosum tools as MCP resources and tools.
 import argparse
 import logging
 from typing import Any
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from mcp.server.fastmcp import FastMCP
 
-from corpus_callosum.config import load_config
-from corpus_callosum.db import ChromaDBBackend
-from corpus_callosum.tools.flashcards import FlashcardConfig, FlashcardGenerator
-from corpus_callosum.tools.quizzes import QuizConfig, QuizGenerator
-from corpus_callosum.tools.rag import RAGAgent, RAGConfig, RAGIngester, RAGRetriever
-from corpus_callosum.tools.summaries import SummaryConfig, SummaryGenerator
-from corpus_callosum.tools.video import (
+from ..config import load_config
+from ..db import ChromaDBBackend
+from ..tools.flashcards import FlashcardConfig, FlashcardGenerator
+from ..tools.quizzes import QuizConfig, QuizGenerator
+from ..tools.rag import RAGAgent, RAGConfig, RAGIngester, RAGRetriever
+from ..tools.summaries import SummaryConfig, SummaryGenerator
+from ..tools.video import (
     TranscriptAugmenter,
     TranscriptCleaner,
     VideoConfig,
     VideoTranscriber,
 )
+from ..utils.auth import MCPAuthenticator, AuthConfig, add_security_headers
 
 
 def create_mcp_server(config_path: str | None = None) -> FastMCP:
@@ -41,11 +44,33 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
     # Initialize database backend
     db = ChromaDBBackend(config.database)
 
+    # Set up authentication
+    auth_config = AuthConfig(
+        enabled=True,
+        api_keys={},  # Will be populated by admin key generation
+        rate_limit_enabled=True,
+        requests_per_minute=100,
+        requests_per_hour=1000
+    )
+    
+    # Create authentication system
+    auth_file = Path.home() / ".corpus_callosum" / "api_keys.json"
+    authenticator = MCPAuthenticator(auth_config, auth_file)
+    
+    # Generate admin key on first run if no keys exist
+    if not authenticator.api_key_manager.api_keys:
+        admin_key = authenticator.create_admin_key()
+        logging.info(f"🔑 Generated admin API key: {admin_key}")
+        logging.info("Store this key securely - it won't be displayed again!")
+
     # Create MCP server
     mcp = FastMCP(
         "Corpus Callosum",
         json_response=True,
     )
+    
+    # Add authentication dependency to all tools
+    auth_dep = Depends(authenticator.authenticate_request)
 
     # ==================== RAG Tools ====================
 
@@ -55,6 +80,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         collection: str,
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
+        auth_context: dict = auth_dep,
     ) -> dict[str, Any]:
         """
         Ingest documents into a RAG collection.
@@ -64,22 +90,34 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             collection: Collection name to store documents
             chunk_size: Size of text chunks (default: 1000)
             chunk_overlap: Overlap between chunks (default: 200)
+            auth_context: Authentication context (injected)
 
         Returns:
             Ingestion result with document count and status
+            
+        Raises:
+            SecurityError: If file path is unsafe
         """
+        # Validate file path for security
+        from ..utils.security import validate_file_path, SecurityError
+        try:
+            validated_path = validate_file_path(path, must_exist=True)
+        except Exception as e:
+            raise SecurityError(f"Invalid file path: {e}")
+        
         rag_config = RAGConfig.from_dict(config.to_dict())
         rag_config.chunking.chunk_size = chunk_size
         rag_config.chunking.chunk_overlap = chunk_overlap
 
         ingester = RAGIngester(rag_config, db)
-        result = ingester.ingest_path(path, collection)
+        result = ingester.ingest_path(str(validated_path), collection)
 
         return {
             "status": "success",
             "collection": collection,
             "documents_processed": result.documents_processed,
             "chunks_created": result.chunks_created,
+            "authenticated_user": auth_context["key_info"]["name"],
         }
 
     @mcp.tool()
@@ -364,6 +402,23 @@ Steps:
 This will create a comprehensive study resource from the lecture.
 """
 
+    # Add security middleware and headers
+    if hasattr(mcp, 'app') and isinstance(mcp.app, FastAPI):
+        # Add CORS middleware with security
+        mcp.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["https://localhost:*"],  # Only allow secure origins
+            allow_credentials=True,
+            allow_methods=["GET", "POST"],
+            allow_headers=["Authorization", "X-API-Key", "Content-Type"],
+        )
+        
+        # Add security headers middleware
+        @mcp.app.middleware("http")
+        async def add_security_headers_middleware(request: Request, call_next):
+            response = await call_next(request)
+            return add_security_headers(response)
+
     return mcp
 
 
@@ -401,8 +456,8 @@ def main() -> None:
             """Readiness check endpoint."""
             try:
                 # Test database connection
-                from corpus_callosum.config import load_config
-                from corpus_callosum.db import ChromaDBBackend
+                from ..config import load_config
+                from ..db import ChromaDBBackend
                 
                 config = load_config(args.config)
                 db = ChromaDBBackend(config.database)

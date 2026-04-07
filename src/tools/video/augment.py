@@ -7,6 +7,13 @@ from pathlib import Path
 from typing import Optional
 
 from .config import VideoConfig
+from ...utils.security import (
+    get_safe_editor, 
+    safe_subprocess_run, 
+    validate_file_path,
+    SecurityError,
+    CommandInjectionError
+)
 
 
 class TranscriptAugmenter:
@@ -21,21 +28,40 @@ class TranscriptAugmenter:
         self.config = config
 
     def open_in_editor(self, file_path: Path) -> None:
-        """Open a file in the system default editor.
+        """Open a file in the system default editor securely.
 
         Args:
             file_path: Path to file to open
+            
+        Raises:
+            SecurityError: If editor command is unsafe
+            CommandInjectionError: If no safe editor is available
         """
-        file_path = Path(file_path)
+        # Validate file path for security
+        try:
+            validated_path = validate_file_path(file_path, must_exist=True)
+        except Exception as e:
+            raise SecurityError(f"Invalid file path: {e}")
+        
         system = platform.system()
         
-        if system == "Windows":
-            os.startfile(str(file_path))
-        elif system == "Darwin":
-            subprocess.run(["open", str(file_path)])
-        else:
-            editor = os.environ.get("EDITOR", "xdg-open")
-            subprocess.run([editor, str(file_path)])
+        try:
+            if system == "Windows":
+                # Use os.startfile for Windows (safer than subprocess for this use case)
+                os.startfile(str(validated_path))
+            elif system == "Darwin":
+                # Use safe subprocess for macOS
+                safe_subprocess_run(["open", str(validated_path)])
+            else:
+                # Get safe editor for Linux/Unix
+                editor = get_safe_editor()
+                safe_subprocess_run([editor, str(validated_path)])
+        except (SecurityError, CommandInjectionError) as e:
+            raise SecurityError(f"Failed to open file safely: {e}")
+        except subprocess.TimeoutExpired:
+            raise SecurityError("Editor command timed out")
+        except Exception as e:
+            raise SecurityError(f"Unexpected error opening file: {e}")
 
     def augment(
         self,
@@ -52,10 +78,16 @@ class TranscriptAugmenter:
 
         Returns:
             Path to final augmented transcript
+            
+        Raises:
+            SecurityError: If file paths are invalid or unsafe
+            FileNotFoundError: If transcript file doesn't exist
         """
-        transcript_path = Path(transcript_path)
-        if not transcript_path.exists():
-            raise FileNotFoundError(f"Transcript not found: {transcript_path}")
+        # Validate transcript path for security
+        try:
+            transcript_path = validate_file_path(transcript_path, must_exist=True)
+        except Exception as e:
+            raise SecurityError(f"Invalid transcript path: {e}")
 
         if not auto_save:
             # Open in editor for manual annotation
@@ -65,7 +97,11 @@ class TranscriptAugmenter:
             print("Press Enter to continue...")
             input()
             
-            self.open_in_editor(transcript_path)
+            try:
+                self.open_in_editor(transcript_path)
+            except SecurityError as e:
+                print(f"⚠️  Security Error: {e}")
+                print("Please edit the file manually and press Enter when done.")
             
             print("\nPress Enter when you have finished editing...")
             input()
@@ -73,11 +109,17 @@ class TranscriptAugmenter:
         # Read the (possibly edited) content
         final_content = transcript_path.read_text(encoding="utf-8")
 
-        # Determine output path
+        # Determine and validate output path
         if output_path is None:
             output_path = transcript_path.parent / f"{transcript_path.stem}_final{transcript_path.suffix}"
         else:
             output_path = Path(output_path)
+            # Validate output path (allow creation of new files)
+            try:
+                output_path = validate_file_path(output_path, must_exist=False)
+            except Exception as e:
+                raise SecurityError(f"Invalid output path: {e}")
+            
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Check for overwrite

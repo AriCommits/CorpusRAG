@@ -25,6 +25,13 @@ dependencies = [
   "click>=8.1.0",
   "ollama>=0.4.0",
   "mcp[cli]>=1.20.0",
+  # Security dependencies
+  "keyring>=25.0.0",
+  "cryptography>=41.0.0",
+  "typer[all]>=0.12.0",
+  "rich>=13.0.0",
+  "structlog>=24.0.0",
+  "pydantic>=2.5.0",
 ]
 
 [project.optional-dependencies]
@@ -52,20 +59,24 @@ where = ["src"]
 
 [project.scripts]
 # MCP Server
-corpus-mcp-server = "corpus_callosum.mcp_server.server:main"
+corpus-mcp-server = "mcp_server.server:main"
 
 # Individual Tool CLIs
-corpus-rag = "corpus_callosum.tools.rag.cli:main"
-corpus-flashcards = "corpus_callosum.tools.flashcards.cli:main"
-corpus-summaries = "corpus_callosum.tools.summaries.cli:main"
-corpus-quizzes = "corpus_callosum.tools.quizzes.cli:main"
-corpus-video = "corpus_callosum.tools.video.cli:main"
+corpus-rag = "tools.rag.cli:main"
+corpus-flashcards = "tools.flashcards.cli:main"
+corpus-summaries = "tools.summaries.cli:main"
+corpus-quizzes = "tools.quizzes.cli:main"
+corpus-video = "tools.video.cli:main"
 
 # Orchestrations
-corpus-orchestrate = "corpus_callosum.orchestrations.cli:main"
+corpus-orchestrate = "orchestrations.cli:main"
 
 # Database management
-corpus-db = "corpus_callosum.db.management:main"
+corpus-db = "db.management:main"
+
+# Security and configuration tools
+corpus-secrets = "utils.manage_secrets:main"
+corpus-api-keys = "utils.manage_keys:main"
 
 [tool.ruff]
 target-version = "py311"
@@ -102,7 +113,7 @@ ignore = [
 "tests/test_smoke.py" = ["E402"]  # imports after sys.path manipulation
 
 [tool.ruff.lint.isort]
-known-first-party = ["corpus_callosum"]
+known-first-party = ["config", "db", "llm", "mcp_server", "orchestrations", "tools", "utils"]
 
 [tool.ruff.format]
 quote-style = "double"
