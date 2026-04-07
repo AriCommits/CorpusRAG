@@ -1,0 +1,218 @@
+# CorpusCallosum - Production Docker Compose Configuration
+# Provides full-stack deployment with all services
+
+version: '3.8'
+
+networks:
+  corpus-network:
+    driver: bridge
+
+volumes:
+  corpus-data:
+    driver: local
+  chroma-data:
+    driver: local
+  ollama-data:
+    driver: local
+
+services:
+  # =============================================================================
+  # ChromaDB - Vector Database Service
+  # =============================================================================
+  chromadb:
+    image: chromadb/chroma:0.4.24
+    container_name: corpus-chromadb
+    restart: unless-stopped
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_PORT=8000
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    networks:
+      - corpus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # =============================================================================
+  # Ollama - LLM Service (Optional, for local LLM inference)
+  # =============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: corpus-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - corpus-network
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - full
+      - ollama
+
+  # =============================================================================
+  # CorpusCallosum MCP Server - Main Application
+  # =============================================================================
+  corpus-mcp:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      target: production
+    container_name: corpus-mcp-server
+    restart: unless-stopped
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - corpus-data:/home/corpus/data
+      - ./configs:/home/corpus/app/configs:ro
+      - ./vault:/home/corpus/data/vault:rw
+    networks:
+      - corpus-network
+    environment:
+      # Database configuration
+      - CC_DATABASE_BACKEND=chromadb
+      - CC_DATABASE_MODE=http
+      - CC_DATABASE_HOST=chromadb
+      - CC_DATABASE_PORT=8000
+      
+      # LLM configuration
+      - CC_LLM_ENDPOINT=http://ollama:11434
+      - CC_LLM_MODEL=llama3
+      - CC_LLM_TEMPERATURE=0.7
+      
+      # Paths configuration
+      - CC_PATHS_VAULT=/home/corpus/data/vault
+      - CC_PATHS_SCRATCH_DIR=/home/corpus/data/scratch
+      - CC_PATHS_OUTPUT_DIR=/home/corpus/data/output
+      
+      # Service configuration
+      - CC_SERVICE_TYPE=mcp
+      - CC_MCP_HOST=0.0.0.0
+      - CC_MCP_PORT=8000
+    healthcheck:
+      test: ["CMD", "python", "/home/corpus/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # =============================================================================
+  # CLI Tools Container (for interactive usage)
+  # =============================================================================
+  corpus-cli:
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+      target: cli
+    container_name: corpus-cli
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    volumes:
+      - corpus-data:/home/corpus/data
+      - ./configs:/home/corpus/app/configs:ro
+      - ./vault:/home/corpus/data/vault:rw
+    networks:
+      - corpus-network
+    environment:
+      # Database configuration
+      - CC_DATABASE_BACKEND=chromadb
+      - CC_DATABASE_MODE=http
+      - CC_DATABASE_HOST=chromadb
+      - CC_DATABASE_PORT=8000
+      
+      # LLM configuration
+      - CC_LLM_ENDPOINT=http://ollama:11434
+      - CC_LLM_MODEL=llama3
+      - CC_LLM_TEMPERATURE=0.7
+      
+      # Paths configuration
+      - CC_PATHS_VAULT=/home/corpus/data/vault
+      - CC_PATHS_SCRATCH_DIR=/home/corpus/data/scratch
+      - CC_PATHS_OUTPUT_DIR=/home/corpus/data/output
+    profiles:
+      - cli
+      - full
+    stdin_open: true
+    tty: true
+
+  # =============================================================================
+  # OpenTelemetry Collector (Optional, for observability)
+  # =============================================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: corpus-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./.docker/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus exporter metrics
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+    networks:
+      - corpus-network
+    profiles:
+      - observability
+      - full
+
+  # =============================================================================
+  # Jaeger (Optional, for distributed tracing)
+  # =============================================================================
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: corpus-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # GRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - corpus-network
+    profiles:
+      - observability
+      - full
+
+# =============================================================================
+# Additional compose files for different deployment scenarios
+# =============================================================================
+
+# To run different configurations:
+# 
+# Minimal (ChromaDB + MCP Server only):
+#   docker compose up chromadb corpus-mcp
+#
+# With CLI tools:
+#   docker compose --profile cli up
+#
+# With local LLM:
+#   docker compose --profile ollama up
+#
+# With observability:
+#   docker compose --profile observability up
+#
+# Full stack:
+#   docker compose --profile full up
+#
+# Development mode:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up

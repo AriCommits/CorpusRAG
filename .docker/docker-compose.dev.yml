@@ -1,0 +1,36 @@
+# Development override for Docker Compose
+# Use with: docker compose -f .docker/docker-compose.yml -f .docker/docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  corpus-mcp:
+    build:
+      target: development
+    environment:
+      # Development-specific settings
+      - CC_LOG_LEVEL=DEBUG
+      - CC_DEVELOPMENT=true
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/home/corpus/app/src:ro
+      - ./pyproject.toml:/home/corpus/app/pyproject.toml:ro
+      - ./tests:/home/corpus/app/tests:ro
+    command: >
+      bash -c "
+        pip install -e ./app &&
+        python -m corpus_callosum.mcp_server.server --host 0.0.0.0 --port 8000 --reload
+      "
+    
+  # Override CLI container for development  
+  corpus-cli:
+    build:
+      target: development
+    volumes:
+      # Mount source code
+      - ./src:/home/corpus/app/src:rw
+      - ./tests:/home/corpus/app/tests:rw
+      - ./pyproject.toml:/home/corpus/app/pyproject.toml:ro
+    environment:
+      - CC_LOG_LEVEL=DEBUG
+      - CC_DEVELOPMENT=true

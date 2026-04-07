@@ -64,6 +64,9 @@ corpus-video = "corpus_callosum.tools.video.cli:main"
 # Orchestrations
 corpus-orchestrate = "corpus_callosum.orchestrations.cli:main"
 
+# Database management
+corpus-db = "corpus_callosum.db.management:main"
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100

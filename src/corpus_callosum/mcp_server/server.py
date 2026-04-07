@@ -4,8 +4,11 @@ MCP Server implementation using FastMCP.
 Exposes all Corpus Callosum tools as MCP resources and tools.
 """
 
+import argparse
+import logging
 from typing import Any
 
+from fastapi import FastAPI
 from mcp.server.fastmcp import FastMCP
 
 from corpus_callosum.config import load_config
@@ -365,12 +368,57 @@ This will create a comprehensive study resource from the lecture.
 
 
 def main() -> None:
-    """Run the MCP server."""
-    import sys
+    """Run the MCP server with optional HTTP health endpoints."""
+    # Set up argument parsing
+    parser = argparse.ArgumentParser(description="Corpus Callosum MCP Server")
+    parser.add_argument("--config", "-c", help="Configuration file path")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
+    parser.add_argument("--transport", default="streamable-http", help="Transport type")
+    args = parser.parse_args()
 
-    config_path = sys.argv[1] if len(sys.argv) > 1 else None
-    mcp = create_mcp_server(config_path)
-    mcp.run(transport="streamable-http")
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Create MCP server
+    mcp = create_mcp_server(args.config)
+    
+    # Add health endpoints to the underlying FastAPI app
+    if hasattr(mcp, 'app') and isinstance(mcp.app, FastAPI):
+        @mcp.app.get("/health")
+        async def health_check():
+            """Health check endpoint for container orchestration."""
+            return {
+                "status": "healthy",
+                "service": "corpus-callosum-mcp",
+                "version": "0.5.0",
+                "timestamp": "2026-04-07"
+            }
+        
+        @mcp.app.get("/health/ready")  
+        async def readiness_check():
+            """Readiness check endpoint."""
+            try:
+                # Test database connection
+                from corpus_callosum.config import load_config
+                from corpus_callosum.db import ChromaDBBackend
+                
+                config = load_config(args.config)
+                db = ChromaDBBackend(config.database)
+                collections = db.list_collections()
+                
+                return {
+                    "status": "ready",
+                    "database": "connected",
+                    "collections": len(collections)
+                }
+            except Exception as e:
+                logger.error(f"Readiness check failed: {e}")
+                return {"status": "not_ready", "error": str(e)}
+
+    logger.info(f"Starting Corpus Callosum MCP Server on {args.host}:{args.port}")
+    mcp.run(transport=args.transport, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

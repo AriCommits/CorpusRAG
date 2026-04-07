@@ -1,0 +1,76 @@
+# OpenTelemetry Collector configuration for CorpusCallosum
+# Provides observability for the entire system
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'corpus-mcp'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['corpus-mcp:8000']
+        - job_name: 'chromadb'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['chromadb:8000']
+        - job_name: 'ollama'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['ollama:11434']
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    
+  memory_limiter:
+    limit_mib: 256
+    
+  resource:
+    attributes:
+      - key: service.namespace
+        value: corpuscallosum
+        action: upsert
+
+exporters:
+  # Logging for development
+  logging:
+    loglevel: info
+    
+  # Jaeger for distributed tracing
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+      
+  # Prometheus metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    const_labels:
+      environment: docker
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [jaeger, logging]
+      
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, logging]
+      
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [logging]
+
+  extensions: []
