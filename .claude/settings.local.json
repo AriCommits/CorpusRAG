@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /c/Users/arian/Github/CorpusCallosum log --oneline -5)",
+      "Bash(git:*)",
+      "Bash(python -m pytest tests/db/test_zip_slip.py -v)"
+    ]
+  }
+}

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import chromadb
 from chromadb.api import ClientAPI
 
-from corpus_callosum.config.base import DatabaseConfig
+from ..config.base import DatabaseConfig
 
 from .base import DatabaseBackend
 

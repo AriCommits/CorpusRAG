@@ -7,6 +7,7 @@ Provides backup, restore, migration, and export functionality for ChromaDB colle
 import argparse
 import json
 import logging
+import os
 import shutil
 import tarfile
 import tempfile
@@ -17,8 +18,40 @@ from typing import Any, Dict, List, Optional
 import chromadb
 from chromadb.config import Settings
 
-from corpus_callosum.config import load_config
-from corpus_callosum.db import ChromaDBBackend
+from ..config import load_config
+from . import ChromaDBBackend
+
+
+def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
+    """
+    Safely extract tar archive members with path traversal validation.
+
+    Prevents Zip Slip (CWE-22) attacks by validating that each extracted
+    member is within the target directory.
+
+    Args:
+        tar: Open TarFile object
+        target_dir: Target directory for extraction
+
+    Raises:
+        ValueError: If a member path would escape the target directory
+    """
+    target_dir = os.path.normpath(os.path.abspath(target_dir))
+
+    for member in tar.getmembers():
+        # Resolve the member path
+        member_path = os.path.normpath(os.path.abspath(
+            os.path.join(target_dir, member.name)
+        ))
+
+        # Ensure the resolved path is within target_dir
+        if not member_path.startswith(target_dir + os.sep) and member_path != target_dir:
+            raise ValueError(
+                f"Attempted path traversal detected: member '{member.name}' "
+                f"would be extracted to {member_path} (outside {target_dir})"
+            )
+
+        tar.extract(member, target_dir)
 
 
 class DatabaseManager:
@@ -137,7 +170,7 @@ class DatabaseManager:
             # Extract backup data
             with tempfile.TemporaryDirectory() as temp_dir:
                 with tarfile.open(backup_path, "r:gz") as tar:
-                    tar.extractall(temp_dir)
+                    _extract_tar_safely(tar, temp_dir)
                 
                 backup_file = Path(temp_dir) / "collection_backup.json"
                 with open(backup_file, 'r', encoding='utf-8') as f:
