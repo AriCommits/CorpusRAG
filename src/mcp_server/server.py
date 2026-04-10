@@ -106,8 +106,8 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             raise SecurityError(f"Invalid file path: {e}")
         
         rag_config = RAGConfig.from_dict(config.to_dict())
-        rag_config.chunking.chunk_size = chunk_size
-        rag_config.chunking.chunk_overlap = chunk_overlap
+        rag_config.chunking.size = chunk_size
+        rag_config.chunking.overlap = chunk_overlap
 
         ingester = RAGIngester(rag_config, db)
         result = ingester.ingest_path(str(validated_path), collection)

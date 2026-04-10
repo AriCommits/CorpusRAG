@@ -177,7 +177,7 @@ class RAGIngester:
         Returns:
             List of text chunks
         """
-        chunk_size = self.config.chunking.chunk_size
+        chunk_size = self.config.chunking.size
         overlap = self.config.chunking.overlap
         
         # Simple character-based chunking
