@@ -41,7 +41,7 @@ pip install -e ".[dev]"
 Start from the repo's example config:
 
 ```bash
-cp configs/corpus_callosum.yaml my-config.yaml
+cp configs/base.yaml my-config.yaml
 ```
 
 Minimal config example:
@@ -68,6 +68,8 @@ paths:
   output_dir: ./output
 ```
 
+By default, Chroma uses local persistent storage at `./chroma_store`. In that mode, you do not need a separate ChromaDB Docker container. Use a Docker Chroma server only when you switch `database.mode` to `http`. A matching example is included at `configs/docker.yaml.example`.
+
 If you use Ollama locally:
 
 ```bash
@@ -83,10 +85,7 @@ After `pip install -e .`, the package exposes console scripts:
 
 ```bash
 corpus --help
-corpus-rag --help
-corpus-video --help
-corpus-orchestrate --help
-corpus-db --help
+corpus db --help
 corpus-secrets --help
 corpus-api-keys --help
 corpus-mcp-server --help
@@ -98,10 +97,7 @@ The same functionality is available directly through Python modules:
 
 ```bash
 python -m cli --help
-python -m tools.rag.cli --help
-python -m tools.video.cli --help
-python -m orchestrations.cli --help
-python -m db.management --help
+python -m cli db --help
 python -m utils.manage_secrets --help
 python -m utils.manage_keys --help
 python -m mcp_server.server --help
@@ -194,12 +190,15 @@ corpus dev fmt
 python -m cli dev fmt
 
 corpus dev build
+python -m cli dev build
+
 corpus dev clean
+python -m cli dev clean
 ```
 
-## Tool-Specific Python Modules
+## Direct Module Entry Points
 
-If you do not want to go through the unified CLI, each tool also has a direct Python module entry point:
+If you do not want to go through the unified CLI, the direct module entry points still work:
 
 ```bash
 python -m tools.rag.cli ingest ./documents --collection notes
@@ -219,7 +218,7 @@ python -m orchestrations.cli build-kb ./documents --collection kb
 
 ## Legacy Console Scripts
 
-The tool-specific `corpus-*` entry points remain available:
+The tool-specific `corpus-*` entry points remain available, but `corpus ...` is the preferred interface:
 
 ```bash
 corpus-rag ingest ./documents --collection notes
@@ -244,16 +243,16 @@ corpus-orchestrate query-kb --collection kb "Explain neural networks"
 ## Database Management
 
 ```bash
-corpus-db list
-python -m db.management list
+corpus db list
+python -m cli db list
 
-corpus-db backup notes --output ./backups/notes.tar.gz
-python -m db.management backup notes --output ./backups/notes.tar.gz
+corpus db backup notes --output ./backups/notes.tar.gz
+python -m cli db backup notes --output ./backups/notes.tar.gz
 
-corpus-db restore ./backups/notes.tar.gz
-corpus-db backup-all --output-dir ./backups
-corpus-db export notes --output notes.json --format json
-corpus-db migrate old_collection new_collection
+corpus db restore ./backups/notes.tar.gz
+corpus db backup-all --output-dir ./backups
+corpus db export notes --output notes.json --format json
+corpus db migrate old_collection new_collection
 ```
 
 ## Secrets and API Keys
@@ -304,6 +303,7 @@ python -m mcp_server.server --host 127.0.0.1 --port 8000
 | `corpus quizzes` | Generate quizzes |
 | `corpus video` | Video processing: `transcribe`, `clean`, `augment`, `pipeline` |
 | `corpus orchestrate` | Workflows: `study-session`, `lecture-pipeline`, `build-kb`, `query-kb` |
+| `corpus db` | Database utilities: `list`, `backup`, `restore`, `backup-all`, `export`, `migrate` |
 | `corpus dev` | Developer utilities: `setup`, `test`, `lint`, `fmt`, `build`, `clean`, `completion` |
 
 ### Python Module Equivalents
@@ -328,10 +328,9 @@ Configuration is loaded from YAML and can be overridden by environment variables
 
 Load order:
 
-1. Tool config file, for example `my-config.yaml`
-2. Optional base config at `configs/base.yaml` if you add one
+1. Base config at `configs/base.yaml`
+2. Tool config file, for example `my-config.yaml`
 3. Environment overrides such as `CC_LLM_MODEL=mistral`
-4. CLI arguments
 
 Example:
 
@@ -357,6 +356,8 @@ paths:
   scratch_dir: ./scratch
   output_dir: ./output
 ```
+
+For Docker or shared-server setups, copy `configs/docker.yaml.example` and switch the database section to `mode: http`.
 
 ## Project Structure
 
@@ -427,4 +428,4 @@ python -m ruff format src tests
 
 ## License
 
-This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE).
+This project is licensed under the GNU GENERAL PUBLIC LICENSE.

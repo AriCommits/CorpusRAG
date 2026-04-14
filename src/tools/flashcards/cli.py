@@ -1,12 +1,10 @@
 """CLI interface for flashcards tool."""
 
-import sys
 from pathlib import Path
 
 import click
 
-from config.loader import load_config
-from db.chroma import ChromaDBBackend
+from cli_common import load_cli_db
 
 from .config import FlashcardConfig
 from .generator import FlashcardGenerator
@@ -20,12 +18,7 @@ from .generator import FlashcardGenerator
 @click.option("--count", "-n", default=None, type=int, help="Number of flashcards")
 def flashcards(collection: str, output: str, config: str, difficulty: str, count: int):
     """Generate flashcards from a collection."""
-    # Load config
-    config_data = load_config(config)
-    cfg = FlashcardConfig.from_dict(config_data)
-
-    # Initialize database and generator
-    db = ChromaDBBackend(cfg.database)
+    cfg, db = load_cli_db(config, FlashcardConfig)
     generator = FlashcardGenerator(cfg, db)
 
     # Generate flashcards

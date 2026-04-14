@@ -4,8 +4,7 @@ from pathlib import Path
 
 import click
 
-from config.loader import load_config
-from db.chroma import ChromaDBBackend
+from cli_common import load_cli_db
 
 from .agent import RAGAgent
 from .config import RAGConfig
@@ -24,9 +23,7 @@ def rag():
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest(path: str, collection: str, config: str):
     """Ingest documents into a RAG collection."""
-    cfg = load_config(config, config_class=RAGConfig)
-
-    db = ChromaDBBackend(cfg.database)
+    cfg, db = load_cli_db(config, RAGConfig)
     ingester = RAGIngester(cfg, db)
 
     click.echo(f"Ingesting documents from {path} into collection '{collection}'...")
@@ -41,9 +38,7 @@ def ingest(path: str, collection: str, config: str):
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def query(query: str, collection: str, top_k: int, config: str):
     """Query a RAG collection."""
-    cfg = load_config(config, config_class=RAGConfig)
-
-    db = ChromaDBBackend(cfg.database)
+    cfg, db = load_cli_db(config, RAGConfig)
     agent = RAGAgent(cfg, db)
 
     click.echo(f"Querying collection '{collection}'...\n")
@@ -60,9 +55,7 @@ def query(query: str, collection: str, top_k: int, config: str):
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def chat(collection: str, config: str):
     """Interactive chat with RAG agent."""
-    cfg = load_config(config, config_class=RAGConfig)
-
-    db = ChromaDBBackend(cfg.database)
+    cfg, db = load_cli_db(config, RAGConfig)
     agent = RAGAgent(cfg, db)
 
     click.echo(f"RAG Chat - Collection: {collection}")

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import click
 
-from config.loader import load_config
+from cli_common import load_cli_config
 
 from .augment import TranscriptAugmenter
 from .clean import TranscriptCleaner
@@ -26,9 +26,7 @@ def video():
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
 def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int):
     """Transcribe video files to text."""
-    # Load config
-    config_data = load_config(config)
-    cfg = VideoConfig.from_dict(config_data)
+    cfg = load_cli_config(config, VideoConfig)
 
     # Initialize transcriber
     transcriber = VideoTranscriber(cfg)
@@ -44,9 +42,9 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
     if output:
         output_path = Path(output)
     elif course and lecture:
-        output_path = Path(cfg.paths.output) / f"{course}_Lecture{lecture:02d}_transcript.md"
+        output_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
     else:
-        output_path = Path(cfg.paths.output) / "transcript.md"
+        output_path = cfg.paths.output_dir / "transcript.md"
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(combined)
@@ -60,9 +58,7 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def clean(transcript_file: str, output: str, config: str):
     """Clean a raw transcript using LLM."""
-    # Load config
-    config_data = load_config(config)
-    cfg = VideoConfig.from_dict(config_data)
+    cfg = load_cli_config(config, VideoConfig)
 
     # Initialize cleaner
     cleaner = TranscriptCleaner(cfg)
@@ -81,9 +77,7 @@ def clean(transcript_file: str, output: str, config: str):
 @click.option("--auto", is_flag=True, help="Skip manual editing")
 def augment(transcript_file: str, output: str, config: str, auto: bool):
     """Augment transcript with manual annotations."""
-    # Load config
-    config_data = load_config(config)
-    cfg = VideoConfig.from_dict(config_data)
+    cfg = load_cli_config(config, VideoConfig)
 
     # Initialize augmenter
     augmenter = TranscriptAugmenter(cfg)
@@ -117,15 +111,13 @@ def pipeline(
     skip_augment: bool,
 ):
     """Run complete video processing pipeline."""
-    # Load config
-    config_data = load_config(config)
-    cfg = VideoConfig.from_dict(config_data)
+    cfg = load_cli_config(config, VideoConfig)
 
     # Create scratch directory
     scratch = (
-        Path(cfg.paths.scratch) / f"{course}_Lecture{lecture:02d}"
+        cfg.paths.scratch_dir / f"{course}_Lecture{lecture:02d}"
         if course and lecture
-        else Path(cfg.paths.scratch) / "video"
+        else cfg.paths.scratch_dir / "video"
     )
     scratch.mkdir(parents=True, exist_ok=True)
 
@@ -156,9 +148,9 @@ def pipeline(
         if output:
             final_path = Path(output)
         elif course and lecture:
-            final_path = Path(cfg.paths.output) / f"{course}_Lecture{lecture:02d}_final.md"
+            final_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_final.md"
         else:
-            final_path = Path(cfg.paths.output) / "final_transcript.md"
+            final_path = cfg.paths.output_dir / "final_transcript.md"
 
         current_file = augmenter.augment(current_file, final_path, auto_save=False)
 

@@ -32,7 +32,7 @@ class TestCorpusGroup:
     def test_help_lists_all_subcommands(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["--help"])
         output = result.output
-        for cmd in ("rag", "video", "orchestrate", "flashcards", "summaries", "quizzes", "dev"):
+        for cmd in ("rag", "video", "orchestrate", "flashcards", "summaries", "quizzes", "db", "dev"):
             assert cmd in output, f"Expected '{cmd}' in corpus --help output"
 
     def test_version_flag(self, runner: CliRunner) -> None:
@@ -75,6 +75,11 @@ class TestCorpusGroup:
     def test_dev_subgroup_reachable(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["dev", "--help"])
         assert result.exit_code == 0
+
+    def test_db_subgroup_reachable(self, runner: CliRunner) -> None:
+        result = runner.invoke(corpus, ["db", "--help"])
+        assert result.exit_code == 0
+        assert "list" in result.output
 
 
 # ---------------------------------------------------------------------------

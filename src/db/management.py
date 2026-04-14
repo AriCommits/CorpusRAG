@@ -1,10 +1,5 @@
-"""
-Database management utilities for CorpusCallosum.
+"""Database management utilities for CorpusCallosum."""
 
-Provides backup, restore, migration, and export functionality for ChromaDB collections.
-"""
-
-import argparse
 import json
 import logging
 import os
@@ -15,10 +10,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import chromadb
-from chromadb.config import Settings
+import click
 
-from config import load_config
+from cli_common import load_cli_config
 from . import ChromaDBBackend
 
 
@@ -57,7 +51,8 @@ class DatabaseManager:
 
     def __init__(self, config_path: Optional[str] = None):
         """Initialize the database manager."""
-        self.config = load_config(config_path)
+        effective_path = config_path or "configs/base.yaml"
+        self.config = load_cli_config(effective_path)
         self.db = ChromaDBBackend(self.config.database)
         self.logger = logging.getLogger(__name__)
 
@@ -435,108 +430,111 @@ class DatabaseManager:
             raise
 
 
-def main():
-    """CLI interface for database management utilities."""
-    parser = argparse.ArgumentParser(description="CorpusCallosum Database Management")
-    parser.add_argument("--config", "-c", help="Configuration file path")
-    parser.add_argument("--log-level", default="INFO", help="Logging level")
+@click.group()
+@click.option("--config", "-c", default="configs/base.yaml", show_default=True, help="Configuration file path")
+@click.option("--log-level", default="INFO", show_default=True, help="Logging level")
+@click.pass_context
+def db(ctx: click.Context, config: str, log_level: str) -> None:
+    """Database management commands."""
+    logging.basicConfig(level=getattr(logging, log_level.upper(), logging.INFO))
+    ctx.ensure_object(dict)
+    ctx.obj["manager"] = DatabaseManager(config)
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # List collections
-    list_parser = subparsers.add_parser("list", help="List all collections")
+def _manager(ctx: click.Context) -> DatabaseManager:
+    return ctx.obj["manager"]
 
-    # Backup collection
-    backup_parser = subparsers.add_parser("backup", help="Backup a collection")
-    backup_parser.add_argument("collection", help="Collection name")
-    backup_parser.add_argument("--output", "-o", required=True, type=Path, help="Backup file path")
-    backup_parser.add_argument("--no-metadata", action="store_true", help="Exclude metadata")
 
-    # Restore collection
-    restore_parser = subparsers.add_parser("restore", help="Restore a collection")
-    restore_parser.add_argument("backup_file", type=Path, help="Backup file path")
-    restore_parser.add_argument("--name", help="New collection name")
-    restore_parser.add_argument(
-        "--overwrite", action="store_true", help="Overwrite existing collection"
+@db.command("list")
+@click.pass_context
+def list_collections_cmd(ctx: click.Context) -> None:
+    """List all collections."""
+    collections = _manager(ctx).list_collections()
+    click.echo(f"Found {len(collections)} collections:")
+    for collection in collections:
+        click.echo(f"  - {collection}")
+
+
+@db.command("backup")
+@click.argument("collection")
+@click.option("--output", "-o", required=True, type=click.Path(path_type=Path))
+@click.option("--no-metadata", is_flag=True, help="Exclude metadata")
+@click.pass_context
+def backup_cmd(ctx: click.Context, collection: str, output: Path, no_metadata: bool) -> None:
+    """Backup one collection."""
+    summary = _manager(ctx).backup_collection(
+        collection,
+        output,
+        include_metadata=not no_metadata,
     )
+    click.echo(f"Backup completed: {summary}")
 
-    # Backup all
-    backup_all_parser = subparsers.add_parser("backup-all", help="Backup all collections")
-    backup_all_parser.add_argument(
-        "--output-dir", "-o", required=True, type=Path, help="Backup directory"
+
+@db.command("restore")
+@click.argument("backup_file", type=click.Path(exists=True, path_type=Path))
+@click.option("--name", help="New collection name")
+@click.option("--overwrite", is_flag=True, help="Overwrite existing collection")
+@click.pass_context
+def restore_cmd(ctx: click.Context, backup_file: Path, name: str | None, overwrite: bool) -> None:
+    """Restore a collection from backup."""
+    summary = _manager(ctx).restore_collection(backup_file, name, overwrite)
+    click.echo(f"Restore completed: {summary}")
+
+
+@db.command("backup-all")
+@click.option("--output-dir", "-o", required=True, type=click.Path(path_type=Path))
+@click.option("--no-metadata", is_flag=True, help="Exclude metadata")
+@click.pass_context
+def backup_all_cmd(ctx: click.Context, output_dir: Path, no_metadata: bool) -> None:
+    """Backup all collections."""
+    summary = _manager(ctx).backup_all_collections(output_dir, include_metadata=not no_metadata)
+    click.echo(f"Full backup completed: {summary}")
+
+
+@db.command("export")
+@click.argument("collection")
+@click.option("--output", "-o", required=True, type=click.Path(path_type=Path))
+@click.option(
+    "--format",
+    "export_format",
+    type=click.Choice(["json", "jsonl", "csv"]),
+    default="json",
+    show_default=True,
+    help="Export format",
+)
+@click.option("--include-embeddings", is_flag=True, help="Include embedding vectors")
+@click.pass_context
+def export_cmd(
+    ctx: click.Context,
+    collection: str,
+    output: Path,
+    export_format: str,
+    include_embeddings: bool,
+) -> None:
+    """Export a collection."""
+    summary = _manager(ctx).export_collection(
+        collection,
+        output,
+        export_format,
+        include_embeddings,
     )
-    backup_all_parser.add_argument("--no-metadata", action="store_true", help="Exclude metadata")
+    click.echo(f"Export completed: {summary}")
 
-    # Export collection
-    export_parser = subparsers.add_parser("export", help="Export a collection")
-    export_parser.add_argument("collection", help="Collection name")
-    export_parser.add_argument("--output", "-o", required=True, type=Path, help="Export file path")
-    export_parser.add_argument(
-        "--format", choices=["json", "jsonl", "csv"], default="json", help="Export format"
-    )
-    export_parser.add_argument(
-        "--include-embeddings", action="store_true", help="Include embedding vectors"
-    )
 
-    # Migrate collection
-    migrate_parser = subparsers.add_parser("migrate", help="Migrate a collection")
-    migrate_parser.add_argument("source", help="Source collection name")
-    migrate_parser.add_argument("target", help="Target collection name")
-    migrate_parser.add_argument("--batch-size", type=int, default=1000, help="Batch size")
+@db.command("migrate")
+@click.argument("source")
+@click.argument("target")
+@click.option("--batch-size", default=1000, show_default=True, type=int, help="Batch size")
+@click.pass_context
+def migrate_cmd(ctx: click.Context, source: str, target: str, batch_size: int) -> None:
+    """Migrate data between collections."""
+    summary = _manager(ctx).migrate_collection(source, target, batch_size)
+    click.echo(f"Migration completed: {summary}")
 
-    args = parser.parse_args()
 
-    # Set up logging
-    logging.basicConfig(level=getattr(logging, args.log_level.upper()))
-
-    if not args.command:
-        parser.print_help()
-        return
-
-    # Create database manager
-    try:
-        db_manager = DatabaseManager(args.config)
-    except Exception as e:
-        print(f"Failed to initialize database manager: {e}")
-        return
-
-    # Execute command
-    try:
-        if args.command == "list":
-            collections = db_manager.list_collections()
-            print(f"\nFound {len(collections)} collections:")
-            for collection in collections:
-                print(f"  - {collection}")
-
-        elif args.command == "backup":
-            summary = db_manager.backup_collection(
-                args.collection, args.output, include_metadata=not args.no_metadata
-            )
-            print(f"Backup completed: {summary}")
-
-        elif args.command == "restore":
-            summary = db_manager.restore_collection(args.backup_file, args.name, args.overwrite)
-            print(f"Restore completed: {summary}")
-
-        elif args.command == "backup-all":
-            summary = db_manager.backup_all_collections(
-                args.output_dir, include_metadata=not args.no_metadata
-            )
-            print(f"Full backup completed: {summary}")
-
-        elif args.command == "export":
-            summary = db_manager.export_collection(
-                args.collection, args.output, args.format, args.include_embeddings
-            )
-            print(f"Export completed: {summary}")
-
-        elif args.command == "migrate":
-            summary = db_manager.migrate_collection(args.source, args.target, args.batch_size)
-            print(f"Migration completed: {summary}")
-
-    except Exception as e:
-        print(f"Command failed: {e}")
-        logging.getLogger(__name__).exception("Command execution failed")
+def main() -> None:
+    """Entry point for corpus-db."""
+    db()
 
 
 if __name__ == "__main__":

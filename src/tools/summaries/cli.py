@@ -1,12 +1,10 @@
 """CLI interface for summaries tool."""
 
-import sys
 from pathlib import Path
 
 import click
 
-from config.loader import load_config
-from db.chroma import ChromaDBBackend
+from cli_common import load_cli_db
 
 from .config import SummaryConfig
 from .generator import SummaryGenerator
@@ -25,13 +23,9 @@ from .generator import SummaryGenerator
 )
 def summaries(collection: str, output: str, config: str, length: str):
     """Generate summary from a collection."""
-    # Load config
-    config_data = load_config(config)
-    cfg = SummaryConfig.from_dict(config_data)
+    cfg, db = load_cli_db(config, SummaryConfig)
     cfg.summary_length = length
 
-    # Initialize database and generator
-    db = ChromaDBBackend(cfg.database)
     generator = SummaryGenerator(cfg, db)
 
     # Generate summary

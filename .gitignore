@@ -201,16 +201,29 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# opencode stuff
+.opencode/
+
+#claude stuff
+.claude/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-
+# pytest stuff
+pytest*/
+__pycache**/
 
 # configs
 configs/*
 !configs/.gitkeep
+!configs/base.yaml
 !configs/.env.example
-!configs/corpus_callosum.yaml.example
-!configs/corpus_callosum.docker.yaml.example
+!configs/docker.yaml.example
+
+# local runtime state
+chroma_store/*
+scratch/
+output/

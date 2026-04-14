@@ -4,8 +4,7 @@ from pathlib import Path
 
 import click
 
-from config.loader import load_config
-from db.chroma import ChromaDBBackend
+from cli_common import load_cli_db
 from orchestrations import (
     KnowledgeBaseOrchestrator,
     LecturePipelineOrchestrator,
@@ -37,9 +36,7 @@ def study_session(
     collection: str, topic: str, flashcards: int, quiz: int, length: str, output: str, config: str
 ):
     """Create a comprehensive study session."""
-    # Load config
-    config_data = load_config(config)
-    db = ChromaDBBackend(config_data.database)
+    config_data, db = load_cli_db(config)
 
     # Create orchestrator
     orchestrator = StudySessionOrchestrator(config_data, db)
@@ -75,9 +72,7 @@ def lecture_pipeline(
     video_path: str, course: str, lecture: int, skip_clean: bool, output: str, config: str
 ):
     """Process a lecture video into complete study materials."""
-    # Load config
-    config_data = load_config(config)
-    db = ChromaDBBackend(config_data.database)
+    config_data, db = load_cli_db(config)
 
     # Create orchestrator
     orchestrator = LecturePipelineOrchestrator(config_data, db)
@@ -107,9 +102,7 @@ def lecture_pipeline(
 @click.option("--config", "-cfg", default="configs/base.yaml", help="Config file")
 def build_kb(source_path: str, collection: str, config: str):
     """Build a knowledge base from documents."""
-    # Load config
-    config_data = load_config(config)
-    db = ChromaDBBackend(config_data.database)
+    config_data, db = load_cli_db(config)
 
     # Create orchestrator
     orchestrator = KnowledgeBaseOrchestrator(config_data, db)
@@ -134,9 +127,7 @@ def build_kb(source_path: str, collection: str, config: str):
 @click.option("--config", "-cfg", default="configs/base.yaml", help="Config file")
 def query_kb(collection: str, query: str, top_k: int, no_response: bool, config: str):
     """Query a knowledge base."""
-    # Load config
-    config_data = load_config(config)
-    db = ChromaDBBackend(config_data.database)
+    config_data, db = load_cli_db(config)
 
     # Create orchestrator
     orchestrator = KnowledgeBaseOrchestrator(config_data, db)
