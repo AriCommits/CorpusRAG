@@ -45,8 +45,13 @@ class RAGConfig(BaseConfig):
         base_config = super().from_dict(data)
 
         # Get RAG-specific config
-        chunking_data = data.get("chunking", {})
-        retrieval_data = data.get("retrieval", {})
+        rag_data = data.get("rag", {})
+        chunking_data = rag_data.get("chunking", data.get("chunking", {}))
+        retrieval_data = rag_data.get("retrieval", data.get("retrieval", {}))
+        collection_prefix = rag_data.get(
+            "collection_prefix",
+            data.get("collection_prefix", "rag"),
+        )
 
         return cls(
             llm=base_config.llm,
@@ -55,5 +60,5 @@ class RAGConfig(BaseConfig):
             paths=base_config.paths,
             chunking=ChunkingConfig(**chunking_data),
             retrieval=RetrievalConfig(**retrieval_data),
-            collection_prefix=data.get("collection_prefix", "rag"),
+            collection_prefix=collection_prefix,
         )

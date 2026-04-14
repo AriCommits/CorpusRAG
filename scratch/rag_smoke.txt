@@ -1,0 +1,1 @@
+CorpusCallosum smoke test document for rag ingestion.

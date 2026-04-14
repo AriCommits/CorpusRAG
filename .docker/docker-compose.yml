@@ -1,8 +1,6 @@
 # CorpusCallosum - Production Docker Compose Configuration
 # Provides full-stack deployment with all services
 
-version: '3.8'
-
 networks:
   corpus-network:
     driver: bridge
@@ -34,7 +32,13 @@ services:
     networks:
       - corpus-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -70,7 +74,7 @@ services:
   # =============================================================================
   corpus-mcp:
     build:
-      context: .
+      context: ..
       dockerfile: .docker/Dockerfile
       target: production
     container_name: corpus-mcp-server
@@ -82,8 +86,8 @@ services:
       - "8000:8000"
     volumes:
       - corpus-data:/home/corpus/data
-      - ./configs:/home/corpus/app/configs:ro
-      - ./vault:/home/corpus/data/vault:rw
+      - ../configs:/home/corpus/app/configs:ro
+      - ../vault:/home/corpus/data/vault:rw
     networks:
       - corpus-network
     environment:
@@ -119,7 +123,7 @@ services:
   # =============================================================================
   corpus-cli:
     build:
-      context: .
+      context: ..
       dockerfile: .docker/Dockerfile
       target: cli
     container_name: corpus-cli
@@ -128,8 +132,8 @@ services:
         condition: service_healthy
     volumes:
       - corpus-data:/home/corpus/data
-      - ./configs:/home/corpus/app/configs:ro
-      - ./vault:/home/corpus/data/vault:rw
+      - ../configs:/home/corpus/app/configs:ro
+      - ../vault:/home/corpus/data/vault:rw
     networks:
       - corpus-network
     environment:
@@ -163,7 +167,7 @@ services:
     restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./.docker/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
     ports:
       - "8888:8888"   # Prometheus metrics
       - "8889:8889"   # Prometheus exporter metrics

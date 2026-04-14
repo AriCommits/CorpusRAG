@@ -1,6 +1,5 @@
 """CLI interface for RAG tool."""
 
-import sys
 from pathlib import Path
 
 import click
@@ -25,19 +24,14 @@ def rag():
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest(path: str, collection: str, config: str):
     """Ingest documents into a RAG collection."""
-    # Load config
-    config_data = load_config(config)
-    cfg = RAGConfig.from_dict(config_data)
+    cfg = load_config(config, config_class=RAGConfig)
 
-    # Initialize database and ingester
     db = ChromaDBBackend(cfg.database)
     ingester = RAGIngester(cfg, db)
 
-    # Ingest documents
     click.echo(f"Ingesting documents from {path} into collection '{collection}'...")
     result = ingester.ingest_path(Path(path), collection)
-
-    click.echo(f"✓ Indexed {result.files_indexed} files, {result.chunks_indexed} chunks")
+    click.echo(f"Indexed {result.files_indexed} files, {result.chunks_indexed} chunks")
 
 
 @rag.command()
@@ -47,19 +41,15 @@ def ingest(path: str, collection: str, config: str):
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def query(query: str, collection: str, top_k: int, config: str):
     """Query a RAG collection."""
-    # Load config
-    config_data = load_config(config)
-    cfg = RAGConfig.from_dict(config_data)
+    cfg = load_config(config, config_class=RAGConfig)
 
-    # Initialize database and agent
     db = ChromaDBBackend(cfg.database)
     agent = RAGAgent(cfg, db)
 
-    # Execute query
     click.echo(f"Querying collection '{collection}'...\n")
-    response, chunks = agent.query(query, collection, top_k=top_k)
+    response = agent.query(query, collection, top_k=top_k)
+    chunks = agent.retrieve(query, collection, top_k=top_k)
 
-    # Display results
     click.echo("Response:")
     click.echo(response)
     click.echo(f"\n(Retrieved {len(chunks)} chunks)")
@@ -70,11 +60,8 @@ def query(query: str, collection: str, top_k: int, config: str):
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def chat(collection: str, config: str):
     """Interactive chat with RAG agent."""
-    # Load config
-    config_data = load_config(config)
-    cfg = RAGConfig.from_dict(config_data)
+    cfg = load_config(config, config_class=RAGConfig)
 
-    # Initialize database and agent
     db = ChromaDBBackend(cfg.database)
     agent = RAGAgent(cfg, db)
 

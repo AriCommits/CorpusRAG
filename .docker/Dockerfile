@@ -4,7 +4,7 @@
 # =============================================================================
 # Stage 1: Base Python environment with system dependencies
 # =============================================================================
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 # Install system dependencies for document processing and video transcription
 RUN apt-get update && apt-get install -y \
@@ -32,7 +32,7 @@ ENV PATH="/home/corpus/.local/bin:$PATH"
 # =============================================================================
 # Stage 2: Development environment (for local development)
 # =============================================================================
-FROM base as development
+FROM base AS development
 
 # Copy requirements and install dependencies
 COPY --chown=corpus:corpus requirements.txt ./
@@ -58,7 +58,7 @@ CMD ["python", "-m", "corpus_callosum.mcp_server.server"]
 # =============================================================================
 # Stage 3: Production environment (optimized)
 # =============================================================================
-FROM base as production
+FROM base AS production
 
 # Copy requirements and install production dependencies only
 COPY --chown=corpus:corpus requirements.txt ./
@@ -98,7 +98,7 @@ CMD ["corpus-mcp-server", "--host", "0.0.0.0", "--port", "8000"]
 # =============================================================================
 # Stage 4: CLI tools (lightweight image for CLI usage)
 # =============================================================================
-FROM production as cli
+FROM production AS cli
 
 # Override default command for CLI usage
 CMD ["bash"]

@@ -6,6 +6,7 @@ from typing import Any, Optional
 from db import DatabaseBackend
 
 from .config import RAGConfig
+from .embeddings import EmbeddingClient
 
 
 @dataclass(frozen=True)
@@ -32,6 +33,7 @@ class RAGRetriever:
         """
         self.config = config
         self.db = db
+        self.embedder = EmbeddingClient(config)
 
     def semantic_search(
         self, query: str, collection: str, top_k: Optional[int] = None
@@ -47,7 +49,7 @@ class RAGRetriever:
             List of retrieved chunks
         """
         if top_k is None:
-            top_k = self.config.retrieval.top_k
+            top_k = self.config.retrieval.top_k_semantic
 
         # Get full collection name with prefix
         full_collection = f"{self.config.collection_prefix}_{collection}"
@@ -56,23 +58,29 @@ class RAGRetriever:
         if not self.db.collection_exists(full_collection):
             return []
 
-        # Query the database
+        query_embedding = self.embedder.embed_query(query)
         results = self.db.query(
-            collection_name=full_collection,
-            query_text=query,
+            full_collection,
+            query_embedding=query_embedding,
             n_results=top_k,
         )
 
         # Convert to RetrievedChunk objects
         chunks = []
-        for i, result in enumerate(results, 1):
+        ids = results.get("ids", [[]])[0]
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+        distances = results.get("distances", [[]])[0]
+
+        for i, chunk_id in enumerate(ids, 1):
+            distance = distances[i - 1] if i - 1 < len(distances) else 0.0
             chunks.append(
                 RetrievedChunk(
-                    id=result.id,
-                    text=result.content,
-                    metadata=result.metadata,
+                    id=chunk_id,
+                    text=documents[i - 1] if i - 1 < len(documents) else "",
+                    metadata=metadatas[i - 1] if i - 1 < len(metadatas) else {},
                     semantic_rank=i,
-                    score=result.score,
+                    score=1.0 / (1.0 + distance),
                 )
             )
 

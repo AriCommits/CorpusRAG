@@ -3,11 +3,12 @@
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
-from db import DatabaseBackend, Document
+from db import DatabaseBackend
 
 from .config import RAGConfig
+from .embeddings import EmbeddingClient
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class RAGIngester:
         """
         self.config = config
         self.db = db
+        self.embedder = EmbeddingClient(config)
 
     def ingest_path(
         self, path: Path | str, collection: str, max_file_size_mb: int = 1000
@@ -84,7 +86,9 @@ class RAGIngester:
         # Collect all files to process
         files = list(self._iter_source_files(source))
 
-        documents = []
+        document_texts: list[str] = []
+        metadata_list: list[dict[str, object]] = []
+        ids: list[str] = []
         files_indexed = 0
 
         for file_path in files:
@@ -107,23 +111,27 @@ class RAGIngester:
 
             for i, chunk_text in enumerate(chunks):
                 doc_id = self._build_chunk_id(full_collection, relative_path, i, chunk_text)
-
-                documents.append(
-                    Document(
-                        id=doc_id,
-                        content=chunk_text,
-                        metadata={
-                            "source_file": relative_path,
-                            "chunk_index": i,
-                            "collection_name": collection,
-                        },
-                    )
+                document_texts.append(chunk_text)
+                metadata_list.append(
+                    {
+                        "source_file": relative_path,
+                        "chunk_index": i,
+                        "collection_name": collection,
+                    }
                 )
+                ids.append(doc_id)
 
         # Add documents to collection
-        chunks_indexed = len(documents)
-        if documents:
-            self.db.add_documents(full_collection, documents)
+        chunks_indexed = len(document_texts)
+        if document_texts:
+            embeddings = self.embedder.embed_texts(document_texts)
+            self.db.add_documents(
+                full_collection,
+                documents=document_texts,
+                embeddings=embeddings,
+                metadata=metadata_list,
+                ids=ids,
+            )
 
         return IngestResult(
             collection=collection,
