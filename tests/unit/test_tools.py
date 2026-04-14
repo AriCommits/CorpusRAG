@@ -1,6 +1,5 @@
 """Tests for tool imports and basic functionality."""
 
-import pytest
 
 
 def test_flashcards_imports():
@@ -30,10 +29,10 @@ def test_quizzes_imports():
 def test_video_imports():
     """Test video tool imports."""
     from tools.video import (
+        TranscriptAugmenter,
+        TranscriptCleaner,
         VideoConfig,
         VideoTranscriber,
-        TranscriptCleaner,
-        TranscriptAugmenter,
     )
 
     assert VideoConfig is not None
@@ -45,11 +44,11 @@ def test_video_imports():
 def test_rag_imports():
     """Test RAG tool imports."""
     from tools.rag import (
-        RAGConfig,
-        RAGAgent,
-        RAGRetriever,
-        RAGIngester,
         IngestResult,
+        RAGAgent,
+        RAGConfig,
+        RAGIngester,
+        RAGRetriever,
         RetrievedChunk,
     )
 

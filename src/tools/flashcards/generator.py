@@ -2,10 +2,9 @@
 
 import logging
 import re
-from typing import Optional
 
 from db import DatabaseBackend
-from llm import create_backend, PromptTemplates
+from llm import PromptTemplates, create_backend
 
 from .config import FlashcardConfig
 
@@ -28,7 +27,7 @@ class FlashcardGenerator:
         self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def generate(
-        self, collection: str, difficulty: str = "intermediate", count: Optional[int] = None
+        self, collection: str, difficulty: str = "intermediate", count: int | None = None
     ) -> list[dict[str, str]]:
         """Generate flashcards from collection.
 

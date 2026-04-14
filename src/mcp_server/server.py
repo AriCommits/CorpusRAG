@@ -6,10 +6,10 @@ Exposes all Corpus Callosum tools as MCP resources and tools.
 
 import argparse
 import logging
-from typing import Any
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI, Depends, Request, Response
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from mcp.server.fastmcp import FastMCP
 
@@ -20,12 +20,11 @@ from tools.quizzes import QuizConfig, QuizGenerator
 from tools.rag import RAGAgent, RAGConfig, RAGIngester, RAGRetriever
 from tools.summaries import SummaryConfig, SummaryGenerator
 from tools.video import (
-    TranscriptAugmenter,
     TranscriptCleaner,
     VideoConfig,
     VideoTranscriber,
 )
-from utils.auth import MCPAuthenticator, AuthConfig, add_security_headers
+from utils.auth import AuthConfig, MCPAuthenticator, add_security_headers
 from utils.validation import get_validator
 
 
@@ -101,7 +100,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             SecurityError: If file path is unsafe
         """
         # Validate file path for security
-        from utils.security import validate_file_path, SecurityError
+        from utils.security import SecurityError, validate_file_path
 
         try:
             validated_path = validate_file_path(path, must_exist=True)

@@ -10,7 +10,8 @@ Pluggable LLM backend abstraction supporting multiple providers:
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 import httpx
 

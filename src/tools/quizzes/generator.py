@@ -3,10 +3,10 @@
 import json
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 from db import DatabaseBackend
-from llm import create_backend, PromptTemplates
+from llm import PromptTemplates, create_backend
 
 from .config import QuizConfig
 
@@ -29,7 +29,7 @@ class QuizGenerator:
         self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def generate(
-        self, collection: str, count: Optional[int] = None, difficulty: str = "intermediate"
+        self, collection: str, count: int | None = None, difficulty: str = "intermediate"
     ) -> list[dict[str, Any]]:
         """Generate quiz questions from collection.
 
@@ -116,7 +116,7 @@ class QuizGenerator:
             return [
                 f"Sample quiz content from {full_collection}",
                 f"Another quiz-relevant document from {full_collection}",
-                f"Additional content for quiz generation",
+                "Additional content for quiz generation",
             ]
 
         except Exception as e:
@@ -239,14 +239,13 @@ class QuizGenerator:
         if answer_match:
             answer = answer_match.group(1).strip()
             question_data["answer"] = answer
+        # Default answer based on type
+        elif q_type == "multiple_choice" and question_data.get("options"):
+            question_data["answer"] = question_data["options"][0]
+        elif q_type == "true_false":
+            question_data["answer"] = "True"
         else:
-            # Default answer based on type
-            if q_type == "multiple_choice" and question_data.get("options"):
-                question_data["answer"] = question_data["options"][0]
-            elif q_type == "true_false":
-                question_data["answer"] = "True"
-            else:
-                question_data["answer"] = "Answer not provided"
+            question_data["answer"] = "Answer not provided"
 
         # Extract explanation if present
         if self.config.include_explanations:

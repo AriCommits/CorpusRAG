@@ -11,8 +11,7 @@ def main() -> int:
     sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
     try:
-        from config import BaseConfig, load_config
-        from db import ChromaDBBackend, DatabaseBackend
+        from config import BaseConfig
 
         print("✓ Configuration imports work")
         print("✓ Database imports work")

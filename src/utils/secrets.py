@@ -1,10 +1,9 @@
 """Secure environment variable and secrets management."""
 
+import json
 import os
 import warnings
-from typing import Optional, Dict, Any, Union
 from pathlib import Path
-import json
 
 try:
     import keyring
@@ -14,7 +13,7 @@ except ImportError:
     KEYRING_AVAILABLE = False
     warnings.warn(
         "keyring not available. Install with 'pip install keyring' for secure credential storage.",
-        UserWarning,
+        UserWarning, stacklevel=2,
     )
 
 try:
@@ -54,7 +53,7 @@ class SecretManager:
             self.key_file.write_bytes(key)
             self.key_file.chmod(0o600)
 
-    def _get_cipher(self) -> Optional[Fernet]:
+    def _get_cipher(self) -> Fernet | None:
         """Get cipher for encryption/decryption."""
         if not CRYPTO_AVAILABLE or not self.key_file.exists():
             return None
@@ -88,8 +87,8 @@ class SecretManager:
         return self._store_local_secret(key, value)
 
     def get_secret(
-        self, key: str, default: Optional[str] = None, use_keyring: bool = True
-    ) -> Optional[str]:
+        self, key: str, default: str | None = None, use_keyring: bool = True
+    ) -> str | None:
         """Retrieve a secret.
 
         Args:
@@ -121,7 +120,7 @@ class SecretManager:
             warnings.warn(
                 f"Secret '{key}' found in environment variable. "
                 f"Consider using secure storage: secrets.store_secret('{key}', 'value')",
-                UserWarning,
+                UserWarning, stacklevel=2,
             )
             return env_value
 
@@ -160,7 +159,7 @@ class SecretManager:
             # No encryption available, warn and skip
             warnings.warn(
                 f"Cannot store secret '{key}' securely. Install cryptography: pip install cryptography",
-                UserWarning,
+                UserWarning, stacklevel=2,
             )
             return False
 
@@ -184,7 +183,7 @@ class SecretManager:
         except Exception:
             return False
 
-    def _get_local_secret(self, key: str) -> Optional[str]:
+    def _get_local_secret(self, key: str) -> str | None:
         """Get secret from encrypted local file."""
         cipher = self._get_cipher()
         if not cipher or not self.local_secrets_file.exists():
@@ -244,7 +243,7 @@ class SecretManager:
 
     def migrate_from_env(
         self, env_vars: list[str], delete_from_env: bool = False
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         """Migrate secrets from environment variables to secure storage.
 
         Args:
@@ -274,7 +273,7 @@ class SecretManager:
 secrets = SecretManager()
 
 
-def get_env_secure(key: str, default: Optional[str] = None) -> Optional[str]:
+def get_env_secure(key: str, default: str | None = None) -> str | None:
     """Get environment variable or secret securely.
 
     This function first checks secure storage, then falls back to environment variables.
@@ -302,7 +301,7 @@ def set_env_secure(key: str, value: str) -> bool:
     return secrets.store_secret(key, value)
 
 
-def validate_required_secrets(required: list[str]) -> Dict[str, bool]:
+def validate_required_secrets(required: list[str]) -> dict[str, bool]:
     """Validate that required secrets are available.
 
     Args:

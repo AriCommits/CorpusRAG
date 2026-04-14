@@ -6,8 +6,6 @@ Provides standardized prompts for various content generation tasks.
 
 from typing import Any
 
-from utils.validation import get_validator
-
 
 class PromptTemplates:
     """Collection of prompt templates for different content types."""
@@ -163,7 +161,7 @@ FORMAT:
 Question 1: [Question text]
 Type: [Multiple Choice/True-False/Short Answer]
 A) [Option A] (for multiple choice only)
-B) [Option B] (for multiple choice only) 
+B) [Option B] (for multiple choice only)
 C) [Option C] (for multiple choice only)
 D) [Option D] (for multiple choice only)
 Correct Answer: [A/B/C/D/True/False or short answer text]

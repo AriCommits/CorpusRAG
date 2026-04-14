@@ -2,7 +2,6 @@
 
 import logging
 import re
-from typing import List, Optional
 
 from .security import SecurityError
 
@@ -17,7 +16,7 @@ MAX_CHUNK_SIZE = 2000
 MIN_QUERY_LENGTH = 1
 
 # Prompt injection attack patterns
-PROMPT_INJECTION_PATTERNS: List[re.Pattern] = [
+PROMPT_INJECTION_PATTERNS: list[re.Pattern] = [
     # Instruction override attempts
     re.compile(r"ignore\s+.*?previous.*?instructions", re.IGNORECASE),
     re.compile(r"you\s+are\s+now\s+.*?(admin|system|root)", re.IGNORECASE),
@@ -60,7 +59,7 @@ class InputValidator:
         self.max_query_length = max_query_length
         self.max_collection_name_length = max_collection_name_length
 
-    def validate_query(self, query: Optional[str]) -> str:
+    def validate_query(self, query: str | None) -> str:
         """Validate user query for injection attacks.
 
         Args:
@@ -101,7 +100,7 @@ class InputValidator:
 
         return sanitized
 
-    def validate_collection_name(self, name: Optional[str]) -> str:
+    def validate_collection_name(self, name: str | None) -> str:
         """Validate collection name.
 
         Args:
@@ -132,7 +131,7 @@ class InputValidator:
 
         return name
 
-    def validate_top_k(self, top_k: Optional[int], min_val: int = 1, max_val: int = 100) -> int:
+    def validate_top_k(self, top_k: int | None, min_val: int = 1, max_val: int = 100) -> int:
         """Validate top_k parameter for retrieval.
 
         Args:
@@ -155,7 +154,7 @@ class InputValidator:
         return top_k
 
     def validate_conversation_history(
-        self, history: Optional[list], max_messages: int = MAX_CONVERSATION_HISTORY
+        self, history: list | None, max_messages: int = MAX_CONVERSATION_HISTORY
     ) -> list:
         """Validate conversation history.
 
@@ -200,7 +199,7 @@ class InputValidator:
 
         return history
 
-    def validate_chunk_text(self, text: Optional[str], max_size: int = MAX_CHUNK_SIZE) -> str:
+    def validate_chunk_text(self, text: str | None, max_size: int = MAX_CHUNK_SIZE) -> str:
         """Validate chunk text size.
 
         Args:
@@ -260,7 +259,7 @@ class InputValidator:
 
 
 # Singleton instance for reuse
-_validator_instance: Optional[InputValidator] = None
+_validator_instance: InputValidator | None = None
 
 
 def get_validator() -> InputValidator:

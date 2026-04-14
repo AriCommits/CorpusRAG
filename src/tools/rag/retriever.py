@@ -1,7 +1,7 @@
 """RAG retrieval logic."""
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from db import DatabaseBackend
 
@@ -16,8 +16,8 @@ class RetrievedChunk:
     id: str
     text: str
     metadata: dict[str, Any]
-    semantic_rank: Optional[int] = None
-    bm25_rank: Optional[int] = None
+    semantic_rank: int | None = None
+    bm25_rank: int | None = None
     score: float = 0.0
 
 
@@ -36,7 +36,7 @@ class RAGRetriever:
         self.embedder = EmbeddingClient(config)
 
     def semantic_search(
-        self, query: str, collection: str, top_k: Optional[int] = None
+        self, query: str, collection: str, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         """Perform semantic search using embeddings.
 
@@ -87,7 +87,7 @@ class RAGRetriever:
         return chunks
 
     def bm25_search(
-        self, query: str, collection: str, top_k: Optional[int] = None
+        self, query: str, collection: str, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         """Perform BM25 keyword search.
 
@@ -109,7 +109,7 @@ class RAGRetriever:
         return []
 
     def hybrid_search(
-        self, query: str, collection: str, top_k: Optional[int] = None
+        self, query: str, collection: str, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         """Perform hybrid search combining semantic and BM25.
 
@@ -130,7 +130,7 @@ class RAGRetriever:
         return self.semantic_search(query, collection, top_k)
 
     def retrieve(
-        self, query: str, collection: str, top_k: Optional[int] = None
+        self, query: str, collection: str, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         """Main retrieval method using configured strategy.
 

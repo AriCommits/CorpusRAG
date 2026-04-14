@@ -2,13 +2,11 @@
 """CLI tool for managing Corpus Callosum MCP server API keys."""
 
 import argparse
-import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
-from .auth import MCPAuthenticator, AuthConfig
+from .auth import AuthConfig, MCPAuthenticator
 
 
 def get_auth_file() -> Path:
@@ -107,7 +105,7 @@ def test_key(args) -> None:
 
     key_info = authenticator.api_key_manager.validate_api_key(args.key)
     if key_info:
-        print(f"✅ API key is valid")
+        print("✅ API key is valid")
         print(f"   Name: {key_info['name']}")
         print(f"   Permissions: {key_info['permissions']}")
         print(f"   Usage: {key_info['usage_count']} requests")

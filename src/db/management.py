@@ -3,16 +3,16 @@
 import json
 import logging
 import os
-import shutil
 import tarfile
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import click
 
 from cli_common import load_cli_config
+
 from . import ChromaDBBackend
 
 
@@ -49,14 +49,14 @@ def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
 class DatabaseManager:
     """Database management utilities for CorpusCallosum."""
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """Initialize the database manager."""
         effective_path = config_path or "configs/base.yaml"
         self.config = load_cli_config(effective_path)
         self.db = ChromaDBBackend(self.config.database)
         self.logger = logging.getLogger(__name__)
 
-    def list_collections(self) -> List[str]:
+    def list_collections(self) -> list[str]:
         """List all collections in the database."""
         try:
             collections = self.db.list_collections()
@@ -71,7 +71,7 @@ class DatabaseManager:
         collection_name: str,
         backup_path: Path,
         include_metadata: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Backup a single collection to a tar.gz file.
 
@@ -141,9 +141,9 @@ class DatabaseManager:
     def restore_collection(
         self,
         backup_path: Path,
-        target_collection_name: Optional[str] = None,
+        target_collection_name: str | None = None,
         overwrite: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Restore a collection from backup.
 
@@ -164,7 +164,7 @@ class DatabaseManager:
                     _extract_tar_safely(tar, temp_dir)
 
                 backup_file = Path(temp_dir) / "collection_backup.json"
-                with open(backup_file, "r", encoding="utf-8") as f:
+                with open(backup_file, encoding="utf-8") as f:
                     backup_data = json.load(f)
 
             # Determine collection name
@@ -215,7 +215,7 @@ class DatabaseManager:
         self,
         backup_dir: Path,
         include_metadata: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Backup all collections to individual files.
 
@@ -268,7 +268,7 @@ class DatabaseManager:
         export_path: Path,
         format: str = "json",
         include_embeddings: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Export collection data in various formats.
 
@@ -364,7 +364,7 @@ class DatabaseManager:
         source_collection: str,
         target_collection: str,
         batch_size: int = 1000,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Migrate data from one collection to another.
 
@@ -431,7 +431,9 @@ class DatabaseManager:
 
 
 @click.group()
-@click.option("--config", "-c", default="configs/base.yaml", show_default=True, help="Configuration file path")
+@click.option(
+    "--config", "-c", default="configs/base.yaml", show_default=True, help="Configuration file path"
+)
 @click.option("--log-level", default="INFO", show_default=True, help="Logging level")
 @click.pass_context
 def db(ctx: click.Context, config: str, log_level: str) -> None:

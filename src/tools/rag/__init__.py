@@ -2,14 +2,14 @@
 
 from .agent import RAGAgent
 from .config import RAGConfig
-from .ingest import RAGIngester, IngestResult
+from .ingest import IngestResult, RAGIngester
 from .retriever import RAGRetriever, RetrievedChunk
 
 __all__ = [
-    "RAGConfig",
-    "RAGAgent",
-    "RAGRetriever",
-    "RAGIngester",
     "IngestResult",
+    "RAGAgent",
+    "RAGConfig",
+    "RAGIngester",
+    "RAGRetriever",
     "RetrievedChunk",
 ]

@@ -2,7 +2,6 @@
 
 from datetime import date
 from pathlib import Path
-from typing import Optional
 
 from .config import VideoConfig
 
@@ -64,8 +63,8 @@ class VideoTranscriber:
     def transcribe_folder(
         self,
         input_folder: Path,
-        course: Optional[str] = None,
-        lecture: Optional[int] = None,
+        course: str | None = None,
+        lecture: int | None = None,
     ) -> dict[str, str]:
         """Transcribe all videos in a folder.
 
@@ -99,8 +98,8 @@ class VideoTranscriber:
     def combine_transcripts(
         self,
         transcripts: dict[str, str],
-        course: Optional[str] = None,
-        lecture: Optional[int] = None,
+        course: str | None = None,
+        lecture: int | None = None,
     ) -> str:
         """Combine multiple transcripts into a single markdown document.
 

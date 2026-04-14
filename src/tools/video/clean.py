@@ -1,7 +1,6 @@
 """Transcript cleaning logic."""
 
 from pathlib import Path
-from typing import Optional
 
 from .config import VideoConfig
 
@@ -46,7 +45,7 @@ class TranscriptCleaner:
 
         return response["message"]["content"]
 
-    def clean_file(self, input_path: Path, output_path: Optional[Path] = None) -> Path:
+    def clean_file(self, input_path: Path, output_path: Path | None = None) -> Path:
         """Clean a transcript file.
 
         Args:

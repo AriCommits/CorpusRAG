@@ -10,8 +10,8 @@ from click.testing import CliRunner
 # Ensure src/ is on the path (mirrors editable install)
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from cli import corpus  # noqa: E402
-from cli_dev import dev  # noqa: E402
+from cli import corpus
+from cli_dev import dev
 
 
 @pytest.fixture()
@@ -32,7 +32,16 @@ class TestCorpusGroup:
     def test_help_lists_all_subcommands(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["--help"])
         output = result.output
-        for cmd in ("rag", "video", "orchestrate", "flashcards", "summaries", "quizzes", "db", "dev"):
+        for cmd in (
+            "rag",
+            "video",
+            "orchestrate",
+            "flashcards",
+            "summaries",
+            "quizzes",
+            "db",
+            "dev",
+        ):
             assert cmd in output, f"Expected '{cmd}' in corpus --help output"
 
     def test_version_flag(self, runner: CliRunner) -> None:

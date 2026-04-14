@@ -10,7 +10,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from llm import create_backend, LLMConfig, LLMBackendType, PromptTemplates
+from llm import LLMBackendType, LLMConfig, PromptTemplates, create_backend
 
 
 def test_ollama_backend():
@@ -57,7 +57,7 @@ def test_prompt_templates():
 
     try:
         # Test flashcard prompt
-        flashcard_prompt = PromptTemplates.flashcard_generation(
+        PromptTemplates.flashcard_generation(
             documents=["Test document content"],
             difficulty="intermediate",
             count=3,
@@ -65,14 +65,14 @@ def test_prompt_templates():
         print("✓ Flashcard prompt template works")
 
         # Test summary prompt
-        summary_prompt = PromptTemplates.summary_generation(
+        PromptTemplates.summary_generation(
             documents=["Test document content"],
             length="medium",
         )
         print("✓ Summary prompt template works")
 
         # Test quiz prompt
-        quiz_prompt = PromptTemplates.quiz_generation(
+        PromptTemplates.quiz_generation(
             documents=["Test document content"],
             difficulty="intermediate",
             count=3,
@@ -80,7 +80,7 @@ def test_prompt_templates():
         print("✓ Quiz prompt template works")
 
         # Test RAG prompt
-        rag_prompt = PromptTemplates.rag_response(
+        PromptTemplates.rag_response(
             query="What is this about?",
             context_chunks=[{"text": "Test content", "source": "test.txt", "score": 0.9}],
         )

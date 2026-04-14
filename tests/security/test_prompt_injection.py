@@ -4,10 +4,9 @@ import pytest
 
 from utils.security import SecurityError
 from utils.validation import (
-    InputValidator,
     MAX_CONVERSATION_HISTORY,
     MAX_QUERY_LENGTH,
-    MAX_SPECIAL_CHAR_PERCENTAGE,
+    InputValidator,
 )
 
 

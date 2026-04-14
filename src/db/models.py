@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -11,9 +11,9 @@ class Document:
 
     id: str
     content: str
-    embedding: List[float]
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: Optional[datetime] = None
+    embedding: list[float]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: datetime | None = None
 
     def __post_init__(self) -> None:
         """Set created_at if not provided."""
@@ -26,8 +26,8 @@ class Collection:
     """Collection model for organizing documents."""
 
     name: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: Optional[datetime] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    created_at: datetime | None = None
     document_count: int = 0
 
     def __post_init__(self) -> None:
@@ -40,17 +40,17 @@ class Collection:
 class QueryResult:
     """Query result model."""
 
-    ids: List[str]
-    documents: List[str]
-    metadatas: List[Dict[str, Any]]
-    distances: List[float]
+    ids: list[str]
+    documents: list[str]
+    metadatas: list[dict[str, Any]]
+    distances: list[float]
 
     @property
     def count(self) -> int:
         """Get number of results."""
         return len(self.ids)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "ids": self.ids,

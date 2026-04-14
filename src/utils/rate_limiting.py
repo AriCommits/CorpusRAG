@@ -3,9 +3,8 @@
 import logging
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from threading import Lock
-from typing import Dict, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +34,10 @@ class OperationRateLimiter:
         self._lock = Lock()
 
         # Track operation history: (user, operation_type) -> [timestamps]
-        self._operation_history: Dict[Tuple[str, str], list] = defaultdict(list)
+        self._operation_history: dict[tuple[str, str], list] = defaultdict(list)
 
         # Track active operations: (user, operation_type) -> count
-        self._active_operations: Dict[Tuple[str, str], int] = defaultdict(int)
+        self._active_operations: dict[tuple[str, str], int] = defaultdict(int)
 
     def check_operation_limit(
         self,

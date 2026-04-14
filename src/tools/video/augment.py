@@ -4,16 +4,16 @@ import os
 import platform
 import subprocess
 from pathlib import Path
-from typing import Optional
 
-from .config import VideoConfig
 from utils.security import (
+    CommandInjectionError,
+    SecurityError,
     get_safe_editor,
     safe_subprocess_run,
     validate_file_path,
-    SecurityError,
-    CommandInjectionError,
 )
+
+from .config import VideoConfig
 
 
 class TranscriptAugmenter:
@@ -66,7 +66,7 @@ class TranscriptAugmenter:
     def augment(
         self,
         transcript_path: Path,
-        output_path: Optional[Path] = None,
+        output_path: Path | None = None,
         auto_save: bool = False,
     ) -> Path:
         """Augment a transcript with manual edits.

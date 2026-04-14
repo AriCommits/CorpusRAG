@@ -217,13 +217,13 @@ pytest*/
 __pycache**/
 
 # configs
-configs/*
+configs/
 !configs/.gitkeep
-!configs/base.yaml
+!configs/base.example.yaml
 !configs/.env.example
 !configs/docker.yaml.example
 
 # local runtime state
-chroma_store/*
+chroma_store/
 scratch/
 output/

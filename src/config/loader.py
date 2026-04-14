@@ -1,16 +1,18 @@
 """YAML configuration loader with deep merge support."""
 
+import contextlib
 import hashlib
 import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, Optional, Set, Type, TypeVar
+from typing import Any, TypeVar
 
 import yaml
 
+from utils.security import SecurityError, validate_file_path
+
 from .base import BaseConfig
-from utils.security import PathTraversalError, SecurityError, validate_file_path
 
 T = TypeVar("T", bound=BaseConfig)
 
@@ -18,7 +20,7 @@ T = TypeVar("T", bound=BaseConfig)
 logger = logging.getLogger(__name__)
 
 # Allowed top-level configuration keys
-ALLOWED_CONFIG_KEYS: Set[str] = {
+ALLOWED_CONFIG_KEYS: set[str] = {
     "llm",
     "embedding",
     "database",
@@ -28,6 +30,7 @@ ALLOWED_CONFIG_KEYS: Set[str] = {
     "tools",
     "logging",
     "monitoring",
+    "video",
 }
 
 # Dangerous patterns to scan for in YAML content
@@ -109,7 +112,7 @@ def _check_nesting_depth(
             _check_nesting_depth(item, max_depth, current_depth + 1)
 
 
-def _validate_config_keys(data: Dict[str, Any]) -> None:
+def _validate_config_keys(data: dict[str, Any]) -> None:
     """Validate that all top-level keys are allowed.
 
     Args:
@@ -125,7 +128,7 @@ def _validate_config_keys(data: Dict[str, Any]) -> None:
         )
 
 
-def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Deep merge two dictionaries (override takes precedence).
 
     Args:
@@ -146,7 +149,7 @@ def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]
     return result
 
 
-def load_yaml(path: Path, validate_schema: bool = True) -> Dict[str, Any]:
+def load_yaml(path: Path, validate_schema: bool = True) -> dict[str, Any]:
     """Load YAML file with security validation.
 
     Args:
@@ -176,9 +179,9 @@ def load_yaml(path: Path, validate_schema: bool = True) -> Dict[str, Any]:
 
     # Read file content
     try:
-        with open(validated_path, "r", encoding="utf-8") as f:
+        with open(validated_path, encoding="utf-8") as f:
             content = f.read()
-    except (IOError, OSError) as e:
+    except OSError as e:
         raise SecurityError(f"Failed to read configuration file: {e}")
 
     # Scan for dangerous patterns
@@ -206,7 +209,7 @@ def load_yaml(path: Path, validate_schema: bool = True) -> Dict[str, Any]:
     return data or {}
 
 
-def parse_env_overrides(prefix: str = "CC_") -> Dict[str, Any]:
+def parse_env_overrides(prefix: str = "CC_") -> dict[str, Any]:
     """Parse environment variables with given prefix into nested dict.
 
     Converts CC_LLM_MODEL=llama3 to {"llm": {"model": "llama3"}}
@@ -220,7 +223,7 @@ def parse_env_overrides(prefix: str = "CC_") -> Dict[str, Any]:
     Raises:
         SecurityError: If validation fails
     """
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
 
     for key, value in os.environ.items():
         if not key.startswith(prefix):
@@ -263,10 +266,8 @@ def parse_env_overrides(prefix: str = "CC_") -> Dict[str, Any]:
         elif value.isdigit():
             parsed_value = int(value)
         elif value.replace(".", "", 1).isdigit():
-            try:
+            with contextlib.suppress(ValueError):
                 parsed_value = float(value)
-            except ValueError:
-                pass
 
         current[final_key] = parsed_value
 
@@ -277,8 +278,8 @@ def parse_env_overrides(prefix: str = "CC_") -> Dict[str, Any]:
 
 def load_config(
     config_path: Path,
-    base_path: Optional[Path] = None,
-    config_class: Type[T] = BaseConfig,  # type: ignore
+    base_path: Path | None = None,
+    config_class: type[T] = BaseConfig,  # type: ignore
 ) -> T:
     """Load configuration with hierarchical merging.
 

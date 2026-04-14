@@ -1,13 +1,10 @@
 """Security tests for YAML configuration loading (CWE-502)."""
 
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from config.loader import (
-    ALLOWED_CONFIG_KEYS,
     MAX_CONFIG_FILE_SIZE,
     MAX_ENV_VALUE_LENGTH,
     load_yaml,

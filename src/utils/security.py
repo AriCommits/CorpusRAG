@@ -5,7 +5,6 @@ import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Union
 
 
 class SecurityError(Exception):
@@ -62,7 +61,7 @@ def validate_editor_command(editor: str) -> str:
 
 
 def safe_subprocess_run(
-    command: Union[str, List[str]], *, shell: bool = False, timeout: Optional[int] = 30, **kwargs
+    command: str | list[str], *, shell: bool = False, timeout: int | None = 30, **kwargs
 ) -> subprocess.CompletedProcess:
     """Safely run subprocess with security validation.
 
@@ -98,8 +97,8 @@ def safe_subprocess_run(
 
 
 def validate_file_path(
-    file_path: Union[str, Path],
-    allowed_roots: Optional[List[Union[str, Path]]] = None,
+    file_path: str | Path,
+    allowed_roots: list[str | Path] | None = None,
     must_exist: bool = True,
 ) -> Path:
     """Validate file path for security (prevent path traversal).

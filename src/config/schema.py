@@ -1,7 +1,7 @@
 """Validation schemas for configuration."""
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class ConfigValidationError(Exception):
@@ -10,7 +10,7 @@ class ConfigValidationError(Exception):
     pass
 
 
-def validate_llm_config(config: Dict[str, Any]) -> List[str]:
+def validate_llm_config(config: dict[str, Any]) -> list[str]:
     """Validate LLM configuration.
 
     Args:
@@ -48,7 +48,7 @@ def validate_llm_config(config: Dict[str, Any]) -> List[str]:
     return errors
 
 
-def validate_embedding_config(config: Dict[str, Any]) -> List[str]:
+def validate_embedding_config(config: dict[str, Any]) -> list[str]:
     """Validate embedding configuration.
 
     Args:
@@ -77,7 +77,7 @@ def validate_embedding_config(config: Dict[str, Any]) -> List[str]:
     return errors
 
 
-def validate_database_config(config: Dict[str, Any]) -> List[str]:
+def validate_database_config(config: dict[str, Any]) -> list[str]:
     """Validate database configuration.
 
     Args:
@@ -112,7 +112,7 @@ def validate_database_config(config: Dict[str, Any]) -> List[str]:
     return errors
 
 
-def validate_paths_config(config: Dict[str, Any]) -> List[str]:
+def validate_paths_config(config: dict[str, Any]) -> list[str]:
     """Validate paths configuration.
 
     Args:
@@ -132,7 +132,78 @@ def validate_paths_config(config: Dict[str, Any]) -> List[str]:
     return errors
 
 
-def validate_config(config_dict: Dict[str, Any]) -> None:
+def validate_video_config(config: dict[str, Any]) -> list[str]:
+    """Validate video configuration.
+
+    Args:
+        config: Video config dictionary
+
+    Returns:
+        List of validation errors (empty if valid)
+    """
+    errors = []
+
+    # Validate transcription settings
+    if "whisper_model" in config and not isinstance(config["whisper_model"], str):
+        errors.append("video.whisper_model must be a string")
+
+    if "whisper_device" in config:
+        if not isinstance(config["whisper_device"], str):
+            errors.append("video.whisper_device must be a string")
+        elif config["whisper_device"] not in ("cuda", "cpu"):
+            errors.append("video.whisper_device must be 'cuda' or 'cpu'")
+
+    if "whisper_compute_type" in config:
+        if not isinstance(config["whisper_compute_type"], str):
+            errors.append("video.whisper_compute_type must be a string")
+        elif config["whisper_compute_type"] not in ("float16", "float32", "int8"):
+            errors.append("video.whisper_compute_type must be 'float16', 'float32', or 'int8'")
+
+    if "whisper_language" in config and config["whisper_language"] is not None:
+        if not isinstance(config["whisper_language"], str):
+            errors.append("video.whisper_language must be a string or null")
+
+    if "models_dir" in config:
+        if not isinstance(config["models_dir"], (str, Path)):
+            errors.append("video.models_dir must be a string or Path")
+
+    # Validate cleaning settings
+    if "clean_model" in config and not isinstance(config["clean_model"], str):
+        errors.append("video.clean_model must be a string")
+
+    if "clean_ollama_host" in config and not isinstance(config["clean_ollama_host"], str):
+        errors.append("video.clean_ollama_host must be a string")
+
+    if "clean_prompt" in config and not isinstance(config["clean_prompt"], str):
+        errors.append("video.clean_prompt must be a string")
+
+    # Validate output settings
+    if "output_format" in config:
+        if not isinstance(config["output_format"], str):
+            errors.append("video.output_format must be a string")
+        elif config["output_format"] not in ("markdown", "text", "json"):
+            errors.append("video.output_format must be 'markdown', 'text', or 'json'")
+
+    if "include_timestamps" in config and not isinstance(config["include_timestamps"], bool):
+        errors.append("video.include_timestamps must be a boolean")
+
+    if "collection_prefix" in config and not isinstance(config["collection_prefix"], str):
+        errors.append("video.collection_prefix must be a string")
+
+    if "supported_extensions" in config:
+        if not isinstance(config["supported_extensions"], list):
+            errors.append("video.supported_extensions must be a list")
+        else:
+            for ext in config["supported_extensions"]:
+                if not isinstance(ext, str):
+                    errors.append("video.supported_extensions must be a list of strings")
+                elif not ext.startswith("."):
+                    errors.append("video.supported_extensions must start with '.'")
+
+    return errors
+
+
+def validate_config(config_dict: dict[str, Any]) -> None:
     """Validate complete configuration dictionary.
 
     Args:
@@ -155,8 +226,10 @@ def validate_config(config_dict: Dict[str, Any]) -> None:
     if "paths" in config_dict:
         all_errors.extend(validate_paths_config(config_dict["paths"]))
 
+    if "video" in config_dict:
+        all_errors.extend(validate_video_config(config_dict["video"]))
+
     if all_errors:
         raise ConfigValidationError(
-            f"Configuration validation failed:\n"
-            + "\n".join(f"  - {error}" for error in all_errors)
+            "Configuration validation failed:\n" + "\n".join(f"  - {error}" for error in all_errors)
         )

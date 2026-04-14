@@ -4,9 +4,8 @@
 import argparse
 import getpass
 import sys
-from typing import List
 
-from .secrets import secrets, get_env_secure, validate_required_secrets
+from .secrets import get_env_secure, secrets, validate_required_secrets
 
 
 def store_secret(args) -> None:
@@ -111,7 +110,7 @@ def migrate_secrets(args) -> None:
 
     results = secrets.migrate_from_env(env_vars, delete_from_env=args.delete)
 
-    print(f"\nMigration results:")
+    print("\nMigration results:")
     for var, success in results.items():
         status = "✅" if success else "❌"
         action = "migrated" if success else "failed"

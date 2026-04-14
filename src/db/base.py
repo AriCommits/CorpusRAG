@@ -1,14 +1,14 @@
 """Abstract database backend interface."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class DatabaseBackend(ABC):
     """Abstract database interface for vector stores."""
 
     @abstractmethod
-    def create_collection(self, name: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+    def create_collection(self, name: str, metadata: dict[str, Any] | None = None) -> None:
         """Create a new collection.
 
         Args:
@@ -36,7 +36,7 @@ class DatabaseBackend(ABC):
         pass
 
     @abstractmethod
-    def list_collections(self) -> List[str]:
+    def list_collections(self) -> list[str]:
         """List all collection names.
 
         Returns:
@@ -60,10 +60,10 @@ class DatabaseBackend(ABC):
     def add_documents(
         self,
         collection: str,
-        documents: List[str],
-        embeddings: List[List[float]],
-        metadata: List[Dict[str, Any]],
-        ids: List[str],
+        documents: list[str],
+        embeddings: list[list[float]],
+        metadata: list[dict[str, Any]],
+        ids: list[str],
     ) -> None:
         """Add documents to collection.
 
@@ -83,10 +83,10 @@ class DatabaseBackend(ABC):
     def query(
         self,
         collection: str,
-        query_embedding: List[float],
+        query_embedding: list[float],
         n_results: int = 10,
-        where: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        where: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Query collection with embedding.
 
         Args:

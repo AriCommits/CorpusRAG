@@ -1,11 +1,10 @@
 """Summary generation logic."""
 
 import logging
-import re
-from typing import Any, Optional
+from typing import Any
 
 from db import DatabaseBackend
-from llm import create_backend, PromptTemplates
+from llm import PromptTemplates, create_backend
 
 from .config import SummaryConfig
 
@@ -27,7 +26,7 @@ class SummaryGenerator:
         # Create LLM backend for generation
         self.llm_backend = create_backend(config.llm.to_backend_config())
 
-    def generate(self, collection: str, topic: Optional[str] = None) -> dict[str, Any]:
+    def generate(self, collection: str, topic: str | None = None) -> dict[str, Any]:
         """Generate summary from collection.
 
         Args:
@@ -89,7 +88,7 @@ class SummaryGenerator:
             return self._generate_placeholder_summary(collection, topic)
 
     def _get_representative_documents(
-        self, full_collection: str, sample_size: int, topic: Optional[str] = None
+        self, full_collection: str, sample_size: int, topic: str | None = None
     ) -> list[str]:
         """Get representative documents from collection.
 
@@ -106,7 +105,7 @@ class SummaryGenerator:
             # In a real implementation, you'd want smarter sampling
 
             # Get collection object to access documents directly
-            collection_obj = self.db.get_collection(full_collection)
+            self.db.get_collection(full_collection)
 
             # This is a simplified approach - in practice you'd implement
             # better document sampling or use the collection's get() method
@@ -241,7 +240,7 @@ OUTLINE:"""
             ]
 
     def _generate_placeholder_summary(
-        self, collection: str, topic: Optional[str] = None
+        self, collection: str, topic: str | None = None
     ) -> dict[str, Any]:
         """Generate placeholder summary as fallback.
 

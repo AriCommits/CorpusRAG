@@ -1,17 +1,15 @@
 """Authentication and authorization module for MCP server."""
 
-import hashlib
-import hmac
+import json
 import secrets
 import time
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
-import json
+from typing import Any
 
-from fastapi import HTTPException, Request, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 
 @dataclass
@@ -20,7 +18,7 @@ class AuthConfig:
 
     # API Key authentication
     enabled: bool = True
-    api_keys: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    api_keys: dict[str, dict[str, Any]] = field(default_factory=dict)
 
     # Rate limiting
     rate_limit_enabled: bool = True
@@ -38,7 +36,7 @@ class AuthConfig:
 class APIKeyManager:
     """Manage API keys and authentication."""
 
-    def __init__(self, config: AuthConfig, config_file: Optional[Path] = None):
+    def __init__(self, config: AuthConfig, config_file: Path | None = None):
         """Initialize API key manager.
 
         Args:
@@ -47,7 +45,7 @@ class APIKeyManager:
         """
         self.config = config
         self.config_file = config_file
-        self.api_keys: Dict[str, Dict[str, Any]] = {}
+        self.api_keys: dict[str, dict[str, Any]] = {}
         self._load_keys()
 
     def _load_keys(self) -> None:
@@ -57,7 +55,7 @@ class APIKeyManager:
 
         if self.config_file and self.config_file.exists():
             try:
-                with open(self.config_file, "r") as f:
+                with open(self.config_file) as f:
                     stored_keys = json.load(f)
                     self.api_keys.update(stored_keys)
             except Exception:
@@ -80,8 +78,8 @@ class APIKeyManager:
     def generate_api_key(
         self,
         name: str,
-        permissions: Optional[Dict[str, Any]] = None,
-        expires_at: Optional[datetime] = None,
+        permissions: dict[str, Any] | None = None,
+        expires_at: datetime | None = None,
     ) -> str:
         """Generate a new API key.
 
@@ -110,7 +108,7 @@ class APIKeyManager:
 
         return api_key
 
-    def validate_api_key(self, api_key: str) -> Optional[Dict[str, Any]]:
+    def validate_api_key(self, api_key: str) -> dict[str, Any] | None:
         """Validate an API key and return key info if valid.
 
         Args:
@@ -152,7 +150,7 @@ class APIKeyManager:
             return True
         return False
 
-    def list_api_keys(self) -> Dict[str, Dict[str, Any]]:
+    def list_api_keys(self) -> dict[str, dict[str, Any]]:
         """List all API keys with their info (excluding actual key values)."""
         return {
             key: {**info, "key_preview": f"{key[:8]}...{key[-4:]}"}
@@ -170,7 +168,7 @@ class RateLimiter:
             config: Authentication configuration
         """
         self.config = config
-        self.requests: Dict[str, list] = {}
+        self.requests: dict[str, list] = {}
 
     def is_allowed(self, identifier: str) -> bool:
         """Check if request is allowed for given identifier.
@@ -218,7 +216,7 @@ class RateLimiter:
 class MCPAuthenticator:
     """Main authentication system for MCP server."""
 
-    def __init__(self, config: AuthConfig, config_file: Optional[Path] = None):
+    def __init__(self, config: AuthConfig, config_file: Path | None = None):
         """Initialize authenticator.
 
         Args:
@@ -233,8 +231,8 @@ class MCPAuthenticator:
     async def authenticate_request(
         self,
         request: Request,
-        credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
-    ) -> Dict[str, Any]:
+        credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
+    ) -> dict[str, Any]:
         """Authenticate a request.
 
         Args:

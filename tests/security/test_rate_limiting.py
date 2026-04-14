@@ -46,7 +46,7 @@ class TestOperationLimitTracking:
         limiter = OperationRateLimiter(config)
 
         # Should allow first 10 ingestions
-        for i in range(10):
+        for _i in range(10):
             assert limiter.check_operation_limit("user1", "ingestion", 10, 3600)
 
     def test_rejects_operations_exceeding_limit(self):
@@ -55,7 +55,7 @@ class TestOperationLimitTracking:
         limiter = OperationRateLimiter(config)
 
         # Allow 10 operations
-        for i in range(10):
+        for _i in range(10):
             assert limiter.check_operation_limit("user1", "ingestion", 10, 3600)
 
         # 11th should fail
@@ -67,7 +67,7 @@ class TestOperationLimitTracking:
         limiter = OperationRateLimiter(config)
 
         # User1 reaches limit
-        for i in range(10):
+        for _i in range(10):
             assert limiter.check_operation_limit("user1", "ingestion", 10, 3600)
 
         # User1 is rate limited
@@ -82,7 +82,7 @@ class TestOperationLimitTracking:
         limiter = OperationRateLimiter(config)
 
         # Max out ingestion
-        for i in range(10):
+        for _i in range(10):
             assert limiter.check_operation_limit("user1", "ingestion", 10, 3600)
 
         # But embedding is still allowed
@@ -94,7 +94,7 @@ class TestOperationLimitTracking:
         limiter = OperationRateLimiter(config)
 
         # Record 5 operations immediately
-        for i in range(5):
+        for _i in range(5):
             assert limiter.check_operation_limit("user1", "test", 5, 1)
 
         # Next operation should fail (at limit)
@@ -257,7 +257,7 @@ class TestUserReset:
         limiter = OperationRateLimiter(config)
 
         # User hits limit
-        for i in range(10):
+        for _i in range(10):
             limiter.check_operation_limit("user1", "ingestion", 10, 3600)
 
         assert not limiter.check_operation_limit("user1", "ingestion", 10, 3600)
@@ -275,7 +275,7 @@ class TestUserReset:
 
         # Both users hit limits
         for user in ["user1", "user2"]:
-            for i in range(10):
+            for _i in range(10):
                 limiter.check_operation_limit(user, "ingestion", 10, 3600)
 
         # Reset only user1
@@ -336,7 +336,7 @@ class TestIntegrationScenarios:
 
         # Each user does 3 ingestions (at limit)
         for user in users:
-            for i in range(3):
+            for _i in range(3):
                 assert limiter.check_ingestion_limit(user)
 
             # Each user should now be rate limited

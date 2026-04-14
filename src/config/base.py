@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 from llm import LLMConfig as LLMBackendConfig
 
@@ -16,11 +15,11 @@ class LLMConfig:
     model: str = "llama3"
     timeout_seconds: float = 120.0
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
+    max_tokens: int | None = None
 
     # New backend configuration
     backend: str = "ollama"
-    api_key: Optional[str] = None
+    api_key: str | None = None
     fallback_models: list[str] = field(default_factory=list)
 
     def to_backend_config(self) -> LLMBackendConfig:
@@ -43,7 +42,7 @@ class EmbeddingConfig:
 
     backend: str = "ollama"  # ollama | sentence-transformers
     model: str = "nomic-embed-text"
-    dimensions: Optional[int] = None
+    dimensions: int | None = None
 
 
 @dataclass

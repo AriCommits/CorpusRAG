@@ -1,6 +1,6 @@
 """Embedding helpers for RAG ingestion and retrieval."""
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import httpx
 
@@ -92,7 +92,9 @@ class EmbeddingClient:
             openai_data = openai_response.json()
             data_items = openai_data.get("data", [])
             embeddings = [item.get("embedding") for item in data_items]
-            if len(embeddings) != len(texts) or any(not isinstance(item, list) for item in embeddings):
+            if len(embeddings) != len(texts) or any(
+                not isinstance(item, list) for item in embeddings
+            ):
                 raise ValueError("OpenAI-compatible Ollama embedding response was invalid")
             return embeddings
 

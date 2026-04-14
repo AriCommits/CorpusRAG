@@ -1,9 +1,8 @@
 """RAG agent orchestration."""
 
-from typing import Any, Iterator, Optional
 
 from db import DatabaseBackend
-from llm import create_backend, PromptTemplates
+from llm import PromptTemplates, create_backend
 
 from .config import RAGConfig
 from .retriever import RAGRetriever, RetrievedChunk
@@ -29,9 +28,9 @@ class RAGAgent:
         self,
         query: str,
         collection: str,
-        top_k: Optional[int] = None,
+        top_k: int | None = None,
         stream: bool = False,
-        conversation_history: Optional[list[dict[str, str]]] = None,
+        conversation_history: list[dict[str, str]] | None = None,
     ) -> str:
         """Execute RAG query.
 
@@ -83,7 +82,7 @@ class RAGAgent:
         self,
         message: str,
         collection: str,
-        session_id: Optional[str] = None,
+        session_id: str | None = None,
         stream: bool = False,
     ) -> str:
         """Chat with RAG agent maintaining conversation history.
@@ -118,7 +117,7 @@ class RAGAgent:
         return response
 
     def retrieve(
-        self, query: str, collection: str, top_k: Optional[int] = None
+        self, query: str, collection: str, top_k: int | None = None
     ) -> list[RetrievedChunk]:
         """Retrieve relevant chunks without generating a response.
 
