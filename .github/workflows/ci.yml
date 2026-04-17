@@ -30,7 +30,7 @@ jobs:
         run: ruff format --check src/ tests/
 
       - name: Run mypy type checker
-        run: mypy src/corpus_callosum --ignore-missing-imports
+        run: mypy src/ --ignore-missing-imports
 
   test:
     name: Test
@@ -56,13 +56,13 @@ jobs:
 
       - name: Create test config
         run: |
-          cp configs/corpus_callosum.yaml.example configs/corpus_callosum.yaml
+          cp configs/base.example.yaml configs/base.yaml
 
       - name: Run tests
         run: |
-          PYTHONPATH=src pytest tests/ -v --cov=src/corpus_callosum --cov-report=xml --ignore=tests/test_smoke.py
+          PYTHONPATH=src pytest tests/ -v --cov=src --cov-report=xml --ignore=tests/test_smoke.py
         env:
-          CORPUS_CALLOSUM_CONFIG: configs/corpus_callosum.yaml
+          CORPUSRAG_CONFIG: configs/base.yaml
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -86,7 +86,7 @@ jobs:
           context: .
           file: .docker/Dockerfile
           push: false
-          tags: corpus-callosum:test
+          tags: corpusrag:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -99,7 +99,7 @@ jobs:
 
       - name: Create docker config
         run: |
-          cp configs/corpus_callosum.docker.yaml.example configs/corpus_callosum.docker.yaml
+          cp configs/docker.yaml.example configs/docker.yaml
 
       - name: Start services
         run: |

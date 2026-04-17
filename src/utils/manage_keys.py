@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI tool for managing Corpus Callosum MCP server API keys."""
+"""CLI tool for managing CorpusRAG MCP server API keys."""
 
 import argparse
 import sys
@@ -11,7 +11,7 @@ from .auth import AuthConfig, MCPAuthenticator
 
 def get_auth_file() -> Path:
     """Get the path to the API keys file."""
-    return Path.home() / ".corpus_callosum" / "api_keys.json"
+    return Path.home() / ".corpusrag" / "api_keys.json"
 
 
 def create_authenticator() -> MCPAuthenticator:
@@ -123,7 +123,7 @@ def test_key(args) -> None:
 def main():
     """Main CLI function."""
     parser = argparse.ArgumentParser(
-        description="Manage Corpus Callosum MCP Server API Keys",
+        description="Manage CorpusRAG MCP Server API Keys",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 

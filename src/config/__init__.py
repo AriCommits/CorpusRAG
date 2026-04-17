@@ -1,4 +1,4 @@
-"""Configuration system for CorpusCallosum."""
+"""Configuration system for CorpusRAG."""
 
 from .base import BaseConfig, DatabaseConfig, EmbeddingConfig, LLMConfig, PathsConfig
 from .loader import load_config, merge_configs

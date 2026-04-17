@@ -1,4 +1,4 @@
-"""Base configuration dataclasses for CorpusCallosum."""
+"""Base configuration dataclasses for CorpusRAG."""
 
 from dataclasses import dataclass, field
 from pathlib import Path

@@ -1,4 +1,4 @@
-"""Database management utilities for CorpusCallosum."""
+"""Database management utilities for CorpusRAG."""
 
 import json
 import logging
@@ -52,7 +52,7 @@ def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
 
 
 class DatabaseManager:
-    """Database management utilities for CorpusCallosum."""
+    """Database management utilities for CorpusRAG."""
 
     def __init__(self, config_path: str | None = None):
         """Initialize the database manager."""

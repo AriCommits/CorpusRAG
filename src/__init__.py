@@ -1,5 +1,5 @@
 """
-CorpusCallosum: Unified Learning & Knowledge Management Toolkit
+CorpusRAG: Unified Learning & Knowledge Management Toolkit
 
 A modular system combining:
 - RAG (Retrieval-Augmented Generation) for document querying

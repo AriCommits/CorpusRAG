@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI tool for managing Corpus Callosum secrets and environment variables."""
+"""CLI tool for managing CorpusRAG secrets and environment variables."""
 
 import argparse
 import getpass
@@ -125,7 +125,7 @@ def validate_secrets(args) -> None:
     required = args.secrets
 
     if not required:
-        # Default required secrets for Corpus Callosum
+        # Default required secrets for CorpusRAG
         required = [
             "OPENAI_API_KEY",  # For LLM operations
             "OLLAMA_HOST",  # For local LLM
@@ -156,7 +156,7 @@ def validate_secrets(args) -> None:
 def main():
     """Main CLI function."""
     parser = argparse.ArgumentParser(
-        description="Manage Corpus Callosum secrets and environment variables",
+        description="Manage CorpusRAG secrets and environment variables",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

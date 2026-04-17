@@ -1,7 +1,7 @@
 """
 MCP Server implementation using FastMCP with authentication.
 
-Exposes all Corpus Callosum tools as MCP resources and tools.
+Exposes all CorpusRAG tools as MCP resources and tools.
 """
 
 import argparse
@@ -26,7 +26,7 @@ from utils.validation import get_validator
 
 def create_mcp_server(config_path: str | None = None) -> FastMCP:
     """
-    Create and configure the MCP server with all Corpus Callosum tools.
+    Create and configure the MCP server with all CorpusRAG tools.
 
     Args:
         config_path: Optional path to configuration file (defaults to configs/base.yaml)
@@ -53,7 +53,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
     )
 
     # Create authentication system
-    auth_file = Path.home() / ".corpus_callosum" / "api_keys.json"
+    auth_file = Path.home() / ".corpusrag" / "api_keys.json"
     authenticator = MCPAuthenticator(auth_config, auth_file)
 
     # Generate admin key on first run if no keys exist
@@ -64,7 +64,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
 
     # Create MCP server
     mcp = FastMCP(
-        "Corpus Callosum",
+        "CorpusRAG",
         json_response=True,
     )
 
@@ -508,7 +508,7 @@ This will create a comprehensive study resource from the lecture.
 def main() -> None:
     """Run the MCP server with optional HTTP health endpoints."""
     # Set up argument parsing
-    parser = argparse.ArgumentParser(description="Corpus Callosum MCP Server")
+    parser = argparse.ArgumentParser(description="CorpusRAG MCP Server")
     parser.add_argument("--config", "-c", help="Configuration file path")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
@@ -530,7 +530,7 @@ def main() -> None:
             """Health check endpoint for container orchestration."""
             return {
                 "status": "healthy",
-                "service": "corpus-callosum-mcp",
+                "service": "corpusrag-mcp",
                 "version": "0.5.0",
                 "timestamp": "2026-04-07",
             }
@@ -556,7 +556,7 @@ def main() -> None:
                 logger.error(f"Readiness check failed: {e}")
                 return {"status": "not_ready", "error": str(e)}
 
-    logger.info(f"Starting Corpus Callosum MCP Server on {args.host}:{args.port}")
+    logger.info(f"Starting CorpusRAG MCP Server on {args.host}:{args.port}")
     mcp.run(transport=args.transport, host=args.host, port=args.port)
 
 

@@ -1,4 +1,4 @@
-"""Flashcard tool for CorpusCallosum."""
+"""Flashcard tool for CorpusRAG."""
 
 from .config import FlashcardConfig
 from .generator import FlashcardGenerator

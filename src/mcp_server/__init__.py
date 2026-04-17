@@ -1,8 +1,8 @@
 """
-MCP Server for Corpus Callosum.
+MCP Server for CorpusRAG.
 
 This module provides MCP (Model Context Protocol) server functionality,
-exposing all Corpus Callosum tools as callable functions for LLM agents.
+exposing all CorpusRAG tools as callable functions for LLM agents.
 """
 
 from .server import create_mcp_server

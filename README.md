@@ -1,8 +1,8 @@
-# CorpusCallosum
+# CorpusRAG
 
 **Unified Learning and Knowledge Management Toolkit**
 
-CorpusCallosum is a modular, AI-powered toolkit for personal knowledge management with advanced RAG, flashcard generation, summaries, quizzes, video transcription, and orchestration workflows.
+CorpusRAG is a modular, AI-powered toolkit for personal knowledge management with advanced RAG, flashcard generation, summaries, quizzes, video transcription, and orchestration workflows.
 
 ## ✨ Recent Improvements (Current Release)
 

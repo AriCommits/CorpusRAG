@@ -1,1 +1,1 @@
-"""Utility modules for CorpusCallosum."""
+"""Utility modules for CorpusRAG."""

@@ -1,5 +1,5 @@
 """
-LLM backend abstraction for Corpus Callosum.
+LLM backend abstraction for CorpusRAG.
 
 Provides unified access to multiple LLM providers:
 - Ollama (local models)

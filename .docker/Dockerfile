@@ -1,4 +1,4 @@
-# CorpusCallosum - Unified Docker Image
+# CorpusRAG - Unified Docker Image
 # Multi-stage build for production-ready deployment
 
 # =============================================================================

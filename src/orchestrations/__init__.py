@@ -1,5 +1,5 @@
 """
-Orchestrations for Corpus Callosum.
+Orchestrations for CorpusRAG.
 
 Pre-composed workflows that combine multiple tools for common use cases.
 """

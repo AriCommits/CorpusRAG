@@ -1,4 +1,4 @@
-"""Database abstraction layer for CorpusCallosum."""
+"""Database abstraction layer for CorpusRAG."""
 
 from .base import DatabaseBackend
 from .chroma import ChromaDBBackend

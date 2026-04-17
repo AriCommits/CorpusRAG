@@ -1,4 +1,4 @@
-"""Unified cross-platform CLI entry point for Corpus Callosum."""
+"""Unified cross-platform CLI entry point for CorpusRAG."""
 
 import click
 
@@ -13,9 +13,9 @@ from tools.video.cli import video
 
 
 @click.group()
-@click.version_option(package_name="corpus-callosum")
+@click.version_option(package_name="corpusrag")
 def corpus() -> None:
-    """Corpus Callosum — unified learning and knowledge management toolkit.
+    """CorpusRAG — unified learning and knowledge management toolkit.
 
     Run any subcommand with --help for details.
     """
