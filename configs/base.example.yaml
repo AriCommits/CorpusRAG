@@ -1,65 +1,295 @@
 # CorpusCallosum Example Configuration File
 # Copy this file to my-config.yaml and modify as needed
+#
+# This file documents all available configuration options.
+# Values shown are the defaults. Modify as needed for your setup.
+#
+# To override any setting, use environment variables with CC_ prefix:
+#   CC_LLM_MODEL=mistral python -m cli rag query "What is X?" --collection notes
+#   CC_DATABASE_MODE=http python -m cli rag ingest ./docs --collection notes
 
 # LLM Configuration (for text generation, cleaning, augmentation, etc.)
 llm:
-  # Ollama backend settings
-  backend: ollama                    # Options: ollama, openai, anthropic, etc.
-  endpoint: http://localhost:11434   # URL of the LLM server
-  model: gemma4:26b-a4b-it-q4_K_M    # Model name to use
-  timeout_seconds: 120.0             # Request timeout in seconds
-  temperature: 0.7                   # Sampling temperature (0.0-2.0)
-  max_tokens: null                   # Maximum tokens to generate (null = model default)
-  api_key: null                      # API key if required by backend
-  fallback_models: []                # List of fallback models if primary fails
+  # Backend selection: ollama (local), openai, anthropic, or other compatible API
+  backend: ollama
+
+  # Endpoint URL for the LLM service
+  # Ollama:   http://localhost:11434
+  # OpenAI:   https://api.openai.com/v1
+  # Anthropic: https://api.anthropic.com
+  endpoint: http://localhost:11434
+
+  # Model identifier
+  # Ollama examples:
+  #   - gemma4:26b-a4b-it-q4_K_M (recommended, ~16GB VRAM)
+  #   - gemma2:27b (good alternative)
+  #   - mistral:latest (7B, fast)
+  #   - neural-chat:latest (small, fast)
+  # OpenAI examples:
+  #   - gpt-4-turbo
+  #   - gpt-4o
+  #   - gpt-3.5-turbo
+  # Anthropic examples:
+  #   - claude-opus-4-1
+  #   - claude-sonnet-4
+  #   - claude-haiku
+  model: gemma4:26b-a4b-it-q4_K_M
+
+  # Request timeout in seconds (increase for slower models or networks)
+  timeout_seconds: 120.0
+
+  # Sampling temperature (0.0 = deterministic, 2.0 = very random)
+  # 0.3 = focused (summaries, extraction)
+  # 0.7 = balanced (default, good for most uses)
+  # 1.0 = creative (story generation, brainstorming)
+  temperature: 0.7
+
+  # Maximum tokens to generate (null = model default, usually 2048-4096)
+  max_tokens: null
+
+  # API key for backends that require it
+  # Set via CC_LLM_API_KEY environment variable for security
+  api_key: null
+
+  # Fallback models if primary fails (comma-separated list)
+  # If first model unavailable, tries each fallback in order
+  fallback_models: []
 
 # Embedding Configuration (for vector search and retrieval)
+# Embeddings convert text to vectors for semantic search in RAG
 embedding:
-  backend: ollama                    # Options: ollama, sentence-transformers
-  model: embeddinggemma              # Embedding model name
-  dimensions: null                   # Embedding dimensions (null = model default)
+  # Backend: ollama (local) or sentence-transformers (Hugging Face models)
+  backend: ollama
+
+  # Embedding model name
+  # Ollama models:
+  #   - embeddinggemma (recommended, 384-dim)
+  #   - nomic-embed-text (768-dim, higher quality but slower)
+  #   - mxbai-embed-large (1024-dim, largest)
+  # Sentence-transformers models (from Hugging Face):
+  #   - all-MiniLM-L6-v2 (384-dim, fast)
+  #   - all-mpnet-base-v2 (768-dim, high quality)
+  #   - sentence-transformers/all-distilroberta-v1 (768-dim)
+  model: embeddinggemma
+
+  # Embedding vector dimensions (null = auto-detect from model)
+  # embeddinggemma: 384
+  # nomic-embed-text: 768
+  # all-MiniLM-L6-v2: 384
+  # all-mpnet-base-v2: 768
+  dimensions: null
+
+  # Note: All embeddings in a collection must have same dimensions.
+  # Changing this setting requires re-ingesting documents.
 
 # Database Configuration (vector storage)
+# CorpusCallosum uses ChromaDB for vector storage and retrieval
 database:
-  backend: chromadb                  # Currently only chromadb is supported
-  mode: persistent                   # Options: persistent (local), http (remote server)
-  host: localhost                    # Database host (for http mode)
-  port: 8000                         # Database port (for http mode)
-  persist_directory: ./chroma_store  # Local storage directory (for persistent mode)
+  # Currently only chromadb backend is supported
+  backend: chromadb
+
+  # Storage mode: persistent (local) or http (Docker/remote server)
+  #
+  # persistent: SQLite-based local storage
+  #   - No Docker required
+  #   - Single-process access only
+  #   - Good for development and personal use
+  #   - Data stored in persist_directory
+  #
+  # http: ChromaDB server (Docker recommended)
+  #   - Requires Docker container running ChromaDB
+  #   - Multi-process/multi-user access
+  #   - Recommended for production
+  #   - Start with: docker-compose up -d
+  mode: persistent
+
+  # For persistent mode: local directory to store vector database
+  # Can be relative (./chroma_store) or absolute (/data/chroma)
+  # Directory will be created if it doesn't exist
+  persist_directory: ./chroma_store
+
+  # For http mode: ChromaDB server hostname
+  # localhost = local Docker container
+  # remote.example.com = remote ChromaDB server
+  host: localhost
+
+  # For http mode: ChromaDB server port (default: 8000)
+  port: 8000
+
+  # Troubleshooting:
+  # - persistent mode: Check persist_directory has write permissions
+  # - http mode: Ensure 'docker-compose up -d' is running
+  # - Connection refused: Verify host and port are correct
 
 # Filesystem Paths
+# All paths can be relative (./vault) or absolute (/data/vault)
+# Directories will be created if they don't exist
 paths:
-  vault: ./vault                     # Directory for source documents
-  scratch_dir: ./scratch             # Temporary processing directory
-  output_dir: ./output               # Directory for final outputs
+  # Directory containing source documents for ingestion
+  # Used by 'corpus rag ingest' and 'corpus orchestrate lecture-pipeline'
+  # Add .md, .txt, and .pdf files here
+  vault: ./vault
+
+  # Temporary directory for processing intermediate files
+  # Used by video transcription, cleaning, and other processing steps
+  # Safe to delete between sessions
+  # Must be on filesystem with sufficient space for video processing
+  scratch_dir: ./scratch
+
+  # Directory for final outputs
+  # Generated summaries, quizzes, flashcards, and transcripts are saved here
+  # Recommended to regularly back up this directory
+  output_dir: ./output
 
 # RAG (Retrieval-Augmented Generation) Settings
+# CorpusCallosum uses a parent-child retrieval architecture:
+#
+# 1. Document Ingestion:
+#    - Documents split by markdown headers (# ## ###) → parent documents
+#    - Tags extracted from bulleted lists (#tag format) → metadata
+#    - Parents stored in parent_store (LocalFileStore)
+#    - Parents split into children → indexed in vector database
+#
+# 2. Query/Retrieval:
+#    - User query embedded and matched against child chunks
+#    - Full parent documents retrieved based on child matches
+#    - Results deduplicated (multiple children from same parent = 1 result)
+#    - Filters applied for tags and section headers
+#
+# 3. LLM Context:
+#    - Full parent documents sent to LLM (not isolated chunks)
+#    - Better context = better answers
+#
 rag:
+  # Child chunking for vector search indexing
+  # Parents split into smaller children for embedding and search
   chunking:
-    child_chunk_size: 400            # Size of child chunks for vector search
-    child_chunk_overlap: 50          # Overlap between child chunks
+    # Size of each child chunk in characters
+    # Smaller = more granular search, more chunks to index
+    # Larger = less granular, fewer chunks
+    # 400 = good balance for most use cases
+    child_chunk_size: 400
+
+    # Overlap between consecutive chunks (helps context preservation)
+    # 50 = 50 chars overlap between children
+    # Higher overlap = more redundant storage but better context
+    child_chunk_overlap: 50
+
+  # Retrieval settings
   retrieval:
-    top_k_semantic: 25               # Number of results from semantic search
-    top_k_bm25: 25                   # Number of results from BM25 search
-    top_k_final: 10                  # Final number of results after reranking
-    rrf_k: 80                        # Reciprocal Rank Fusion constant
+    # Number of child chunks to retrieve from vector search
+    # Higher = more candidates to find matching parents
+    # 25 = good balance, usually sufficient
+    # Increase if your documents are long or topics diverse
+    top_k_semantic: 25
+
+    # BM25 keyword search results (currently unused, kept for future use)
+    top_k_bm25: 25
+
+    # Final number of parent documents to return to LLM
+    # Should be <= top_k_semantic (fewer parents than children)
+    # 10 = typically enough context for LLM
+    # Increase for very long documents or complex questions
+    top_k_final: 10
+
+    # Reciprocal Rank Fusion parameter (currently unused, kept for future use)
+    rrf_k: 80
+
+  # Parent document storage configuration
+  # Parents stored separately from children for full context retrieval
   parent_store:
-    type: local_file                 # Storage type for parent documents (local_file or in_memory)
-    path: ./parent_store             # Path to local parent document store
-  collection_prefix: rag             # Prefix for RAG collection names
+    # Storage type: local_file (recommended) or in_memory
+    #   local_file = persistent storage on disk (survives restarts)
+    #   in_memory = faster but lost on restart
+    type: local_file
+
+    # Directory path for parent document storage
+    # Used by local_file type only
+    # Will be created if it doesn't exist
+    # Contains one JSON file per parent document
+    path: ./parent_store
+
+  # Prefix for RAG collection names in database
+  # Collection names will be: rag_<name>
+  # Example: 'corpus rag ingest ./docs --collection notes' → 'rag_notes'
+  collection_prefix: rag
+
+# RAG Usage Examples:
+#
+# Basic ingestion (semantic markdown splitting with tag extraction):
+#   corpus rag ingest ./documents --collection notes
+#
+# Query without filters:
+#   corpus rag query "What is machine learning?" --collection notes
+#
+# Query with tag filtering (returns only documents with these tags):
+#   corpus rag query "algorithms" --collection notes --tag python --tag ml
+#
+# Query with section filtering (by markdown header):
+#   corpus rag query "sorting" --collection notes --section "Algorithms"
+#
+# Interactive chat with tag filtering:
+#   corpus rag chat --collection notes --tag important
 
 # Video Processing Configuration
+# Transcribe videos to text, clean with LLM, and optionally generate study materials
 video:
   # Transcription settings (using faster-whisper)
-  whisper_model: "medium.en"         # Whisper model size (tiny.en, base.en, small.en, medium.en, large-v2, etc.)
-  whisper_device: "cpu"              # Options: cuda, cpu
-  whisper_compute_type: "int8"       # Options: float16, float32, int8 (int8 recommended for CPU)
-  whisper_language: "en"             # Language code (e.g., "en", "es", "fr") or None for auto-detect
-  models_dir: ./models/whisper       # Directory to cache Whisper models
-  
-  # Cleaning settings (LLM-based transcript cleanup)
-  clean_model: "gemma4:26b-a4b-it-q4_K_M"  # LLM model to use for cleaning
-  clean_ollama_host: http://localhost:11434 # Ollama host for cleaning
+  #
+  # Model size selection guide:
+  # tiny.en     = 39M, fastest, least accurate
+  # base.en     = 74M, good for clear audio
+  # small.en    = 244M, better accuracy
+  # medium.en   = 769M, good balance (recommended for most)
+  # large-v2    = 2.7GB, best accuracy but slow
+  #
+  # ".en" variants are English-only, faster
+  # Without ".en" suffix supports multi-language
+  whisper_model: medium.en
+
+  # Device to run transcription on
+  # cuda = GPU (NVIDIA only, very fast) - requires nvidia-cuda-toolkit
+  # cpu = CPU (slow but works on any machine)
+  # mps = Apple Metal (M1/M2/M3 Macs, fast)
+  whisper_device: cpu
+
+  # Compute type for quantization
+  # float32 = highest accuracy, more VRAM
+  # float16 = good balance, moderate VRAM (requires CUDA)
+  # int8 = fastest, lowest memory (recommended for CPU)
+  whisper_compute_type: int8
+
+  # Language code for transcription
+  # "en" = English
+  # "es" = Spanish
+  # "fr" = French
+  # "de" = German
+  # etc. (any ISO 639-1 code)
+  # null or "auto" = auto-detect language
+  whisper_language: en
+
+  # Directory to cache downloaded Whisper models
+  # First run downloads the model (~1-3GB depending on size)
+  # Subsequent runs use cached model
+  models_dir: ./models/whisper
+
+  # Transcript cleaning settings (LLM-based post-processing)
+  # Uses LLM backend to clean up transcription artifacts
+  #
+  # Can use different model than main llm.model for faster/cheaper processing
+  # Examples:
+  #   gemma4:26b-a4b-it-q4_K_M = high quality
+  #   mistral:latest = faster, decent quality
+  #   neural-chat:latest = fastest, acceptable quality
+  clean_model: gemma4:26b-a4b-it-q4_K_M
+
+  # LLM endpoint for cleaning (uses llm.backend and llm.endpoint by default)
+  # This is deprecated - clean_model now uses the global llm configuration
+  clean_ollama_host: http://localhost:11434
+
+  # Prompt template for transcript cleaning
+  # Controls how the LLM cleans up transcriptions
+  # Can customize to match your preferences
   clean_prompt: |
     Clean this lecture transcript into structured markdown notes.
     - Remove filler words, false starts, and repetition
@@ -67,13 +297,32 @@ video:
     - Use ## headers to separate distinct topics as they appear
     - Preserve the segment markers (e.g. ## Segment 1: filename) exactly as they are
     - Do not summarize away any detail — only remove noise
-  
-  # Output settings
-  output_format: markdown            # Options: markdown, text, json
-  include_timestamps: false          # Whether to include timestamps in transcript
-  collection_prefix: videos          # Prefix for video collection names in database
-  
+
+  # Output format for cleaned transcripts
+  # markdown = structured markdown with headers (recommended)
+  # text = plain text
+  # json = JSON with metadata
+  output_format: markdown
+
+  # Whether to include timestamps in transcript output
+  # Useful for finding specific sections in videos
+  include_timestamps: false
+
+  # Prefix for video collection names in RAG database
+  # Collection names will be: videos_<name>
+  # Example: 'corpus video transcribe ./lecture.mp4 --course BIOL101' → 'videos_BIOL101'
+  collection_prefix: videos
+
+  # Automatically ingest transcripts into RAG after processing
+  # If true, cleaned transcripts added to RAG for semantic search
+  # Collection name will use collection_prefix above
+  auto_ingest: true
+
   # Supported video file extensions
+  # .mp4, .mkv, .mov = video formats
+  # .avi, .webm = less common video formats
+  # .m4v = iTunes video format
+  # .zoom = Zoom recording format
   supported_extensions:
     - .mp4
     - .mkv
@@ -84,117 +333,251 @@ video:
     - .zoom
 
 # Summaries Configuration
+# Generate summaries from documents using semantic search and LLM
+# Retrieves relevant context and summarizes at specified length
 summaries:
-  # Length options: short, medium, long
-  summary_length: medium             # Default summary length
-  
-  # LLM settings for summarization (can override global llm)
+  # Default summary length for generation
+  # short = 50-100 words (bullet points)
+  # medium = 200-300 words (paragraphs)
+  # long = 500-800 words (comprehensive)
+  summary_length: medium
+
+  # LLM settings for summarization
+  # Can override global llm settings for different model/temperature
   llm:
     model: gemma4:26b-a4b-it-q4_K_M
-    temperature: 0.3                 # Lower temperature for more focused summaries
+    # Lower temperature = more focused summaries
+    # 0.3 = factual and direct
+    temperature: 0.3
+    # Token limit for summary output
     max_tokens: 500
-    
-  # Prompt templates
+
+  # Custom prompt for summary generation
+  # Variables available: {length}, {text}
   prompt_template: |
     Generate a {length} summary of the following text:
     {text}
-    
+
     Summary should be concise and capture the key points.
 
 # Flashcards Configuration
+# Generate study flashcards from documents
+# Retrieves relevant content and creates question-answer pairs
 flashcards:
-  # Difficulty options: beginner, intermediate, advanced
-  difficulty: intermediate           # Default difficulty level
-  count: 15                          # Default number of flashcards to generate
-  
+  # Default difficulty level
+  # beginner = basic concepts, simple questions
+  # intermediate = detailed concepts, contextual questions
+  # advanced = deep understanding, application-based questions
+  difficulty: intermediate
+
+  # Default number of flashcards to generate
+  count: 15
+
   # LLM settings for flashcard generation
   llm:
     model: gemma4:26b-a4b-it-q4_K_M
+    # Moderate temperature for varied question styles
     temperature: 0.5
-    
-  # Format options: markdown, json, csv
-  format: markdown                   # Output format for flashcards
-  
-  # Prompt template
+
+  # Output format
+  # markdown = readable format with Q: and A: labels
+  # json = structured format suitable for Anki import
+  # csv = spreadsheet format
+  format: markdown
+
+  # Custom prompt for flashcard generation
+  # Variables available: {count}, {difficulty}, {text}
   prompt_template: |
     Generate {count} flashcards at {difficulty} difficulty level from the following text:
     {text}
-    
+
     Each flashcard should have a clear question and concise answer.
     Format as JSON: [{{"front": "question", "back": "answer"}}]
 
 # Quizzes Configuration
+# Generate quizzes from documents with various question types
+# Retrieves relevant content and creates diverse question formats
 quizzes:
-  count: 10                          # Default number of quiz questions
-  format: markdown                   # Options: markdown, json, csv
-  difficulty: intermediate           # Options: beginner, intermediate, advanced
-  
+  # Default number of questions to generate
+  count: 10
+
+  # Output format
+  # markdown = readable format with answers
+  # json = structured format with metadata
+  # csv = spreadsheet format
+  format: markdown
+
+  # Default difficulty level
+  # beginner = recall-based, straightforward questions
+  # intermediate = comprehension-based, context-dependent questions
+  # advanced = application-based, critical thinking questions
+  difficulty: intermediate
+
   # LLM settings for quiz generation
   llm:
     model: gemma4:26b-a4b-it-q4_K_M
+    # Moderate temperature for consistent quiz difficulty
     temperature: 0.4
-    
-  # Question types: multiple_choice, true_false, short_answer, mixed
+
+  # Question types to include in quiz
+  # multiple_choice = select from options (requires "options" field)
+  # true_false = binary choice (simplest)
+  # short_answer = open-ended (most flexible)
   question_types: [multiple_choice, true_false, short_answer]
-  
-  # Prompt template
+
+  # Custom prompt for quiz generation
+  # Variables available: {count}, {difficulty}, {question_types}, {text}
   prompt_template: |
     Generate a quiz with {count} questions at {difficulty} difficulty level.
     Include a mix of question types: {question_types}.
     Base the questions on the following text:
     {text}
-    
+
     Format as JSON array with objects containing:
     - "question": the question text
-    - "options": array of options (for multiple choice)
+    - "type": question type (multiple_choice, true_false, short_answer)
+    - "options": array of options (for multiple_choice only)
     - "correct_answer": the correct answer
     - "explanation": brief explanation of why answer is correct
 
-# Orchestrations Configuration (workflows)
+# Orchestrations Configuration (Workflows)
+# Workflows that combine multiple tools (transcribe + clean + ingest + generate)
 orchestrations:
-  # Default settings for workflow orchestrations
-  default_collection: notes          # Default collection to use
-  
-  # Lecture pipeline settings
+  # Default RAG collection for workflow outputs
+  # Used when no explicit --collection specified
+  default_collection: notes
+
+  # Lecture pipeline workflow configuration
+  # Full pipeline: transcribe → clean → ingest → optionally generate study materials
   lecture_pipeline:
-    # These settings can be overridden per pipeline run
-    generate_flashcards: true        # Whether to generate flashcards after transcription
+    # Generate flashcards from transcribed/cleaned lecture
+    # If true: automatically generates flashcards and stores in output_dir
+    generate_flashcards: true
+    # Number of flashcards to generate
     flashcard_count: 20
-    generate_quiz: true              # Whether to generate quiz after transcription
+
+    # Generate quiz from transcribed/cleaned lecture
+    # If true: automatically generates quiz and stores in output_dir
+    generate_quiz: true
+    # Number of quiz questions
     quiz_count: 15
-    generate_summary: true           # Whether to generate summary after transcription
+
+    # Generate summary from transcribed/cleaned lecture
+    # If true: automatically generates summary and stores in output_dir
+    generate_summary: true
+    # Length of generated summary
     summary_length: medium
 
+  # Study session workflow configuration
+  # Generates study materials from documents in collection
+  study_session:
+    # Automatically generate flashcards for study session
+    generate_flashcards: true
+    flashcard_count: 20
+
+    # Automatically generate quiz for study session
+    generate_quiz: true
+    quiz_count: 10
+
+# Orchestration Usage Examples:
+#
+# Full lecture pipeline (transcribe + clean + ingest + generate materials):
+#   corpus orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 1
+#
+# Study session (generate materials from existing documents):
+#   corpus orchestrate study-session --collection notes --topic "databases"
+
 # Developer Tools Configuration
+# Settings for development, testing, and code quality tools
 dev:
-  # Test coverage settings
-  coverage_threshold: 80             # Minimum percentage for coverage check
-  
-  # Linting settings
-  line_length: 88                    # Maximum line length for linting
-  
-  # Formatting settings
-  # (uses black/formatter configurations from pyproject.toml)
+  # Test coverage threshold
+  # Minimum code coverage percentage required by CI/CD
+  # 80 = 80% of code must be covered by tests
+  coverage_threshold: 80
+
+  # Maximum line length for linting
+  # 88 = Black formatter standard (PEP 8 extended)
+  # Used by: black, ruff, mypy
+  line_length: 88
+
+  # Linting rules to enforce
+  # Can be configured in pyproject.toml [tool.ruff] section
+  # Common rules:
+  #   E501 = line too long
+  #   F401 = unused import
+  #   E303 = too many blank lines
+
+  # Code formatting
+  # Uses black and isort configuration from pyproject.toml
+  # Run: python scripts/lint_and_format.py --fix
 
 # Monitoring and Telemetry (optional)
+# Disabled by default - enable for usage analytics
 monitoring:
-  enabled: false                     # Enable anonymous usage tracking
-  # If enabled, collects basic usage statistics to improve the tool
+  # Whether to collect anonymous usage statistics
+  # If enabled, sends non-sensitive usage data to improve the tool
+  enabled: false
 
 # Authentication (for API keys, etc.)
+# Settings for external service authentication
 auth:
-  # Settings for external service authentication
-  # Would be used for services requiring API keys beyond Ollama/local
+  # API keys and credentials should be stored via:
+  #   corpus-secrets store MY_API_KEY
+  # Or environment variable:
+  #   export CC_MY_API_KEY="..."
+  # Never commit secrets to config files!
 
-# Tools Configuration (general tool behavior)
+# Tools Configuration (General Tool Behavior)
+# Global settings that affect multiple tools
 tools:
-  # Global settings that affect multiple tools
-  parallel_processing: true          # Enable parallel processing where applicable
-  max_workers: 4                     # Maximum number of worker processes
-  
-  # Cache settings
-  enable_cache: true                 # Enable caching of intermediate results
-  cache_directory: ./cache           # Directory for cached files
-  
-  # Logging
-  log_level: INFO                    # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  # Enable parallel processing where applicable
+  # true = faster processing using multiple CPU cores
+  # false = sequential processing (uses less memory)
+  parallel_processing: true
+
+  # Maximum number of worker processes
+  # Should be <= number of CPU cores on your system
+  # Increase for faster processing, decrease to save memory
+  max_workers: 4
+
+  # Caching settings
+  # Improves performance by storing intermediate results
+  enable_cache: true
+  # Directory for cached files
+  cache_directory: ./cache
+
+  # Logging level
+  # DEBUG = very verbose, shows all internal operations
+  # INFO = normal operation, important events
+  # WARNING = only warnings and errors
+  # ERROR = only errors
+  # CRITICAL = only critical errors
+  log_level: INFO
+
+################################################################################
+# QUICK REFERENCE
+################################################################################
+#
+# Environment Variable Overrides:
+#   CC_LLM_MODEL=mistral
+#   CC_DATABASE_MODE=http
+#   CC_RAG_PARENT_STORE_PATH=/data/parents
+#
+# Common Commands:
+#   # Configure and run
+#   corpus --config my-config.yaml rag ingest ./vault --collection notes
+#   corpus rag query "What is ML?" --collection notes --tag python
+#
+#   # Video to notes pipeline
+#   corpus orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 1
+#
+#   # Generate study materials
+#   corpus orchestrate study-session --collection notes --topic algorithms
+#
+#   # Code quality
+#   python scripts/lint_and_format.py --fix --test
+#
+# For detailed documentation, see:
+#   - README.md - Quick start and feature overview
+#   - LINT_AND_FORMAT.md - Code quality and development
+#   - docs/plans/plan_2.md - Architecture and implementation details
