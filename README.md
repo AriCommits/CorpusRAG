@@ -2,24 +2,55 @@
 
 **Unified Learning and Knowledge Management Toolkit**
 
-CorpusCallosum is a modular, AI-powered toolkit for personal knowledge management with RAG, flashcard generation, summaries, quizzes, video transcription, and orchestration workflows.
+CorpusCallosum is a modular, AI-powered toolkit for personal knowledge management with advanced RAG, flashcard generation, summaries, quizzes, video transcription, and orchestration workflows.
+
+## ✨ Recent Improvements (Current Release)
+
+### 🎯 Advanced RAG Architecture
+- **Parent-Child Retrieval**: Semantic markdown splitting creates parent documents stored in LocalFileStore with child chunks indexed for vector search
+- **Metadata Filtering**: Query with `--tag` and `--section` flags to filter results by document tags and section headers
+- **Tag Extraction**: Automatically extracts `#tags` from markdown bullet lists for automatic metadata enrichment
+- **Improved Quality**: Full parent documents returned instead of isolated chunks, providing better context
+
+### 🔧 Developer Experience
+- **Automated Code Quality**: `python scripts/lint_and_format.py --fix` auto-fixes Black, isort, and Ruff issues
+- **Pre-push Checks**: Run `python scripts/lint_and_format.py --fix --test` before pushing to GitHub
+- **Comprehensive Tests**: 120+ new unit and integration tests covering RAG, CLI, and generators
+- **Developer Guide**: `LINT_AND_FORMAT.md` with IDE setup, GitHub Actions integration, and troubleshooting
+
+### 🐳 Docker & Deployment
+- **Local ChromaDB**: `docker-compose.yml` at project root for quick local setup
+- **HTTP Mode Support**: Switch to `database.mode: http` for shared ChromaDB server
+- **Containerized Workflows**: Full Docker integration for production deployments
+
+### 🔨 Code Quality & Fixes
+- **Fixed Generator Bugs**: FlashcardGenerator, QuizGenerator, SummaryGenerator now use real embedding-based retrieval
+- **MCP Server Fixed**: Corrected attribute references for video and RAG configs
+- **Config Alignment**: All defaults now match YAML configuration (gemma4:26b-a4b-it-q4_K_M, embeddinggemma)
+- **Cross-Platform Paths**: Removed hardcoded `/tmp` paths, now uses `config.paths.scratch_dir`
+
+### 📦 Simplified CLI
+- **Removed Redundancy**: Standalone `corpus-rag`, `corpus-flashcards`, etc. removed — use `corpus rag`, `corpus flashcards` instead
+- **Unified Interface**: Single `corpus` command with all subcommands
+- **Direct Module Access**: `python -m tools.rag.cli` still works for direct access
 
 ## Features
 
 ### Core Tools
-- **RAG Agent**: Query your personal knowledge base with context-aware responses
-- **Flashcard Generator**: Create study cards from your documents
-- **Summary Generator**: Generate short, medium, or long summaries
-- **Quiz Generator**: Build quizzes in Markdown, JSON, or CSV
-- **Video Transcriber**: Convert lectures and videos into searchable text
+- **RAG Agent**: Query your personal knowledge base with context-aware responses and metadata filtering
+- **Flashcard Generator**: Create study cards from documents with real semantic search
+- **Summary Generator**: Generate short, medium, or long summaries using embedding-based retrieval
+- **Quiz Generator**: Build quizzes in Markdown, JSON, or CSV formats
+- **Video Transcriber**: Convert lectures and videos into searchable text with cleaning and augmentation
 
 ### Platform Features
 - **Unified CLI**: Main `corpus` command for daily use
-- **Python CLI Interface**: Run the same tools with `python -m ...`
+- **Python CLI Interface**: Run tools directly with `python -m ...`
 - **MCP Server Integration**: Expose tools to agent workflows
-- **Multi-LLM Backend Support**: Ollama and compatible API backends
-- **Unified Database**: Shared ChromaDB storage across tools
-- **Developer Commands**: Cross-platform setup, test, lint, format, build, and clean
+- **Multi-LLM Backend Support**: Ollama, OpenAI, Anthropic, and compatible API backends
+- **Unified Database**: Shared ChromaDB storage (persistent or Docker-based)
+- **Advanced RAG**: Parent-child retrieval with semantic markdown splitting and metadata filtering
+- **Developer Commands**: Setup, test, lint, format, build, and clean utilities
 
 ## Quick Start
 
@@ -29,10 +60,10 @@ CorpusCallosum is a modular, AI-powered toolkit for personal knowledge managemen
 git clone https://github.com/yourusername/CorpusCallosum.git
 cd CorpusCallosum
 
-# Install the package so console scripts and python -m commands resolve cleanly
+# Install the package for console scripts and python -m commands
 pip install -e .
 
-# Optional: install developer tooling
+# Optional: install developer tooling (linting, testing, etc.)
 pip install -e ".[dev]"
 ```
 
@@ -41,7 +72,7 @@ pip install -e ".[dev]"
 Start from the repo's example config:
 
 ```bash
-cp configs/base.yaml my-config.yaml
+cp configs/base.example.yaml my-config.yaml
 ```
 
 Minimal config example:
@@ -50,17 +81,28 @@ Minimal config example:
 llm:
   backend: ollama
   endpoint: http://localhost:11434
-  model: llama3
+  model: gemma4:26b-a4b-it-q4_K_M
   temperature: 0.7
 
 embedding:
   backend: ollama
-  model: nomic-embed-text
+  model: embeddinggemma
 
 database:
   backend: chromadb
   mode: persistent
   persist_directory: ./chroma_store
+
+rag:
+  chunking:
+    child_chunk_size: 400
+    child_chunk_overlap: 50
+  retrieval:
+    top_k_semantic: 25
+    top_k_final: 10
+  parent_store:
+    type: local_file
+    path: ./parent_store
 
 paths:
   vault: ./vault
@@ -68,296 +110,184 @@ paths:
   output_dir: ./output
 ```
 
-By default, Chroma uses local persistent storage at `./chroma_store`. In that mode, you do not need a separate ChromaDB Docker container. Use a Docker Chroma server only when you switch `database.mode` to `http`. A matching example is included at `configs/docker.yaml.example`.
+**For Docker setup with ChromaDB server:**
+
+```bash
+# Start ChromaDB container
+docker-compose up -d
+
+# Update config
+cp configs/base.example.yaml my-config.yaml
+# Change: database.mode: http
+```
 
 If you use Ollama locally:
 
 ```bash
 ollama serve
-ollama pull llama3
+ollama pull gemma4:26b-a4b-it-q4_K_M
+ollama pull embeddinggemma
 ```
 
 ## CLI Usage
 
-### Option 1: Installed Console Scripts
-
-After `pip install -e .`, the package exposes console scripts:
+### Unified Command (Recommended)
 
 ```bash
 corpus --help
-corpus db --help
-corpus-secrets --help
-corpus-api-keys --help
-corpus-mcp-server --help
 ```
 
-### Option 2: Python CLI Interface
-
-The same functionality is available directly through Python modules:
+#### RAG with Metadata Filtering
 
 ```bash
-python -m cli --help
-python -m cli db --help
-python -m utils.manage_secrets --help
-python -m utils.manage_keys --help
-python -m mcp_server.server --help
-```
-
-Use the installed `corpus` command when you want the shortest form. Use `python -m ...` when you want to stay inside an explicit Python environment or script tooling.
-
-## Main Commands
-
-### Unified CLI
-
-The recommended top-level interface is:
-
-```bash
-corpus --help
-python -m cli --help
-```
-
-#### RAG
-
-```bash
+# Ingest documents (semantic markdown splitting with tag extraction)
 corpus rag ingest ./documents --collection notes
-python -m cli rag ingest ./documents --collection notes
 
+# Query with results
 corpus rag query "What is machine learning?" --collection notes
-python -m cli rag query "What is machine learning?" --collection notes
 
+# Query with tag filter
+corpus rag query "machine learning" --collection notes --tag python --tag ml
+
+# Query with section filter
+corpus rag query "algorithms" --collection notes --section "Sorting"
+
+# Interactive chat
 corpus rag chat --collection notes
-python -m cli rag chat --collection notes
 ```
 
 #### Flashcards, Summaries, Quizzes
 
 ```bash
 corpus flashcards --collection notes --count 15 --difficulty intermediate
-python -m cli flashcards --collection notes --count 15 --difficulty intermediate
-
 corpus summaries --collection notes --length medium
-python -m cli summaries --collection notes --length medium
-
 corpus quizzes --collection notes --count 10 --format markdown
-python -m cli quizzes --collection notes --count 10 --format markdown
 ```
 
-#### Video
+#### Video Processing
 
 ```bash
 corpus video transcribe ./lectures --course BIOL101 --lecture 1
-python -m cli video transcribe ./lectures --course BIOL101 --lecture 1
-
 corpus video clean transcript.md
-python -m cli video clean transcript.md
-
-corpus video augment transcript.md --auto
-python -m cli video augment transcript.md --auto
-
 corpus video pipeline ./lectures --course BIOL101 --lecture 1
-python -m cli video pipeline ./lectures --course BIOL101 --lecture 1
 ```
 
 #### Orchestrations
 
 ```bash
 corpus orchestrate study-session --collection notes --topic "databases"
-python -m cli orchestrate study-session --collection notes --topic "databases"
-
 corpus orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 3
-python -m cli orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 3
+```
 
-corpus orchestrate build-kb ./documents --collection kb
-python -m cli orchestrate build-kb ./documents --collection kb
+#### Database Management
 
-corpus orchestrate query-kb --collection kb "Explain neural networks"
-python -m cli orchestrate query-kb --collection kb "Explain neural networks"
+```bash
+corpus db list
+corpus db backup notes --output ./backups/notes.tar.gz
+corpus db restore ./backups/notes.tar.gz
 ```
 
 #### Developer Commands
 
 ```bash
 corpus dev setup
-python -m cli dev setup
-
 corpus dev test --cov
-python -m cli dev test --cov
-
 corpus dev lint
-python -m cli dev lint
-
 corpus dev fmt
-python -m cli dev fmt
-
-corpus dev build
-python -m cli dev build
-
 corpus dev clean
-python -m cli dev clean
 ```
 
-## Direct Module Entry Points
+### Code Quality & Testing
 
-If you do not want to go through the unified CLI, the direct module entry points still work:
+Before pushing to GitHub, ensure all checks pass:
 
 ```bash
+# Check and auto-fix all linting/formatting issues
+python scripts/lint_and_format.py --fix
+
+# Run full checks including tests
+python scripts/lint_and_format.py --fix --test
+
+# Check only (no fixes)
+python scripts/lint_and_format.py
+
+# See LINT_AND_FORMAT.md for full documentation
+```
+
+The script runs:
+- **Black** - Code formatting (88-char lines)
+- **isort** - Import sorting
+- **Ruff** - Fast linting (unused imports, syntax, etc.)
+- **pytest** - Unit and integration tests (optional)
+
+### Direct Module Entry Points
+
+For direct access without the unified CLI:
+
+```bash
+# RAG
 python -m tools.rag.cli ingest ./documents --collection notes
 python -m tools.rag.cli query "What is machine learning?" --collection notes
-python -m tools.rag.cli chat --collection notes
+python -m tools.rag.cli query "ml" --collection notes --tag python --tag ml
 
+# Flashcards
 python -m tools.flashcards.cli --collection notes --count 15
-python -m tools.summaries.cli --collection notes --length medium
-python -m tools.quizzes.cli --collection notes --count 10 --format json
 
+# Video
 python -m tools.video.cli transcribe ./lectures --course BIOL101 --lecture 1
-python -m tools.video.cli pipeline ./lectures --course BIOL101 --lecture 1
 
-python -m orchestrations.cli study-session --collection notes --topic "databases"
-python -m orchestrations.cli build-kb ./documents --collection kb
+# Orchestrations
+python -m orchestrations.cli lecture-pipeline ./lecture.mp4 --course CS101 --lecture 3
 ```
-
-## Legacy Console Scripts
-
-The tool-specific `corpus-*` entry points remain available, but `corpus ...` is the preferred interface:
-
-```bash
-corpus-rag ingest ./documents --collection notes
-corpus-rag query "What is machine learning?" --collection notes
-corpus-rag chat --collection notes
-
-corpus-flashcards --collection notes --count 15 --difficulty intermediate
-corpus-summaries --collection notes --length medium
-corpus-quizzes --collection notes --count 10 --format markdown
-
-corpus-video transcribe ./lectures --course BIOL101 --lecture 1
-corpus-video clean transcript.md
-corpus-video augment transcript.md --auto
-corpus-video pipeline ./lectures --course BIOL101 --lecture 1
-
-corpus-orchestrate study-session --collection notes --topic "databases"
-corpus-orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 3
-corpus-orchestrate build-kb ./documents --collection kb
-corpus-orchestrate query-kb --collection kb "Explain neural networks"
-```
-
-## Database Management
-
-```bash
-corpus db list
-python -m cli db list
-
-corpus db backup notes --output ./backups/notes.tar.gz
-python -m cli db backup notes --output ./backups/notes.tar.gz
-
-corpus db restore ./backups/notes.tar.gz
-corpus db backup-all --output-dir ./backups
-corpus db export notes --output notes.json --format json
-corpus db migrate old_collection new_collection
-```
-
-## Secrets and API Keys
-
-```bash
-# Secrets backed by the system keyring
-corpus-secrets store OPENAI_API_KEY
-python -m utils.manage_secrets store OPENAI_API_KEY
-
-corpus-secrets get OPENAI_API_KEY
-corpus-secrets list
-corpus-secrets delete OPENAI_API_KEY
-corpus-secrets migrate
-corpus-secrets validate
-
-# MCP server API keys
-corpus-api-keys generate my-agent
-python -m utils.manage_keys generate my-agent
-
-corpus-api-keys list
-corpus-api-keys revoke <key>
-corpus-api-keys test <key>
-```
-
-## MCP Server
-
-```bash
-corpus-mcp-server
-python -m mcp_server.server
-```
-
-Default CLI options:
-
-```bash
-corpus-mcp-server --host 127.0.0.1 --port 8000
-python -m mcp_server.server --host 127.0.0.1 --port 8000
-```
-
-## CLI Reference
-
-### Unified `corpus` Command
-
-| Subcommand | Description |
-|---|---|
-| `corpus rag` | RAG agent: `ingest`, `query`, `chat` |
-| `corpus flashcards` | Generate flashcards |
-| `corpus summaries` | Generate summaries |
-| `corpus quizzes` | Generate quizzes |
-| `corpus video` | Video processing: `transcribe`, `clean`, `augment`, `pipeline` |
-| `corpus orchestrate` | Workflows: `study-session`, `lecture-pipeline`, `build-kb`, `query-kb` |
-| `corpus db` | Database utilities: `list`, `backup`, `restore`, `backup-all`, `export`, `migrate` |
-| `corpus dev` | Developer utilities: `setup`, `test`, `lint`, `fmt`, `build`, `clean`, `completion` |
-
-### Python Module Equivalents
-
-| Command Family | Python Form |
-|---|---|
-| Unified CLI | `python -m cli` |
-| RAG | `python -m tools.rag.cli` |
-| Flashcards | `python -m tools.flashcards.cli` |
-| Summaries | `python -m tools.summaries.cli` |
-| Quizzes | `python -m tools.quizzes.cli` |
-| Video | `python -m tools.video.cli` |
-| Orchestrations | `python -m orchestrations.cli` |
-| Database | `python -m db.management` |
-| Secrets | `python -m utils.manage_secrets` |
-| API Keys | `python -m utils.manage_keys` |
-| MCP Server | `python -m mcp_server.server` |
 
 ## Configuration
 
-Configuration is loaded from YAML and can be overridden by environment variables prefixed with `CC_`.
-
-Load order:
+Configuration is loaded in order with later values overriding earlier ones:
 
 1. Base config at `configs/base.yaml`
-2. Tool config file, for example `my-config.yaml`
-3. Environment overrides such as `CC_LLM_MODEL=mistral`
+2. Tool config file (e.g., `my-config.yaml`)
+3. Environment overrides (e.g., `CC_LLM_MODEL=mistral`)
 
-Example:
+### RAG Configuration
 
 ```yaml
-llm:
-  backend: ollama
-  endpoint: http://localhost:11434
-  model: llama3
-  timeout_seconds: 120.0
-  temperature: 0.7
+rag:
+  # Child chunking for vector search
+  chunking:
+    child_chunk_size: 400        # Size of child chunks
+    child_chunk_overlap: 50      # Overlap between chunks
+  
+  # Retrieval settings
+  retrieval:
+    top_k_semantic: 25           # Initial semantic search results
+    top_k_final: 10              # Final results after reranking
+  
+  # Parent document storage (for parent-child retrieval)
+  parent_store:
+    type: local_file             # local_file or in_memory
+    path: ./parent_store         # Path to parent document store
+  
+  collection_prefix: rag         # Prefix for collection names
+```
 
-embedding:
-  backend: ollama
-  model: nomic-embed-text
+### Database Configuration
 
+**Persistent mode (local, no Docker):**
+```yaml
 database:
   backend: chromadb
   mode: persistent
   persist_directory: ./chroma_store
-
-paths:
-  vault: ./vault
-  scratch_dir: ./scratch
-  output_dir: ./output
 ```
 
-For Docker or shared-server setups, copy `configs/docker.yaml.example` and switch the database section to `mode: http`.
+**HTTP mode (Docker ChromaDB):**
+```yaml
+database:
+  backend: chromadb
+  mode: http
+  host: localhost
+  port: 8000
+```
 
 ## Project Structure
 
@@ -365,67 +295,155 @@ For Docker or shared-server setups, copy `configs/docker.yaml.example` and switc
 CorpusCallosum/
 ├── src/
 │   ├── cli.py                    # Unified CLI entry point
-│   ├── cli_dev.py                # Developer command group
 │   ├── config/                   # Configuration management
-│   ├── db/                       # Database layer and management CLI
-│   ├── llm/                      # LLM backend abstraction
+│   ├── db/                       # Database layer
+│   ├── llm/                      # LLM backend abstraction (Ollama, OpenAI, Anthropic)
 │   ├── mcp_server/               # MCP server implementation
-│   ├── orchestrations/           # Workflow orchestration CLI
-│   ├── tools/                    # RAG, flashcards, summaries, quizzes, video
-│   └── utils/                    # Shared utilities, secrets, auth, security
+│   ├── orchestrations/           # Workflow orchestration
+│   ├── tools/
+│   │   ├── rag/                  # RAG with parent-child retrieval
+│   │   │   ├── ingest.py         # Document ingestion
+│   │   │   ├── retriever.py      # Parent document retriever
+│   │   │   ├── markdown_parser.py # Semantic markdown splitting
+│   │   │   ├── storage.py        # LocalFileStore for parents
+│   │   │   └── cli.py            # RAG CLI with tag/section filtering
+│   │   ├── flashcards/
+│   │   ├── summaries/
+│   │   ├── quizzes/
+│   │   └── video/
+│   └── utils/                    # Shared utilities, secrets, auth
 ├── configs/
-│   └── corpus_callosum.yaml      # Example configuration
-├── docs/
+│   ├── base.yaml                 # Base configuration
+│   ├── base.example.yaml         # Example with all options
+│   └── docker.yaml.example       # Docker deployment example
+├── docker-compose.yml            # Local ChromaDB Docker setup
+├── scripts/
+│   ├── lint_and_format.py        # Automated code quality checks
+│   └── lint-and-format.sh        # Bash version
 ├── tests/
+│   ├── unit/
+│   │   ├── test_rag_components.py     # RAG internals
+│   │   ├── test_rag_cli.py            # RAG CLI commands
+│   │   ├── test_tool_generators.py    # Generator configs
+│   │   └── ...                        # Other unit tests
+│   ├── integration/
+│   │   ├── test_rag_integration.py    # Parent-child RAG tests
+│   │   └── ...                        # Other integration tests
+│   └── security/                      # Security and validation tests
+├── docs/
+│   ├── LINT_AND_FORMAT.md        # Code quality guide (NEW)
+│   ├── plans/plan_2.md           # Audit and upgrade plan
+│   └── ...                       # Other documentation
 └── pyproject.toml
 ```
 
 ## Development
 
-Use either the installed script or the Python form:
+### Code Quality Checks
 
+**Before every commit/push:**
 ```bash
-corpus dev setup
-corpus dev test --cov
-corpus dev lint
-corpus dev fmt
-corpus dev build
-corpus dev clean
-
-python -m cli dev setup
-python -m cli dev test --cov
-python -m cli dev lint
-python -m cli dev fmt
+python scripts/lint_and_format.py --fix --test
 ```
 
-Underlying tools:
+**Without auto-fix:**
+```bash
+python scripts/lint_and_format.py
+```
+
+See [LINT_AND_FORMAT.md](LINT_AND_FORMAT.md) for detailed guide including:
+- IDE setup (VS Code, PyCharm, vim)
+- Pre-commit hooks
+- GitHub Actions integration
+- Common issues and fixes
+
+### Running Tests
+
+```bash
+# All tests
+pytest tests/
+
+# With coverage report
+pytest tests/ --cov=src
+
+# RAG integration tests only
+pytest tests/integration/test_rag_integration.py -v
+
+# Specific test class
+pytest tests/unit/test_rag_components.py::TestMarkdownParser -v
+```
+
+### Installing Development Tools
 
 ```bash
 pip install -e ".[dev]"
-pytest tests/
-pytest --cov=src tests/
-python -m ruff check src tests
-python -m mypy src
-python -m ruff format src tests
+
+# Or manually install linting tools
+pip install black isort ruff pytest mypy
 ```
 
-## Documentation
+## RAG Pipeline Details
 
-- [Architecture Overview](docs/architecture.md)
-- [Tool Usage](docs/tools-usage.md)
-- [Configuration Guide](docs/configuration.md)
-- [MCP Integration](docs/mcp-integration.md)
-- [Docker Deployment](docs/docker-deployment.md)
-- [Troubleshooting](docs/troubleshooting.md)
+### Document Ingestion
+
+1. **Semantic Markdown Splitting**: Documents split by headers (# ## ###) preserving semantic structure
+2. **Tag Extraction**: Automatically extracts `#tags` from bulleted lists
+3. **Parent Storage**: Full sections stored in LocalFileStore for context
+4. **Child Chunking**: Parents recursively split into 400-char children with 50-char overlap
+5. **Embedding**: Children embedded and stored in ChromaDB with parent linkage
+
+### Retrieval (Parent-Child Architecture)
+
+1. **Semantic Search**: Query embedded and matched against child chunks
+2. **Parent Lookup**: Parent document ID extracted from child metadata
+3. **Parent Retrieval**: Full parent document retrieved from LocalFileStore
+4. **Deduplication**: Multiple children from same parent return only one instance
+5. **Context**: Full parent returned to LLM, not isolated chunks
+
+### Metadata Filtering
+
+Query results can be filtered by:
+- **Tags**: `--tag python --tag ml` filters documents with those tags
+- **Sections**: `--section "Sorting"` filters by section header
 
 ## Contributing
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes with tests.
-4. Run `corpus dev lint` and `corpus dev test`.
-5. Open a pull request.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Run code quality checks: `python scripts/lint_and_format.py --fix --test`
+5. Verify all tests pass
+6. Open a pull request
 
 ## License
 
 This project is licensed under the GNU GENERAL PUBLIC LICENSE.
+
+## Troubleshooting
+
+See [LINT_AND_FORMAT.md](LINT_AND_FORMAT.md) for code quality issues and [docs/troubleshooting.md](docs/troubleshooting.md) for runtime issues.
+
+### Common Issues
+
+**GitHub Actions Failures**: Run `python scripts/lint_and_format.py --fix` before pushing
+
+**ChromaDB Connection**: Ensure `docker-compose up -d` is running if using `database.mode: http`
+
+**Import Errors**: Run `pip install -e .` after cloning
+
+**Ollama Not Found**: Install from [ollama.ai](https://ollama.ai) and run `ollama serve`
+
+## Changelog
+
+### Latest Release
+- ✅ Parent-child RAG retrieval with semantic markdown splitting
+- ✅ Metadata filtering by tags and sections
+- ✅ Comprehensive test suite (120+ new tests)
+- ✅ Automated linting and formatting system
+- ✅ Fixed generator placeholder queries
+- ✅ Fixed MCP server attribute errors
+- ✅ Docker ChromaDB support
+- ✅ Cross-platform path handling
+- ✅ Removed redundant CLI entry points
+
+See [docs/plans/plan_2.md](docs/plans/plan_2.md) for complete audit and upgrade details.
