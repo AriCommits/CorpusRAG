@@ -1,9 +1,12 @@
 """Secure environment variable and secrets management."""
 
 import json
+import logging
 import os
 import warnings
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 try:
     import keyring
@@ -28,7 +31,7 @@ except ImportError:
 class SecretManager:
     """Secure management of secrets and environment variables."""
 
-    def __init__(self, app_name: str = "corpus-callosum"):
+    def __init__(self, app_name: str = "corpusrag"):
         """Initialize secret manager.
 
         Args:
@@ -81,8 +84,11 @@ class SecretManager:
             try:
                 keyring.set_password(self.app_name, key, value)
                 return True
-            except Exception:
-                pass  # Fall back to local storage
+            except Exception as e:
+                logger.warning(
+                    f"Failed to store secret '{key}' in system keyring: {e}. "
+                    f"Falling back to local encrypted storage."
+                )
 
         # Fall back to encrypted local storage
         return self._store_local_secret(key, value)
@@ -106,8 +112,11 @@ class SecretManager:
                 value = keyring.get_password(self.app_name, key)
                 if value is not None:
                     return value
-            except Exception:
-                pass  # Fall back to local storage
+            except Exception as e:
+                logger.warning(
+                    f"Failed to retrieve secret '{key}' from system keyring: {e}. "
+                    f"Falling back to local encrypted storage."
+                )
 
         # Try encrypted local storage
         value = self._get_local_secret(key)

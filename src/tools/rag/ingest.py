@@ -72,7 +72,16 @@ class RAGIngester:
         Raises:
             ValueError: If file size exceeds limit
         """
-        source = Path(path).expanduser().resolve()
+        source_original = Path(path).expanduser()
+
+        # Check for symlinks to prevent path traversal attacks
+        if source_original.is_symlink():
+            raise ValueError(
+                f"Symlinks are not allowed for security reasons: {source_original}. "
+                "Please use the actual file path instead."
+            )
+
+        source = source_original.resolve()
         if not source.exists():
             raise FileNotFoundError(f"Path does not exist: {source}")
 

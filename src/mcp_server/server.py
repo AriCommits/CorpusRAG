@@ -141,18 +141,20 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         """
         # Validate user input
         validator = get_validator()
-        query_validation = validator.validate_query(query)
-        if not query_validation.is_valid:
+        try:
+            validated_query = validator.validate_query(query)
+            validated_top_k = validator.validate_top_k(top_k, min_val=1, max_val=100)
+        except SecurityError as e:
             return {
                 "status": "error",
-                "error": f"Query validation failed: {query_validation.message}",
+                "error": f"Validation failed: {str(e)}",
             }
 
         rag_config = RAGConfig.from_dict(config.to_dict())
-        rag_config.retrieval.top_k_final = top_k
+        rag_config.retrieval.top_k_final = validated_top_k
 
         agent = RAGAgent(rag_config, db)
-        response = agent.query(query, collection, top_k=top_k)
+        response = agent.query(validated_query, collection, top_k=validated_top_k)
 
         return {
             "status": "success",
@@ -181,18 +183,20 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         """
         # Validate user input
         validator = get_validator()
-        query_validation = validator.validate_query(query)
-        if not query_validation.is_valid:
+        try:
+            validated_query = validator.validate_query(query)
+            validated_top_k = validator.validate_top_k(top_k, min_val=1, max_val=100)
+        except SecurityError as e:
             return {
                 "status": "error",
-                "error": f"Query validation failed: {query_validation.message}",
+                "error": f"Validation failed: {str(e)}",
             }
 
         rag_config = RAGConfig.from_dict(config.to_dict())
-        rag_config.retrieval.top_k_semantic = top_k
+        rag_config.retrieval.top_k_semantic = validated_top_k
 
         retriever = RAGRetriever(rag_config, db)
-        chunks = retriever.retrieve(collection, query, top_k=top_k)
+        chunks = retriever.retrieve(collection, validated_query, top_k=validated_top_k)
 
         return {
             "status": "success",
@@ -232,11 +236,12 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         """
         # Validate collection name
         validator = get_validator()
-        collection_validation = validator.validate_collection_name(collection)
-        if not collection_validation.is_valid:
+        try:
+            validated_collection = validator.validate_collection_name(collection)
+        except SecurityError as e:
             return {
                 "status": "error",
-                "error": f"Collection validation failed: {collection_validation.message}",
+                "error": f"Validation failed: {str(e)}",
             }
 
         flashcard_config = FlashcardConfig.from_dict(config.to_dict())
@@ -245,7 +250,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         flashcard_config.format = output_format
 
         generator = FlashcardGenerator(flashcard_config, db)
-        flashcards = generator.generate(collection)
+        flashcards = generator.generate(validated_collection)
 
         return {
             "status": "success",
@@ -281,20 +286,16 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         """
         # Validate collection name and topic
         validator = get_validator()
-        collection_validation = validator.validate_collection_name(collection)
-        if not collection_validation.is_valid:
+        try:
+            validated_collection = validator.validate_collection_name(collection)
+            validated_topic = topic
+            if topic:
+                validated_topic = validator.validate_query(topic)
+        except SecurityError as e:
             return {
                 "status": "error",
-                "error": f"Collection validation failed: {collection_validation.message}",
+                "error": f"Validation failed: {str(e)}",
             }
-
-        if topic:
-            topic_validation = validator.validate_query(topic)
-            if not topic_validation.is_valid:
-                return {
-                    "status": "error",
-                    "error": f"Topic validation failed: {topic_validation.message}",
-                }
 
         summary_config = SummaryConfig.from_dict(config.to_dict())
         summary_config.summary_length = length
@@ -302,7 +303,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         summary_config.include_outline = include_outline
 
         generator = SummaryGenerator(summary_config, db)
-        summary = generator.generate(collection, topic)
+        summary = generator.generate(validated_collection, validated_topic)
 
         return {
             "status": "success",
@@ -336,11 +337,12 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         """
         # Validate collection name
         validator = get_validator()
-        collection_validation = validator.validate_collection_name(collection)
-        if not collection_validation.is_valid:
+        try:
+            validated_collection = validator.validate_collection_name(collection)
+        except SecurityError as e:
             return {
                 "status": "error",
-                "error": f"Collection validation failed: {collection_validation.message}",
+                "error": f"Validation failed: {str(e)}",
             }
 
         quiz_config = QuizConfig.from_dict(config.to_dict())
@@ -350,7 +352,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         quiz_config.format = output_format
 
         generator = QuizGenerator(quiz_config, db)
-        quiz = generator.generate(collection)
+        quiz = generator.generate(validated_collection)
 
         return {
             "status": "success",
@@ -488,9 +490,17 @@ This will create a comprehensive study resource from the lecture.
     # Add security middleware and headers
     if hasattr(mcp, "app") and isinstance(mcp.app, FastAPI):
         # Add CORS middleware with security
+        # Only allow explicit localhost origins to prevent port enumeration attacks
         mcp.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["https://localhost:*"],  # Only allow secure origins
+            allow_origins=[
+                "http://localhost:3000",
+                "http://localhost:8000",
+                "http://localhost:8888",
+                "https://localhost:3000",
+                "https://localhost:8000",
+                "https://localhost:8888",
+            ],
             allow_credentials=True,
             allow_methods=["GET", "POST"],
             allow_headers=["Authorization", "X-API-Key", "Content-Type"],

@@ -1,7 +1,9 @@
 """Authentication and authorization module for MCP server."""
 
 import json
+import os
 import secrets
+import stat
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -63,7 +65,7 @@ class APIKeyManager:
                 pass
 
     def _save_keys(self) -> None:
-        """Save API keys to persistent storage."""
+        """Save API keys to persistent storage with restricted permissions."""
         if not self.config_file:
             return
 
@@ -71,6 +73,8 @@ class APIKeyManager:
             self.config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(self.config_file, "w") as f:
                 json.dump(self.api_keys, f, indent=2, default=str)
+            # Restrict file permissions to owner only (0o600)
+            os.chmod(self.config_file, stat.S_IRUSR | stat.S_IWUSR)
         except Exception:
             # Fail silently - don't break functionality if we can't persist
             pass

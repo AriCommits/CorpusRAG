@@ -1,15 +1,46 @@
 """CLI interface for RAG tool."""
 
+import re
 from pathlib import Path
 
 import click
 
 from cli_common import load_cli_db
+from utils.security import SecurityError
 
 from .agent import RAGAgent
 from .config import RAGConfig
 from .ingest import RAGIngester
 from .tui import RAGApp
+
+
+def _validate_filter_value(value: str, field_name: str) -> str:
+    """Validate a metadata filter value for safe ChromaDB usage.
+
+    Args:
+        value: The filter value to validate
+        field_name: Name of the field being filtered (for error messages)
+
+    Returns:
+        The validated value
+
+    Raises:
+        ValueError: If the value is invalid
+    """
+    if not value or not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a non-empty string")
+
+    if len(value) > 256:
+        raise ValueError(f"{field_name} is too long (max 256 characters)")
+
+    # Reject values containing operators or special ChromaDB syntax
+    if any(char in value for char in ["$", "{", "}", "[", "]", "|"]):
+        raise ValueError(
+            f"{field_name} contains invalid characters. "
+            "Only alphanumeric characters, spaces, hyphens, and underscores allowed"
+        )
+
+    return value
 
 
 @click.group()
@@ -63,19 +94,37 @@ def query(
     if tag or section:
         tag_filter = None
         if tag:
-            if len(tag) == 1:
-                tag_filter = {"tags": {"$contains": tag[0]}}
+            # Validate all tag values for safe ChromaDB usage
+            try:
+                validated_tags = [_validate_filter_value(t, f"tag '{t}'") for t in tag]
+            except ValueError as e:
+                click.echo(f"Error: {e}", err=True)
+                return
+
+            if len(validated_tags) == 1:
+                tag_filter = {"tags": {"$contains": validated_tags[0]}}
             else:
-                tag_filter = {"$or": [{"tags": {"$contains": t}} for t in tag]}
+                tag_filter = {
+                    "$or": [{"tags": {"$contains": t}} for t in validated_tags]
+                }
 
         section_filter = None
         if section:
+            # Validate all section values for safe ChromaDB usage
+            try:
+                validated_sections = [
+                    _validate_filter_value(s, f"section '{s}'") for s in section
+                ]
+            except ValueError as e:
+                click.echo(f"Error: {e}", err=True)
+                return
+
             # Filter for documents with specific section headers
             # Only use keys that actually exist in the metadata
             section_filter = {
                 "$or": [
-                    {"Document Title": {"$in": list(section)}},
-                    {"Subsection": {"$in": list(section)}},
+                    {"Document Title": {"$in": validated_sections}},
+                    {"Subsection": {"$in": validated_sections}},
                 ]
             }
 
