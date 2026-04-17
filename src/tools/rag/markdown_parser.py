@@ -76,11 +76,12 @@ def split_markdown_semantic(text: str) -> list[Document]:
 
     # Enrich metadata with tags
     for doc in docs:
-        # Add global tags to all documents
-        doc.metadata["tags"] = global_tags
-        # Ensure metadata dict exists and is populated
+        # Ensure metadata dict exists
         if not doc.metadata:
             doc.metadata = {}
+        # Add global tags only if tags exist (ChromaDB rejects empty lists)
+        if global_tags:
+            doc.metadata["tags"] = global_tags
 
     return docs
 
