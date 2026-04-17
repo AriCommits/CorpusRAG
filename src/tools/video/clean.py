@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+from llm import create_backend
+
 from .config import VideoConfig
 
 
@@ -15,6 +17,8 @@ class TranscriptCleaner:
             config: Video configuration
         """
         self.config = config
+        # Initialize LLM backend for cleaning
+        self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def clean(self, transcript: str) -> str:
         """Clean a raw transcript using LLM.
@@ -25,25 +29,13 @@ class TranscriptCleaner:
         Returns:
             Cleaned transcript text
         """
-        try:
-            import ollama
-        except ImportError:
-            raise ImportError(
-                "ollama is required for transcript cleaning. Install with: pip install ollama"
-            )
-
         # Format the prompt with the transcript
         prompt = self.config.clean_prompt.format(transcript=transcript)
 
-        # Call Ollama
-        client = ollama.Client(host=self.config.clean_ollama_host)
-        response = client.chat(
-            model=self.config.clean_model,
-            messages=[{"role": "user", "content": prompt}],
-            options={"num_predict": -1},  # no token limit
-        )
+        # Call LLM backend (supports any configured backend: Ollama, OpenAI, etc.)
+        response = self.llm_backend.complete(prompt, model=self.config.clean_model)
 
-        return response["message"]["content"]
+        return response.text
 
     def clean_file(self, input_path: Path, output_path: Path | None = None) -> Path:
         """Clean a transcript file.

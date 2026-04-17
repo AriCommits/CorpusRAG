@@ -1,0 +1,200 @@
+# CorpusCallosum Example Configuration File
+# Copy this file to my-config.yaml and modify as needed
+
+# LLM Configuration (for text generation, cleaning, augmentation, etc.)
+llm:
+  # Ollama backend settings
+  backend: ollama                    # Options: ollama, openai, anthropic, etc.
+  endpoint: http://localhost:11434   # URL of the LLM server
+  model: gemma4:26b-a4b-it-q4_K_M    # Model name to use
+  timeout_seconds: 120.0             # Request timeout in seconds
+  temperature: 0.7                   # Sampling temperature (0.0-2.0)
+  max_tokens: null                   # Maximum tokens to generate (null = model default)
+  api_key: null                      # API key if required by backend
+  fallback_models: []                # List of fallback models if primary fails
+
+# Embedding Configuration (for vector search and retrieval)
+embedding:
+  backend: ollama                    # Options: ollama, sentence-transformers
+  model: embeddinggemma              # Embedding model name
+  dimensions: null                   # Embedding dimensions (null = model default)
+
+# Database Configuration (vector storage)
+database:
+  backend: chromadb                  # Currently only chromadb is supported
+  mode: persistent                   # Options: persistent (local), http (remote server)
+  host: localhost                    # Database host (for http mode)
+  port: 8000                         # Database port (for http mode)
+  persist_directory: ./chroma_store  # Local storage directory (for persistent mode)
+
+# Filesystem Paths
+paths:
+  vault: ./vault                     # Directory for source documents
+  scratch_dir: ./scratch             # Temporary processing directory
+  output_dir: ./output               # Directory for final outputs
+
+# RAG (Retrieval-Augmented Generation) Settings
+rag:
+  chunking:
+    child_chunk_size: 400            # Size of child chunks for vector search
+    child_chunk_overlap: 50          # Overlap between child chunks
+  retrieval:
+    top_k_semantic: 25               # Number of results from semantic search
+    top_k_bm25: 25                   # Number of results from BM25 search
+    top_k_final: 10                  # Final number of results after reranking
+    rrf_k: 80                        # Reciprocal Rank Fusion constant
+  parent_store:
+    type: local_file                 # Storage type for parent documents (local_file or in_memory)
+    path: ./parent_store             # Path to local parent document store
+  collection_prefix: rag             # Prefix for RAG collection names
+
+# Video Processing Configuration
+video:
+  # Transcription settings (using faster-whisper)
+  whisper_model: "medium.en"         # Whisper model size (tiny.en, base.en, small.en, medium.en, large-v2, etc.)
+  whisper_device: "cpu"              # Options: cuda, cpu
+  whisper_compute_type: "int8"       # Options: float16, float32, int8 (int8 recommended for CPU)
+  whisper_language: "en"             # Language code (e.g., "en", "es", "fr") or None for auto-detect
+  models_dir: ./models/whisper       # Directory to cache Whisper models
+  
+  # Cleaning settings (LLM-based transcript cleanup)
+  clean_model: "gemma4:26b-a4b-it-q4_K_M"  # LLM model to use for cleaning
+  clean_ollama_host: http://localhost:11434 # Ollama host for cleaning
+  clean_prompt: |
+    Clean this lecture transcript into structured markdown notes.
+    - Remove filler words, false starts, and repetition
+    - Preserve all specific facts, definitions, numbers, and examples exactly
+    - Use ## headers to separate distinct topics as they appear
+    - Preserve the segment markers (e.g. ## Segment 1: filename) exactly as they are
+    - Do not summarize away any detail — only remove noise
+  
+  # Output settings
+  output_format: markdown            # Options: markdown, text, json
+  include_timestamps: false          # Whether to include timestamps in transcript
+  collection_prefix: videos          # Prefix for video collection names in database
+  
+  # Supported video file extensions
+  supported_extensions:
+    - .mp4
+    - .mkv
+    - .mov
+    - .avi
+    - .webm
+    - .m4v
+    - .zoom
+
+# Summaries Configuration
+summaries:
+  # Length options: short, medium, long
+  summary_length: medium             # Default summary length
+  
+  # LLM settings for summarization (can override global llm)
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.3                 # Lower temperature for more focused summaries
+    max_tokens: 500
+    
+  # Prompt templates
+  prompt_template: |
+    Generate a {length} summary of the following text:
+    {text}
+    
+    Summary should be concise and capture the key points.
+
+# Flashcards Configuration
+flashcards:
+  # Difficulty options: beginner, intermediate, advanced
+  difficulty: intermediate           # Default difficulty level
+  count: 15                          # Default number of flashcards to generate
+  
+  # LLM settings for flashcard generation
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.5
+    
+  # Format options: markdown, json, csv
+  format: markdown                   # Output format for flashcards
+  
+  # Prompt template
+  prompt_template: |
+    Generate {count} flashcards at {difficulty} difficulty level from the following text:
+    {text}
+    
+    Each flashcard should have a clear question and concise answer.
+    Format as JSON: [{{"front": "question", "back": "answer"}}]
+
+# Quizzes Configuration
+quizzes:
+  count: 10                          # Default number of quiz questions
+  format: markdown                   # Options: markdown, json, csv
+  difficulty: intermediate           # Options: beginner, intermediate, advanced
+  
+  # LLM settings for quiz generation
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.4
+    
+  # Question types: multiple_choice, true_false, short_answer, mixed
+  question_types: [multiple_choice, true_false, short_answer]
+  
+  # Prompt template
+  prompt_template: |
+    Generate a quiz with {count} questions at {difficulty} difficulty level.
+    Include a mix of question types: {question_types}.
+    Base the questions on the following text:
+    {text}
+    
+    Format as JSON array with objects containing:
+    - "question": the question text
+    - "options": array of options (for multiple choice)
+    - "correct_answer": the correct answer
+    - "explanation": brief explanation of why answer is correct
+
+# Orchestrations Configuration (workflows)
+orchestrations:
+  # Default settings for workflow orchestrations
+  default_collection: notes          # Default collection to use
+  
+  # Lecture pipeline settings
+  lecture_pipeline:
+    # These settings can be overridden per pipeline run
+    generate_flashcards: true        # Whether to generate flashcards after transcription
+    flashcard_count: 20
+    generate_quiz: true              # Whether to generate quiz after transcription
+    quiz_count: 15
+    generate_summary: true           # Whether to generate summary after transcription
+    summary_length: medium
+
+# Developer Tools Configuration
+dev:
+  # Test coverage settings
+  coverage_threshold: 80             # Minimum percentage for coverage check
+  
+  # Linting settings
+  line_length: 88                    # Maximum line length for linting
+  
+  # Formatting settings
+  # (uses black/formatter configurations from pyproject.toml)
+
+# Monitoring and Telemetry (optional)
+monitoring:
+  enabled: false                     # Enable anonymous usage tracking
+  # If enabled, collects basic usage statistics to improve the tool
+
+# Authentication (for API keys, etc.)
+auth:
+  # Settings for external service authentication
+  # Would be used for services requiring API keys beyond Ollama/local
+
+# Tools Configuration (general tool behavior)
+tools:
+  # Global settings that affect multiple tools
+  parallel_processing: true          # Enable parallel processing where applicable
+  max_workers: 4                     # Maximum number of worker processes
+  
+  # Cache settings
+  enable_cache: true                 # Enable caching of intermediate results
+  cache_directory: ./cache           # Directory for cached files
+  
+  # Logging
+  log_level: INFO                    # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL

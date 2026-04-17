@@ -5,6 +5,7 @@ import re
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
+from tools.rag.embeddings import EmbeddingClient
 
 from .config import FlashcardConfig
 
@@ -52,19 +53,23 @@ class FlashcardGenerator:
         # Retrieve documents from the collection
         try:
             # Get a sample of documents from the collection
-            # Using a simple query to get representative content
+            # Using semantic search with a general query embedding
+            embedder = EmbeddingClient(self.config)
+            query_text = "main concepts key ideas important information"
+            query_embedding = embedder.embed_query(query_text)
+
             sample_docs = self.db.query(
                 collection=full_collection,
-                query="main concepts key ideas important information",
-                top_k=10,
+                query_embedding=query_embedding,
+                n_results=10,
             )
 
-            if not sample_docs:
+            if not sample_docs or not sample_docs.get("documents"):
                 logger.warning(f"No documents found in collection '{full_collection}'")
                 return self._generate_placeholder_flashcards(count, difficulty, collection)
 
             # Extract document texts
-            document_texts = [doc.text for doc in sample_docs]
+            document_texts = sample_docs.get("documents", [[]])[0]
 
             # Generate flashcards using LLM
             flashcards = self._generate_with_llm(

@@ -7,6 +7,7 @@ from typing import Any
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
+from tools.rag.embeddings import EmbeddingClient
 
 from .config import QuizConfig
 
@@ -111,13 +112,19 @@ class QuizGenerator:
             List of document texts
         """
         try:
-            # Placeholder implementation - same issue as summary generator
-            # TODO: Implement proper document sampling
-            return [
-                f"Sample quiz content from {full_collection}",
-                f"Another quiz-relevant document from {full_collection}",
-                "Additional content for quiz generation",
-            ]
+            # Use semantic search to get relevant documents
+            embedder = EmbeddingClient(self.config)
+            query_text = "key concepts topics main ideas"
+            query_embedding = embedder.embed_query(query_text)
+
+            results = self.db.query(
+                collection=full_collection,
+                query_embedding=query_embedding,
+                n_results=sample_size,
+            )
+
+            documents = results.get("documents", [[]])[0]
+            return documents if documents else []
 
         except Exception as e:
             logger.error(f"Error getting documents: {e}")

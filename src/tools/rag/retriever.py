@@ -86,53 +86,11 @@ class RAGRetriever:
 
         return chunks
 
-    def bm25_search(
-        self, query: str, collection: str, top_k: int | None = None
-    ) -> list[RetrievedChunk]:
-        """Perform BM25 keyword search.
-
-        Args:
-            query: Search query
-            collection: Collection name
-            top_k: Number of results (uses config default if None)
-
-        Returns:
-            List of retrieved chunks
-        """
-        # For now, return empty list (BM25 implementation pending)
-        # Full implementation would:
-        # 1. Tokenize the query
-        # 2. Retrieve all documents from collection
-        # 3. Build BM25 index
-        # 4. Rank documents and return top-k
-
-        return []
-
-    def hybrid_search(
-        self, query: str, collection: str, top_k: int | None = None
-    ) -> list[RetrievedChunk]:
-        """Perform hybrid search combining semantic and BM25.
-
-        Args:
-            query: Search query
-            collection: Collection name
-            top_k: Number of results (uses config default if None)
-
-        Returns:
-            List of retrieved chunks with combined ranking
-        """
-        # For now, just use semantic search
-        # Full implementation would:
-        # 1. Run both semantic and BM25 search
-        # 2. Combine results using Reciprocal Rank Fusion (RRF)
-        # 3. Return top-k results
-
-        return self.semantic_search(query, collection, top_k)
 
     def retrieve(
         self, query: str, collection: str, top_k: int | None = None
     ) -> list[RetrievedChunk]:
-        """Main retrieval method using configured strategy.
+        """Main retrieval method using semantic search.
 
         Args:
             query: Search query
@@ -142,4 +100,4 @@ class RAGRetriever:
         Returns:
             List of retrieved chunks
         """
-        return self.hybrid_search(query, collection, top_k)
+        return self.semantic_search(query, collection, top_k)

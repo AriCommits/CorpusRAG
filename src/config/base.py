@@ -12,7 +12,7 @@ class LLMConfig:
 
     # Legacy fields for compatibility
     endpoint: str = "http://localhost:11434"
-    model: str = "llama3"
+    model: str = "gemma4:26b-a4b-it-q4_K_M"
     timeout_seconds: float = 120.0
     temperature: float = 0.7
     max_tokens: int | None = None
@@ -41,7 +41,7 @@ class EmbeddingConfig:
     """Shared embedding configuration."""
 
     backend: str = "ollama"  # ollama | sentence-transformers
-    model: str = "nomic-embed-text"
+    model: str = "embeddinggemma"
     dimensions: int | None = None
 
 

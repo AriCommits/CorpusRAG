@@ -69,7 +69,7 @@ Transcript:
             whisper_language=video_data.get("whisper_language", "en"),
             models_dir=video_data.get("models_dir", str(Path.home() / "models" / "whisper")),
             clean_model=video_data.get("clean_model", "qwen3:8b"),
-            clean_ollama_host=video_data.get("clean_ollama_host", "http://localhost:11434"),
+            clean_ollama_host=base_config.llm.endpoint,
             clean_prompt=video_data.get(
                 "clean_prompt", cls.__dataclass_fields__["clean_prompt"].default
             ),

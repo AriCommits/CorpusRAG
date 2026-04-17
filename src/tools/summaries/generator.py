@@ -5,6 +5,7 @@ from typing import Any
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
+from tools.rag.embeddings import EmbeddingClient
 
 from .config import SummaryConfig
 
@@ -101,23 +102,25 @@ class SummaryGenerator:
             List of document texts
         """
         try:
-            # For now, use a simple approach - get all documents and sample
-            # In a real implementation, you'd want smarter sampling
+            # Use semantic search to get relevant documents
+            embedder = EmbeddingClient(self.config)
 
-            # Get collection object to access documents directly
-            self.db.get_collection(full_collection)
+            # Use topic if provided, otherwise use general query
+            if topic:
+                query_text = topic
+            else:
+                query_text = "overview summary main points key concepts"
 
-            # This is a simplified approach - in practice you'd implement
-            # better document sampling or use the collection's get() method
-            # with limit and offset for pagination
+            query_embedding = embedder.embed_query(query_text)
 
-            # For now, return placeholder approach
-            # TODO: Implement proper document sampling based on the actual database backend
-            return [
-                f"Sample document from {full_collection}",
-                f"Another sample document from {full_collection}",
-                f"Topic-related content for {topic or 'general content'}",
-            ]
+            results = self.db.query(
+                collection=full_collection,
+                query_embedding=query_embedding,
+                n_results=sample_size,
+            )
+
+            documents = results.get("documents", [[]])[0]
+            return documents if documents else []
 
         except Exception as e:
             logger.error(f"Error getting documents: {e}")

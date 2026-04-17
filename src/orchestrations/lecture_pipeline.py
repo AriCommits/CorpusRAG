@@ -83,7 +83,9 @@ class LecturePipelineOrchestrator:
 
         # Step 3: Ingest into RAG
         # Save transcript to temp file for ingestion
-        temp_transcript = Path(f"/tmp/{collection_name}_transcript.md")
+        scratch_dir = self.video_config.paths.scratch_dir
+        scratch_dir.mkdir(parents=True, exist_ok=True)
+        temp_transcript = scratch_dir / f"{collection_name}_transcript.md"
         temp_transcript.write_text(transcript)
 
         ingester = RAGIngester(self.rag_config, self.db)
@@ -106,7 +108,7 @@ class LecturePipelineOrchestrator:
             "lecture_num": lecture_num,
             "collection": collection_name,
             "transcript": transcript,
-            "chunks_indexed": ingest_result.chunks_created,
+            "chunks_indexed": ingest_result.chunks_indexed,
             "summary": summary,
             "flashcards": flashcards,
             "quiz": quiz,

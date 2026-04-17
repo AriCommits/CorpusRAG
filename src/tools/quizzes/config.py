@@ -37,6 +37,11 @@ class QuizConfig(BaseConfig):
         # Get quiz-specific config
         quiz_data = data.get("quizzes", {})
 
+        # Build difficulty distribution with defaults
+        difficulty_dist = quiz_data.get("difficulty_distribution")
+        if difficulty_dist is None:
+            difficulty_dist = {"easy": 0.3, "medium": 0.5, "hard": 0.2}
+
         return cls(
             llm=base_config.llm,
             embedding=base_config.embedding,
@@ -46,9 +51,7 @@ class QuizConfig(BaseConfig):
             question_types=quiz_data.get(
                 "question_types", ["multiple_choice", "true_false", "short_answer"]
             ),
-            difficulty_distribution=quiz_data.get(
-                "difficulty_distribution", {"easy": 0.3, "medium": 0.5, "hard": 0.2}
-            ),
+            difficulty_distribution=difficulty_dist,
             format=quiz_data.get("format", "markdown"),
             include_explanations=quiz_data.get("include_explanations", True),
             collection_prefix=quiz_data.get("collection_prefix", "quizzes"),

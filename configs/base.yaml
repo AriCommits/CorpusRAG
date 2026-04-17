@@ -27,13 +27,16 @@ paths:
 
 rag:
   chunking:
-    size: 1000
-    overlap: 200
+    child_chunk_size: 400
+    child_chunk_overlap: 50
   retrieval:
     top_k_semantic: 25
     top_k_bm25: 25
     top_k_final: 10
     rrf_k: 80
+  parent_store:
+    type: local_file
+    path: ./parent_store
   collection_prefix: rag
 
 

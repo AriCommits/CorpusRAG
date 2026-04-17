@@ -151,10 +151,10 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             }
 
         rag_config = RAGConfig.from_dict(config.to_dict())
-        rag_config.retrieval.top_k = top_k
+        rag_config.retrieval.top_k_final = top_k
 
         agent = RAGAgent(rag_config, db)
-        response = agent.query(query, collection)
+        response = agent.query(query, collection, top_k=top_k)
 
         return {
             "status": "success",
@@ -191,10 +191,10 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             }
 
         rag_config = RAGConfig.from_dict(config.to_dict())
-        rag_config.retrieval.top_k = top_k
+        rag_config.retrieval.top_k_semantic = top_k
 
         retriever = RAGRetriever(rag_config, db)
-        chunks = retriever.retrieve(collection, query)
+        chunks = retriever.retrieve(collection, query, top_k=top_k)
 
         return {
             "status": "success",
@@ -383,7 +383,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             Transcription result with text and metadata
         """
         video_config = VideoConfig.from_dict(config.to_dict())
-        video_config.whisper.model = model
+        video_config.whisper_model = model
 
         transcriber = VideoTranscriber(video_config, db)
         transcript = transcriber.transcribe_file(video_path, collection)
@@ -414,7 +414,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         """
         video_config = VideoConfig.from_dict(config.to_dict())
         if model:
-            video_config.ollama_cleaning.model = model
+            video_config.clean_model = model
 
         cleaner = TranscriptCleaner(video_config)
         cleaned = cleaner.clean(transcript_text)

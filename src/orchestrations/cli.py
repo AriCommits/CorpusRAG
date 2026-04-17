@@ -6,7 +6,6 @@ import click
 
 from cli_common import load_cli_db
 from orchestrations import (
-    KnowledgeBaseOrchestrator,
     LecturePipelineOrchestrator,
     StudySessionOrchestrator,
 )
@@ -96,60 +95,6 @@ def lecture_pipeline(
         click.echo("\n" + formatted)
 
 
-@orchestrate.command()
-@click.argument("source_path", type=click.Path(exists=True))
-@click.option("--collection", "-c", required=True, help="Collection name")
-@click.option("--config", "-cfg", default="configs/base.yaml", help="Config file")
-def build_kb(source_path: str, collection: str, config: str):
-    """Build a knowledge base from documents."""
-    config_data, db = load_cli_db(config)
-
-    # Create orchestrator
-    orchestrator = KnowledgeBaseOrchestrator(config_data, db)
-
-    # Build knowledge base
-    click.echo(f"Building knowledge base '{collection}' from {source_path}...")
-    result = orchestrator.build_knowledge_base(
-        source_path=Path(source_path),
-        collection=collection,
-    )
-
-    click.echo(
-        f"✓ Processed {result['documents_processed']} documents, created {result['chunks_created']} chunks"
-    )
-
-
-@orchestrate.command()
-@click.option("--collection", "-c", required=True, help="Collection name")
-@click.argument("query")
-@click.option("--top-k", "-k", default=5, type=int, help="Number of results")
-@click.option("--no-response", is_flag=True, help="Only retrieve chunks, don't generate response")
-@click.option("--config", "-cfg", default="configs/base.yaml", help="Config file")
-def query_kb(collection: str, query: str, top_k: int, no_response: bool, config: str):
-    """Query a knowledge base."""
-    config_data, db = load_cli_db(config)
-
-    # Create orchestrator
-    orchestrator = KnowledgeBaseOrchestrator(config_data, db)
-
-    # Query
-    click.echo(f"Querying collection '{collection}'...")
-    result = orchestrator.query_knowledge_base(
-        collection=collection,
-        query=query,
-        top_k=top_k,
-        generate_response=not no_response,
-    )
-
-    # Display results
-    if "response" in result:
-        click.echo(f"\n{result['response']}")
-    else:
-        click.echo(f"\nFound {len(result['chunks'])} relevant chunks:")
-        for idx, chunk in enumerate(result["chunks"], 1):
-            click.echo(f"\n{idx}. Score: {chunk['score']:.3f}")
-            click.echo(f"   Source: {chunk['source']}")
-            click.echo(f"   {chunk['text'][:200]}...")
 
 
 def main():

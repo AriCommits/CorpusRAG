@@ -31,6 +31,11 @@ ALLOWED_CONFIG_KEYS: set[str] = {
     "logging",
     "monitoring",
     "video",
+    "summaries",
+    "flashcards",
+    "quizzes",
+    "orchestrations",
+    "dev",
 }
 
 # Dangerous patterns to scan for in YAML content

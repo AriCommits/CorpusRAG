@@ -61,8 +61,8 @@ class KnowledgeBaseOrchestrator:
         return {
             "collection": collection,
             "source": str(source_path),
-            "documents_processed": result.documents_processed,
-            "chunks_created": result.chunks_created,
+            "documents_processed": result.files_indexed,
+            "chunks_created": result.chunks_indexed,
             "status": "success",
         }
 
