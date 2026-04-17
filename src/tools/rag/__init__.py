@@ -3,7 +3,7 @@
 from .agent import RAGAgent
 from .config import RAGConfig
 from .ingest import IngestResult, RAGIngester
-from .retriever import RAGRetriever, RetrievedChunk
+from .retriever import RAGRetriever, RetrievedDocument
 
 __all__ = [
     "IngestResult",
@@ -11,5 +11,5 @@ __all__ = [
     "RAGConfig",
     "RAGIngester",
     "RAGRetriever",
-    "RetrievedChunk",
+    "RetrievedDocument",
 ]

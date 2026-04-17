@@ -49,7 +49,7 @@ def test_rag_imports():
         RAGConfig,
         RAGIngester,
         RAGRetriever,
-        RetrievedChunk,
+        RetrievedDocument,
     )
 
     assert RAGConfig is not None
@@ -57,7 +57,7 @@ def test_rag_imports():
     assert RAGRetriever is not None
     assert RAGIngester is not None
     assert IngestResult is not None
-    assert RetrievedChunk is not None
+    assert RetrievedDocument is not None
 
 
 def test_flashcards_config_creation():

@@ -1,0 +1,109 @@
+"""Local file-based storage for parent documents."""
+
+import json
+from pathlib import Path
+from typing import Any, Optional
+
+from langchain_core.documents import Document
+
+
+class LocalFileStore:
+    """Simple local file-based document store for parent documents.
+
+    Stores Document objects as JSON files, with one file per document ID.
+    """
+
+    def __init__(self, path: str | Path):
+        """Initialize file store.
+
+        Args:
+            path: Directory path for storing documents
+        """
+        self.path = Path(path)
+        self.path.mkdir(parents=True, exist_ok=True)
+
+    def mset(self, items: list[tuple[str, Document]]) -> None:
+        """Store multiple documents.
+
+        Args:
+            items: List of (id, document) tuples
+        """
+        for doc_id, doc in items:
+            self._save_document(doc_id, doc)
+
+    def mget(self, keys: list[str]) -> list[Document | None]:
+        """Retrieve multiple documents.
+
+        Args:
+            keys: List of document IDs
+
+        Returns:
+            List of documents or None for missing IDs
+        """
+        return [self._load_document(key) for key in keys]
+
+    def get(self, key: str) -> Optional[Document]:
+        """Retrieve a single document.
+
+        Args:
+            key: Document ID
+
+        Returns:
+            Document or None if not found
+        """
+        return self._load_document(key)
+
+    def put(self, key: str, value: Document) -> None:
+        """Store a single document.
+
+        Args:
+            key: Document ID
+            value: Document to store
+        """
+        self._save_document(key, value)
+
+    def delete(self, key: str) -> None:
+        """Delete a document.
+
+        Args:
+            key: Document ID
+        """
+        file_path = self.path / f"{key}.json"
+        if file_path.exists():
+            file_path.unlink()
+
+    def _save_document(self, doc_id: str, doc: Document) -> None:
+        """Save a document as JSON.
+
+        Args:
+            doc_id: Document ID (used as filename)
+            doc: Document to save
+        """
+        file_path = self.path / f"{doc_id}.json"
+        doc_data = {
+            "page_content": doc.page_content,
+            "metadata": dict(doc.metadata) if doc.metadata else {},
+        }
+        file_path.write_text(json.dumps(doc_data, indent=2, default=str), encoding="utf-8")
+
+    def _load_document(self, doc_id: str) -> Optional[Document]:
+        """Load a document from JSON.
+
+        Args:
+            doc_id: Document ID (filename without .json)
+
+        Returns:
+            Document or None if not found
+        """
+        file_path = self.path / f"{doc_id}.json"
+        if not file_path.exists():
+            return None
+
+        try:
+            data = json.loads(file_path.read_text(encoding="utf-8"))
+            return Document(
+                page_content=data.get("page_content", ""),
+                metadata=data.get("metadata", {}),
+            )
+        except Exception:
+            return None

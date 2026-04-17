@@ -1,11 +1,12 @@
 """RAG agent orchestration."""
 
+from typing import Any
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
 
 from .config import RAGConfig
-from .retriever import RAGRetriever, RetrievedChunk
+from .retriever import RAGRetriever, RetrievedDocument
 
 
 class RAGAgent:
@@ -31,8 +32,9 @@ class RAGAgent:
         top_k: int | None = None,
         stream: bool = False,
         conversation_history: list[dict[str, str]] | None = None,
+        where: dict[str, Any] | None = None,
     ) -> str:
-        """Execute RAG query.
+        """Execute RAG query with optional metadata filtering.
 
         Args:
             query: User query
@@ -40,22 +42,23 @@ class RAGAgent:
             top_k: Number of documents to retrieve
             stream: Whether to stream the response (not yet implemented)
             conversation_history: Previous conversation messages
+            where: Metadata filter dict for tags, sections, etc.
 
         Returns:
             Response text
         """
         try:
-            # Retrieve relevant chunks
-            chunks = self.retriever.retrieve(query, collection, top_k)
+            # Retrieve relevant parent documents
+            documents = self.retriever.retrieve(query, collection, top_k, where=where)
 
-            # Convert chunks to format expected by prompt template
+            # Convert documents to format expected by prompt template
             context_chunks = []
-            for chunk in chunks:
+            for doc in documents:
                 context_chunks.append(
                     {
-                        "text": chunk.text,
-                        "source": chunk.metadata.get("source_file", "unknown"),
-                        "score": chunk.score,
+                        "text": doc.text,
+                        "source": doc.metadata.get("source_file", "unknown"),
+                        "score": doc.score,
                     }
                 )
 
@@ -84,6 +87,7 @@ class RAGAgent:
         collection: str,
         session_id: str | None = None,
         stream: bool = False,
+        where: dict[str, Any] | None = None,
     ) -> str:
         """Chat with RAG agent maintaining conversation history.
 
@@ -92,6 +96,7 @@ class RAGAgent:
             collection: Collection name to search
             session_id: Optional session ID for conversation history
             stream: Whether to stream the response
+            where: Metadata filter dict for tags, sections, etc.
 
         Returns:
             Response text
@@ -106,7 +111,7 @@ class RAGAgent:
             conversation_history = []
 
         response = self.query(
-            message, collection, stream=stream, conversation_history=conversation_history
+            message, collection, stream=stream, conversation_history=conversation_history, where=where
         )
 
         if session_id:
@@ -117,16 +122,17 @@ class RAGAgent:
         return response
 
     def retrieve(
-        self, query: str, collection: str, top_k: int | None = None
-    ) -> list[RetrievedChunk]:
-        """Retrieve relevant chunks without generating a response.
+        self, query: str, collection: str, top_k: int | None = None, where: dict[str, Any] | None = None
+    ) -> list[RetrievedDocument]:
+        """Retrieve relevant parent documents without generating a response.
 
         Args:
             query: Search query
             collection: Collection name to search
             top_k: Number of documents to retrieve
+            where: Metadata filter dict for tags, sections, etc.
 
         Returns:
-            List of retrieved chunks
+            List of retrieved parent documents
         """
-        return self.retriever.retrieve(query, collection, top_k)
+        return self.retriever.retrieve(query, collection, top_k, where=where)

@@ -1,13 +1,19 @@
-"""Document ingestion for RAG."""
+"""Document ingestion for RAG with parent-child retrieval architecture."""
 
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
+from uuid import uuid4
+
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from db import DatabaseBackend
 
 from .config import RAGConfig
 from .embeddings import EmbeddingClient
+from .markdown_parser import split_markdown_semantic
+from .storage import LocalFileStore
 
 
 @dataclass(frozen=True)
@@ -20,7 +26,7 @@ class IngestResult:
 
 
 class RAGIngester:
-    """Ingest documents into RAG collections."""
+    """Ingest documents into RAG collections using parent-child retrieval architecture."""
 
     SUPPORTED_EXTENSIONS = {".md", ".txt", ".pdf"}
 
@@ -35,10 +41,24 @@ class RAGIngester:
         self.db = db
         self.embedder = EmbeddingClient(config)
 
+        # Initialize parent document store
+        self.config.parent_store.path.mkdir(parents=True, exist_ok=True)
+        self.parent_store = LocalFileStore(str(self.config.parent_store.path))
+
+        # Initialize child text splitter
+        self.child_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.config.chunking.child_chunk_size,
+            chunk_overlap=self.config.chunking.child_chunk_overlap,
+            separators=["\n\n", "\n", " ", ""],
+        )
+
     def ingest_path(
         self, path: Path | str, collection: str, max_file_size_mb: int = 1000
     ) -> IngestResult:
         """Ingest documents from a file or directory.
+
+        Uses semantic markdown splitting to create parent documents, then creates
+        child chunks for vector search while maintaining parent-child linkage.
 
         Args:
             path: Path to file or directory
@@ -85,10 +105,11 @@ class RAGIngester:
         # Collect all files to process
         files = list(self._iter_source_files(source))
 
-        document_texts: list[str] = []
-        metadata_list: list[dict[str, object]] = []
-        ids: list[str] = []
+        child_documents: list[str] = []
+        child_metadata: list[dict[str, object]] = []
+        child_ids: list[str] = []
         files_indexed = 0
+        chunks_indexed = 0
 
         for file_path in files:
             # Read file content
@@ -96,40 +117,56 @@ class RAGIngester:
             if not content.strip():
                 continue
 
-            # Chunk the content
-            chunks = self._chunk_text(content)
-            if not chunks:
-                continue
-
             files_indexed += 1
-
-            # Create document for each chunk
             relative_path = (
                 str(file_path.relative_to(source)) if file_path != source else file_path.name
             )
 
-            for i, chunk_text in enumerate(chunks):
-                doc_id = self._build_chunk_id(full_collection, relative_path, i, chunk_text)
-                document_texts.append(chunk_text)
-                metadata_list.append(
-                    {
-                        "source_file": relative_path,
-                        "chunk_index": i,
-                        "collection_name": collection,
-                    }
-                )
-                ids.append(doc_id)
+            # Split markdown semantically (parent documents)
+            parent_docs = split_markdown_semantic(content)
 
-        # Add documents to collection
-        chunks_indexed = len(document_texts)
-        if document_texts:
-            embeddings = self.embedder.embed_texts(document_texts)
+            for parent_idx, parent_doc in enumerate(parent_docs):
+                # Create parent with unique ID
+                parent_id = str(uuid4())
+                parent_metadata = dict(parent_doc.metadata) if parent_doc.metadata else {}
+                parent_metadata["source_file"] = relative_path
+                parent_metadata["parent_index"] = parent_idx
+
+                # Store parent document in document store
+                parent_langchain_doc = Document(
+                    page_content=parent_doc.page_content,
+                    metadata=parent_metadata,
+                )
+                self.parent_store.mset([(parent_id, parent_langchain_doc)])
+
+                # Split parent into children for vector search
+                child_docs = self.child_splitter.split_text(parent_doc.page_content)
+
+                for child_idx, child_text in enumerate(child_docs):
+                    if not child_text.strip():
+                        continue
+
+                    child_id = self._build_chunk_id(full_collection, parent_id, child_idx)
+                    child_documents.append(child_text)
+
+                    # Child metadata includes parent linkage
+                    metadata = dict(parent_metadata)
+                    metadata["parent_id"] = parent_id
+                    metadata["child_index"] = child_idx
+                    metadata["collection_name"] = collection
+                    child_metadata.append(metadata)
+                    child_ids.append(child_id)
+                    chunks_indexed += 1
+
+        # Add child documents to collection with embeddings
+        if child_documents:
+            embeddings = self.embedder.embed_texts(child_documents)
             self.db.add_documents(
                 full_collection,
-                documents=document_texts,
+                documents=child_documents,
                 embeddings=embeddings,
-                metadata=metadata_list,
-                ids=ids,
+                metadata=child_metadata,
+                ids=child_ids,
             )
 
         return IngestResult(
@@ -202,50 +239,18 @@ class RAGIngester:
 
         return "\n\n".join(pages)
 
-    def _chunk_text(self, text: str) -> list[str]:
-        """Chunk text into smaller pieces.
-
-        Args:
-            text: Text to chunk
-
-        Returns:
-            List of text chunks
-        """
-        chunk_size = self.config.chunking.size
-        overlap = self.config.chunking.overlap
-
-        # Simple character-based chunking
-        chunks = []
-        start = 0
-
-        while start < len(text):
-            end = start + chunk_size
-            chunk = text[start:end]
-
-            if chunk.strip():
-                chunks.append(chunk)
-
-            start = end - overlap
-
-            # Prevent infinite loop
-            if overlap >= chunk_size:
-                break
-
-        return chunks
-
     def _build_chunk_id(
-        self, collection: str, source_file: str, chunk_index: int, text: str
+        self, collection: str, parent_id: str, child_index: int
     ) -> str:
-        """Build deterministic chunk ID.
+        """Build deterministic chunk ID for child document.
 
         Args:
             collection: Collection name
-            source_file: Source file name
-            chunk_index: Index of chunk within file
-            text: Chunk text
+            parent_id: Parent document ID
+            child_index: Index of child within parent
 
         Returns:
             Chunk ID hash
         """
-        content = f"{collection}::{source_file}::{chunk_index}::{text}"
+        content = f"{collection}::{parent_id}::{child_index}"
         return sha256(content.encode("utf-8")).hexdigest()[:16]
