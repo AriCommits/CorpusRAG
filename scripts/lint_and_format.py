@@ -116,15 +116,31 @@ def check_ruff(fix: bool = False) -> bool:
         print_check("Ruff", "passed", True)
     else:
         print_check("Ruff", "failed", False)
-        if output and not fix:
-            print("\nRuff findings:")
+        if output:
+            if fix:
+                print(
+                    "\nRuff attempted auto-fixes. Remaining errors cannot be auto-fixed:"
+                )
+            else:
+                print("\nRuff findings (first 30 lines):")
             # Print first 30 lines
             lines = output.split("\n")[:30]
             for line in lines:
                 if line.strip():
                     print(f"  {line}")
-            if len(output.split("\n")) > 30:
-                print("  ... and more (run ruff check to see all)")
+            total_lines = len(output.split("\n"))
+            if total_lines > 30:
+                print(f"  ... and {total_lines - 30} more lines")
+
+            if fix:
+                print(f"\n{YELLOW}Manual fixes needed:{RESET}")
+                print("  B904: Exception handling (raise ... from err)")
+                print("  PLR0912: Too many branches (code complexity)")
+                print("  PTH123/PTH100: Path.open() replacements")
+                print("  B017: Blind exception assertions")
+                print("  RUF043: Raw string patterns")
+                print(f"\n{YELLOW}To see all errors:{RESET}")
+                print("  python -m ruff check src tests scripts")
 
     return passed
 

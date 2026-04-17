@@ -15,7 +15,9 @@ class VideoConfig(BaseConfig):
     whisper_device: str = "cuda"  # cuda | cpu
     whisper_compute_type: str = "float16"
     whisper_language: str = "en"
-    models_dir: str = field(default_factory=lambda: str(Path.home() / "models" / "whisper"))
+    models_dir: str = field(
+        default_factory=lambda: str(Path.home() / "models" / "whisper")
+    )
 
     # Cleaning settings
     clean_model: str = "qwen3:8b"
@@ -39,7 +41,15 @@ Transcript:
 
     # Supported video extensions
     supported_extensions: list[str] = field(
-        default_factory=lambda: [".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".zoom"]
+        default_factory=lambda: [
+            ".mp4",
+            ".mkv",
+            ".mov",
+            ".avi",
+            ".webm",
+            ".m4v",
+            ".zoom",
+        ]
     )
 
     @classmethod
@@ -67,7 +77,9 @@ Transcript:
             whisper_device=video_data.get("whisper_device", "cuda"),
             whisper_compute_type=video_data.get("whisper_compute_type", "float16"),
             whisper_language=video_data.get("whisper_language", "en"),
-            models_dir=video_data.get("models_dir", str(Path.home() / "models" / "whisper")),
+            models_dir=video_data.get(
+                "models_dir", str(Path.home() / "models" / "whisper")
+            ),
             clean_model=video_data.get("clean_model", "qwen3:8b"),
             clean_ollama_host=base_config.llm.endpoint,
             clean_prompt=video_data.get(
@@ -77,6 +89,7 @@ Transcript:
             include_timestamps=video_data.get("include_timestamps", False),
             collection_prefix=video_data.get("collection_prefix", "videos"),
             supported_extensions=video_data.get(
-                "supported_extensions", [".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".zoom"]
+                "supported_extensions",
+                [".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".zoom"],
             ),
         )

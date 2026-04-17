@@ -71,8 +71,18 @@ class RAGConfig(BaseConfig):
             embedding=base_config.embedding,
             database=base_config.database,
             paths=base_config.paths,
-            chunking=ChunkingConfig(**chunking_data) if chunking_data else ChunkingConfig(),
-            retrieval=RetrievalConfig(**retrieval_data) if retrieval_data else RetrievalConfig(),
-            parent_store=ParentStoreConfig(**parent_store_data) if parent_store_data else ParentStoreConfig(),
+            chunking=(
+                ChunkingConfig(**chunking_data) if chunking_data else ChunkingConfig()
+            ),
+            retrieval=(
+                RetrievalConfig(**retrieval_data)
+                if retrieval_data
+                else RetrievalConfig()
+            ),
+            parent_store=(
+                ParentStoreConfig(**parent_store_data)
+                if parent_store_data
+                else ParentStoreConfig()
+            ),
             collection_prefix=collection_prefix or "rag",
         )

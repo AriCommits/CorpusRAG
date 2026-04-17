@@ -112,7 +112,8 @@ class TranscriptAugmenter:
         # Determine and validate output path
         if output_path is None:
             output_path = (
-                transcript_path.parent / f"{transcript_path.stem}_final{transcript_path.suffix}"
+                transcript_path.parent
+                / f"{transcript_path.stem}_final{transcript_path.suffix}"
             )
         else:
             output_path = Path(output_path)

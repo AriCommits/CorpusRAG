@@ -85,9 +85,7 @@ def split_markdown_semantic(text: str) -> list[Document]:
     return docs
 
 
-def parse_and_split(
-    text: str, source_name: str | None = None
-) -> list[dict[str, Any]]:
+def parse_and_split(text: str, source_name: str | None = None) -> list[dict[str, Any]]:
     """Parse markdown, extract tags, and split into semantic sections.
 
     Args:

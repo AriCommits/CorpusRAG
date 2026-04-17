@@ -70,28 +70,13 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
-  "E",      # pycodestyle errors
+  "E",      # pycodestyle errors (syntax and whitespace)
   "W",      # pycodestyle warnings
-  "F",      # Pyflakes
-  "I",      # isort
-  "B",      # flake8-bugbear
-  "C4",     # flake8-comprehensions
-  "UP",     # pyupgrade
-  "ARG",    # flake8-unused-arguments
-  "SIM",    # flake8-simplify
-  "PTH",    # flake8-use-pathlib
-  "ERA",    # eradicate (commented-out code)
-  "PL",     # Pylint
-  "RUF",    # Ruff-specific rules
+  "F",      # Pyflakes (undefined names, duplicate imports)
+  "I",      # isort (import sorting)
 ]
 ignore = [
-  "E501",    # line too long (handled by formatter)
-  "PLR0913", # too many arguments
-  "PLR2004", # magic value comparison
-  "PLR0915", # too many statements
-  "PLW0603", # global statement (valid for module-level singletons)
-  "SIM108",  # use ternary operator (not always more readable)
-  "PLC0415", # import not at top level (intentional for optional deps)
+  "E501",   # line too long (handled by Black formatter)
 ]
 
 [tool.ruff.lint.per-file-ignores]

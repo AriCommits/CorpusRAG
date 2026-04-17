@@ -93,7 +93,9 @@ class BaseConfig:
         if "persist_directory" in database_data and isinstance(
             database_data["persist_directory"], str
         ):
-            database_data["persist_directory"] = Path(database_data["persist_directory"])
+            database_data["persist_directory"] = Path(
+                database_data["persist_directory"]
+            )
 
         for key in ["vault", "scratch_dir", "output_dir"]:
             if key in paths_data and isinstance(paths_data[key], str):

@@ -22,7 +22,9 @@ class ChromaDBBackend(DatabaseBackend):
         self.config = config
 
         if config.mode == "persistent":
-            self.client: ClientAPI = chromadb.PersistentClient(path=str(config.persist_directory))
+            self.client: ClientAPI = chromadb.PersistentClient(
+                path=str(config.persist_directory)
+            )
         elif config.mode == "http":
             self.client = chromadb.HttpClient(
                 host=config.host,
@@ -31,7 +33,9 @@ class ChromaDBBackend(DatabaseBackend):
         else:
             raise ValueError(f"Unknown database mode: {config.mode}")
 
-    def create_collection(self, name: str, metadata: dict[str, Any] | None = None) -> None:
+    def create_collection(
+        self, name: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Create a new collection.
 
         Args:
@@ -117,7 +121,9 @@ class ChromaDBBackend(DatabaseBackend):
             ValueError: If collection doesn't exist or lengths don't match
         """
         if not (len(documents) == len(embeddings) == len(metadata) == len(ids)):
-            raise ValueError("documents, embeddings, metadata, and ids must have same length")
+            raise ValueError(
+                "documents, embeddings, metadata, and ids must have same length"
+            )
 
         col = self.get_collection(collection)
         # ChromaDB requires non-empty metadata dicts; fill empty ones with a sentinel

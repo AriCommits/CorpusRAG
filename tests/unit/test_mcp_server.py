@@ -13,7 +13,10 @@ def config_file(tmp_path):
     """Write a minimal valid config for the MCP server."""
     cfg = {
         "llm": {"model": "llama3"},
-        "database": {"mode": "persistent", "persist_directory": str(tmp_path / "chroma")},
+        "database": {
+            "mode": "persistent",
+            "persist_directory": str(tmp_path / "chroma"),
+        },
     }
     path = tmp_path / "base.yaml"
     path.write_text(yaml.dump(cfg))

@@ -42,7 +42,9 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
     if output:
         output_path = Path(output)
     elif course and lecture:
-        output_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
+        output_path = (
+            cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
+        )
     else:
         output_path = cfg.paths.output_dir / "transcript.md"
 
@@ -65,7 +67,9 @@ def clean(transcript_file: str, output: str, config: str):
 
     # Clean transcript
     click.echo(f"Cleaning transcript {transcript_file}...")
-    output_path = cleaner.clean_file(Path(transcript_file), Path(output) if output else None)
+    output_path = cleaner.clean_file(
+        Path(transcript_file), Path(output) if output else None
+    )
 
     click.echo(f"✓ Cleaned transcript written to {output_path}")
 
@@ -148,7 +152,9 @@ def pipeline(
         if output:
             final_path = Path(output)
         elif course and lecture:
-            final_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_final.md"
+            final_path = (
+                cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_final.md"
+            )
         else:
             final_path = cfg.paths.output_dir / "final_transcript.md"
 

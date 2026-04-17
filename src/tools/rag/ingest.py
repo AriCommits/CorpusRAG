@@ -87,7 +87,10 @@ class RAGIngester:
         else:
             # For directories, check each file
             for file_path in source.rglob("*"):
-                if file_path.is_file() and file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS:
+                if (
+                    file_path.is_file()
+                    and file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS
+                ):
                     file_size = file_path.stat().st_size
                     if file_size > max_size_bytes:
                         raise ValueError(
@@ -119,7 +122,9 @@ class RAGIngester:
 
             files_indexed += 1
             relative_path = (
-                str(file_path.relative_to(source)) if file_path != source else file_path.name
+                str(file_path.relative_to(source))
+                if file_path != source
+                else file_path.name
             )
 
             # Split markdown semantically (parent documents)
@@ -128,7 +133,9 @@ class RAGIngester:
             for parent_idx, parent_doc in enumerate(parent_docs):
                 # Create parent with unique ID
                 parent_id = str(uuid4())
-                parent_metadata = dict(parent_doc.metadata) if parent_doc.metadata else {}
+                parent_metadata = (
+                    dict(parent_doc.metadata) if parent_doc.metadata else {}
+                )
                 parent_metadata["source_file"] = relative_path
                 parent_metadata["parent_index"] = parent_idx
 
@@ -146,7 +153,9 @@ class RAGIngester:
                     if not child_text.strip():
                         continue
 
-                    child_id = self._build_chunk_id(full_collection, parent_id, child_idx)
+                    child_id = self._build_chunk_id(
+                        full_collection, parent_id, child_idx
+                    )
                     child_documents.append(child_text)
 
                     # Child metadata includes parent linkage
@@ -239,9 +248,7 @@ class RAGIngester:
 
         return "\n\n".join(pages)
 
-    def _build_chunk_id(
-        self, collection: str, parent_id: str, child_index: int
-    ) -> str:
+    def _build_chunk_id(self, collection: str, parent_id: str, child_index: int) -> str:
         """Build deterministic chunk ID for child document.
 
         Args:

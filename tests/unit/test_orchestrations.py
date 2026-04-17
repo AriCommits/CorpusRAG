@@ -1,6 +1,5 @@
 """Tests for orchestrations."""
 
-
 import pytest
 
 from config import BaseConfig, DatabaseConfig

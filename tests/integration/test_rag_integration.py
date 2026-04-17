@@ -71,7 +71,9 @@ def db_backend(rag_config: RAGConfig) -> ChromaDBBackend:
 class TestRAGIngestor:
     """Test RAG document ingestion with parent-child architecture."""
 
-    def test_ingest_markdown_file(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_ingest_markdown_file(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test ingesting a markdown file with semantic splitting."""
         # Create test markdown file
         markdown_content = """# Machine Learning Guide
@@ -104,9 +106,11 @@ Tags:
         with patch("tools.rag.ingest.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
+
             # Return dummy embeddings matching the number of texts
             def mock_embed(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_embedder.embed_texts = mock_embed
 
             # Ingest the file
@@ -116,7 +120,9 @@ Tags:
             # Verify ingestion results
             assert result.collection == "ml_guide"
             assert result.files_indexed == 1
-            assert result.chunks_indexed > 0  # Should have multiple chunks from splitting
+            assert (
+                result.chunks_indexed > 0
+            )  # Should have multiple chunks from splitting
 
             # Verify collection was created
             full_collection = f"{rag_config.collection_prefix}_{result.collection}"
@@ -126,7 +132,9 @@ Tags:
             count = db_backend.count_documents(full_collection)
             assert count == result.chunks_indexed
 
-    def test_parent_documents_stored(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_parent_documents_stored(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that parent documents are properly stored in local file store."""
         markdown_content = """# Python Basics
 
@@ -148,19 +156,23 @@ Tags:
         with patch("tools.rag.ingest.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
+
             def mock_embed(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_embedder.embed_texts = mock_embed
 
             ingester = RAGIngester(rag_config, db_backend)
-            result = ingester.ingest_path(test_file, "python_guide")
+            ingester.ingest_path(test_file, "python_guide")
 
             # Verify parent store was created and contains documents
             parent_store_path = rag_config.parent_store.path
             assert parent_store_path.exists()
             assert len(list(parent_store_path.glob("*"))) > 0
 
-    def test_child_metadata_includes_parent_linkage(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_child_metadata_includes_parent_linkage(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that child documents have proper parent_id metadata."""
         markdown_content = """# Web Development
 
@@ -182,8 +194,10 @@ Tags:
         with patch("tools.rag.ingest.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
+
             def mock_embed(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_embedder.embed_texts = mock_embed
 
             ingester = RAGIngester(rag_config, db_backend)
@@ -201,10 +215,16 @@ Tags:
             metadatas = query_results.get("metadatas", [[]])[0]
             for metadata in metadatas:
                 assert "parent_id" in metadata, "Child documents must have parent_id"
-                assert "child_index" in metadata, "Child documents must have child_index"
-                assert "source_file" in metadata, "Child documents must have source_file"
+                assert (
+                    "child_index" in metadata
+                ), "Child documents must have child_index"
+                assert (
+                    "source_file" in metadata
+                ), "Child documents must have source_file"
 
-    def test_tags_extracted_and_stored(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_tags_extracted_and_stored(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that tags are extracted from markdown and stored in metadata."""
         markdown_content = """# Data Science
 
@@ -226,8 +246,10 @@ Tags:
         with patch("tools.rag.ingest.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
+
             def mock_embed(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_embedder.embed_texts = mock_embed
 
             ingester = RAGIngester(rag_config, db_backend)
@@ -247,13 +269,17 @@ Tags:
                     tags = metadata["tags"]
                     # Tags should be present and include the extracted ones
                     assert isinstance(tags, list)
-                    assert any(tag in ["data-science", "statistics", "ml"] for tag in tags)
+                    assert any(
+                        tag in ["data-science", "statistics", "ml"] for tag in tags
+                    )
 
 
 class TestRAGRetriever:
     """Test RAG retriever with parent-child architecture."""
 
-    def test_retrieve_returns_parent_documents(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_retrieve_returns_parent_documents(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that retriever returns full parent documents."""
         markdown_content = """# Computer Science
 
@@ -272,13 +298,17 @@ Tags:
         test_file = temp_rag_dir / "cs.md"
         test_file.write_text(markdown_content)
 
-        with patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder, \
-             patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder:
+        with (
+            patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder,
+            patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder,
+        ):
             # Mock ingestion
             mock_ingest = MagicMock()
             mock_ingest_embedder.return_value = mock_ingest
+
             def mock_embed_ingest(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_ingest.embed_texts = mock_embed_ingest
 
             # Mock retrieval
@@ -301,7 +331,9 @@ Tags:
                 assert "rank" in doc.__dict__
                 assert "score" in doc.__dict__
 
-    def test_retrieve_with_metadata_filter(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_retrieve_with_metadata_filter(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test retrieval with metadata filtering."""
         markdown_content = """# Advanced Topics
 
@@ -320,12 +352,16 @@ Tags:
         test_file = temp_rag_dir / "advanced.md"
         test_file.write_text(markdown_content)
 
-        with patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder, \
-             patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder:
+        with (
+            patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder,
+            patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder,
+        ):
             mock_ingest = MagicMock()
             mock_ingest_embedder.return_value = mock_ingest
+
             def mock_embed_ingest(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_ingest.embed_texts = mock_embed_ingest
 
             mock_retrieve = MagicMock()
@@ -346,7 +382,9 @@ Tags:
             # Note: Actual filtering depends on the embedding model behavior
             assert isinstance(results, list)
 
-    def test_retrieve_deduplicates_parent_documents(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_retrieve_deduplicates_parent_documents(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that retriever deduplicates parent documents from multiple child chunks."""
         markdown_content = """# Long Document
 
@@ -370,12 +408,16 @@ Tags:
         test_file = temp_rag_dir / "long.md"
         test_file.write_text(markdown_content)
 
-        with patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder, \
-             patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder:
+        with (
+            patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder,
+            patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder,
+        ):
             mock_ingest = MagicMock()
             mock_ingest_embedder.return_value = mock_ingest
+
             def mock_embed_ingest(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_ingest.embed_texts = mock_embed_ingest
 
             mock_retrieve = MagicMock()
@@ -391,13 +433,17 @@ Tags:
 
             # Collect parent IDs to verify deduplication
             parent_ids = [doc.id for doc in results]
-            assert len(parent_ids) == len(set(parent_ids)), "Parent documents should be deduplicated"
+            assert len(parent_ids) == len(
+                set(parent_ids)
+            ), "Parent documents should be deduplicated"
 
 
 class TestRAGAgent:
     """Test RAG agent with parent-child retrieval."""
 
-    def test_agent_retrieves_documents(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_agent_retrieves_documents(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that RAG agent can retrieve documents."""
         markdown_content = """# Biology
 
@@ -416,12 +462,16 @@ Tags:
         test_file = temp_rag_dir / "biology.md"
         test_file.write_text(markdown_content)
 
-        with patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder, \
-             patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder:
+        with (
+            patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder,
+            patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder,
+        ):
             mock_ingest = MagicMock()
             mock_ingest_embedder.return_value = mock_ingest
+
             def mock_embed_ingest(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_ingest.embed_texts = mock_embed_ingest
 
             mock_retrieve = MagicMock()
@@ -440,7 +490,9 @@ Tags:
                 assert hasattr(doc, "text")
                 assert hasattr(doc, "metadata")
 
-    def test_agent_filter_parameters(self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path) -> None:
+    def test_agent_filter_parameters(
+        self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
+    ) -> None:
         """Test that agent properly forwards filter parameters."""
         markdown_content = """# Filtered Content
 
@@ -459,12 +511,16 @@ Tags:
         test_file = temp_rag_dir / "filtered.md"
         test_file.write_text(markdown_content)
 
-        with patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder, \
-             patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder:
+        with (
+            patch("tools.rag.ingest.EmbeddingClient") as mock_ingest_embedder,
+            patch("tools.rag.retriever.EmbeddingClient") as mock_retriever_embedder,
+        ):
             mock_ingest = MagicMock()
             mock_ingest_embedder.return_value = mock_ingest
+
             def mock_embed_ingest(texts):
                 return [[0.1] * 384 for _ in texts]
+
             mock_ingest.embed_texts = mock_embed_ingest
 
             mock_retrieve = MagicMock()

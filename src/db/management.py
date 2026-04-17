@@ -34,10 +34,15 @@ def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
 
     for member in tar.getmembers():
         # Resolve the member path
-        member_path = os.path.normpath(os.path.abspath(os.path.join(target_dir, member.name)))
+        member_path = os.path.normpath(
+            os.path.abspath(os.path.join(target_dir, member.name))
+        )
 
         # Ensure the resolved path is within target_dir
-        if not member_path.startswith(target_dir + os.sep) and member_path != target_dir:
+        if (
+            not member_path.startswith(target_dir + os.sep)
+            and member_path != target_dir
+        ):
             raise ValueError(
                 f"Attempted path traversal detected: member '{member.name}' "
                 f"would be extracted to {member_path} (outside {target_dir})"
@@ -106,7 +111,9 @@ class DatabaseManager:
                 # Include collection metadata if available
                 try:
                     collection_info = collection._client.get_collection(collection_name)
-                    backup_data["collection_metadata"] = getattr(collection_info, "metadata", {})
+                    backup_data["collection_metadata"] = getattr(
+                        collection_info, "metadata", {}
+                    )
                 except Exception as e:
                     self.logger.warning(f"Could not get collection metadata: {e}")
 
@@ -178,7 +185,9 @@ class DatabaseManager:
                         f"Collection '{collection_name}' already exists. Use --overwrite to replace."
                     )
                 else:
-                    self.logger.warning(f"Overwriting existing collection: {collection_name}")
+                    self.logger.warning(
+                        f"Overwriting existing collection: {collection_name}"
+                    )
                     self.db.delete_collection(collection_name)
 
             # Create collection
@@ -237,12 +246,18 @@ class DatabaseManager:
         for collection_name in collections:
             try:
                 backup_path = backup_dir / f"{collection_name}_{timestamp}.tar.gz"
-                summary = self.backup_collection(collection_name, backup_path, include_metadata)
+                summary = self.backup_collection(
+                    collection_name, backup_path, include_metadata
+                )
                 summaries.append(summary)
             except Exception as e:
                 self.logger.error(f"Failed to backup collection {collection_name}: {e}")
                 summaries.append(
-                    {"collection_name": collection_name, "status": "failed", "error": str(e)}
+                    {
+                        "collection_name": collection_name,
+                        "status": "failed",
+                        "error": str(e),
+                    }
                 )
 
         overall_summary = {
@@ -426,13 +441,19 @@ class DatabaseManager:
             return summary
 
         except Exception as e:
-            self.logger.error(f"Failed to migrate {source_collection} to {target_collection}: {e}")
+            self.logger.error(
+                f"Failed to migrate {source_collection} to {target_collection}: {e}"
+            )
             raise
 
 
 @click.group()
 @click.option(
-    "--config", "-c", default="configs/base.yaml", show_default=True, help="Configuration file path"
+    "--config",
+    "-c",
+    default="configs/base.yaml",
+    show_default=True,
+    help="Configuration file path",
 )
 @click.option("--log-level", default="INFO", show_default=True, help="Logging level")
 @click.pass_context
@@ -462,7 +483,9 @@ def list_collections_cmd(ctx: click.Context) -> None:
 @click.option("--output", "-o", required=True, type=click.Path(path_type=Path))
 @click.option("--no-metadata", is_flag=True, help="Exclude metadata")
 @click.pass_context
-def backup_cmd(ctx: click.Context, collection: str, output: Path, no_metadata: bool) -> None:
+def backup_cmd(
+    ctx: click.Context, collection: str, output: Path, no_metadata: bool
+) -> None:
     """Backup one collection."""
     summary = _manager(ctx).backup_collection(
         collection,
@@ -477,7 +500,9 @@ def backup_cmd(ctx: click.Context, collection: str, output: Path, no_metadata: b
 @click.option("--name", help="New collection name")
 @click.option("--overwrite", is_flag=True, help="Overwrite existing collection")
 @click.pass_context
-def restore_cmd(ctx: click.Context, backup_file: Path, name: str | None, overwrite: bool) -> None:
+def restore_cmd(
+    ctx: click.Context, backup_file: Path, name: str | None, overwrite: bool
+) -> None:
     """Restore a collection from backup."""
     summary = _manager(ctx).restore_collection(backup_file, name, overwrite)
     click.echo(f"Restore completed: {summary}")
@@ -489,7 +514,9 @@ def restore_cmd(ctx: click.Context, backup_file: Path, name: str | None, overwri
 @click.pass_context
 def backup_all_cmd(ctx: click.Context, output_dir: Path, no_metadata: bool) -> None:
     """Backup all collections."""
-    summary = _manager(ctx).backup_all_collections(output_dir, include_metadata=not no_metadata)
+    summary = _manager(ctx).backup_all_collections(
+        output_dir, include_metadata=not no_metadata
+    )
     click.echo(f"Full backup completed: {summary}")
 
 
@@ -526,7 +553,9 @@ def export_cmd(
 @db.command("migrate")
 @click.argument("source")
 @click.argument("target")
-@click.option("--batch-size", default=1000, show_default=True, type=int, help="Batch size")
+@click.option(
+    "--batch-size", default=1000, show_default=True, type=int, help="Batch size"
+)
 @click.pass_context
 def migrate_cmd(ctx: click.Context, source: str, target: str, batch_size: int) -> None:
     """Migrate data between collections."""

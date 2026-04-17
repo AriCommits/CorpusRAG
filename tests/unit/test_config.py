@@ -199,7 +199,9 @@ class TestDeepMerge:
         base = {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.7}}
         override = {"llm": {"temperature": 0.5}}
         result = deep_merge(base, override)
-        assert result == {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.5}}
+        assert result == {
+            "llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.5}
+        }
 
     def test_merge_deep_nested(self) -> None:
         """Test merging deeply nested dictionaries."""
@@ -269,7 +271,7 @@ class TestLoadConfig:
         """Test loading a simple config file."""
         config_file = tmp_path / "config.yaml"
         config_data = {"llm": {"model": "mistral"}, "embedding": {"backend": "ollama"}}
-        with open(config_file, "w") as f:
+        with config_file.open("w") as f:
             yaml.dump(config_data, f)
 
         config = load_config(config_file)
@@ -284,16 +286,18 @@ class TestLoadConfig:
         base_data = {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.7}}
         tool_data = {"llm": {"temperature": 0.5}}
 
-        with open(base_file, "w") as f:
+        with base_file.open("w") as f:
             yaml.dump(base_data, f)
-        with open(tool_file, "w") as f:
+        with tool_file.open("w") as f:
             yaml.dump(tool_data, f)
 
         config = load_config(tool_file, base_path=base_file)
         assert config.llm.model == "gemma4:26b-a4b-it-q4_K_M"  # from base
         assert config.llm.temperature == 0.5  # overridden
 
-    def test_load_with_env_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_load_with_env_override(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test loading with environment variable override."""
         config_file = tmp_path / "config.yaml"
         config_data = {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M"}}

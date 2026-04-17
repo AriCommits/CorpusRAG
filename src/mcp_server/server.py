@@ -19,11 +19,7 @@ from tools.flashcards import FlashcardConfig, FlashcardGenerator
 from tools.quizzes import QuizConfig, QuizGenerator
 from tools.rag import RAGAgent, RAGConfig, RAGIngester, RAGRetriever
 from tools.summaries import SummaryConfig, SummaryGenerator
-from tools.video import (
-    TranscriptCleaner,
-    VideoConfig,
-    VideoTranscriber,
-)
+from tools.video import TranscriptCleaner, VideoConfig, VideoTranscriber
 from utils.auth import AuthConfig, MCPAuthenticator, add_security_headers
 from utils.validation import get_validator
 
@@ -39,7 +35,9 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         Configured FastMCP server instance
     """
     # Load configuration
-    effective_path = Path(config_path) if config_path is not None else Path("configs/base.yaml")
+    effective_path = (
+        Path(config_path) if config_path is not None else Path("configs/base.yaml")
+    )
     config = load_config(effective_path)
 
     # Initialize database backend
@@ -549,7 +547,11 @@ def main() -> None:
                 db = ChromaDBBackend(config.database)
                 collections = db.list_collections()
 
-                return {"status": "ready", "database": "connected", "collections": len(collections)}
+                return {
+                    "status": "ready",
+                    "database": "connected",
+                    "collections": len(collections),
+                }
             except Exception as e:
                 logger.error(f"Readiness check failed: {e}")
                 return {"status": "not_ready", "error": str(e)}

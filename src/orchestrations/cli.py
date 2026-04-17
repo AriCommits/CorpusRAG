@@ -5,10 +5,7 @@ from pathlib import Path
 import click
 
 from cli_common import load_cli_db
-from orchestrations import (
-    LecturePipelineOrchestrator,
-    StudySessionOrchestrator,
-)
+from orchestrations import LecturePipelineOrchestrator, StudySessionOrchestrator
 
 
 @click.group()
@@ -32,7 +29,13 @@ def orchestrate():
 @click.option("--output", "-o", default=None, help="Output file")
 @click.option("--config", "-cfg", default="configs/base.yaml", help="Config file")
 def study_session(
-    collection: str, topic: str, flashcards: int, quiz: int, length: str, output: str, config: str
+    collection: str,
+    topic: str,
+    flashcards: int,
+    quiz: int,
+    length: str,
+    output: str,
+    config: str,
 ):
     """Create a comprehensive study session."""
     config_data, db = load_cli_db(config)
@@ -68,7 +71,12 @@ def study_session(
 @click.option("--output", "-o", default=None, help="Output file")
 @click.option("--config", "-cfg", default="configs/base.yaml", help="Config file")
 def lecture_pipeline(
-    video_path: str, course: str, lecture: int, skip_clean: bool, output: str, config: str
+    video_path: str,
+    course: str,
+    lecture: int,
+    skip_clean: bool,
+    output: str,
+    config: str,
 ):
     """Process a lecture video into complete study materials."""
     config_data, db = load_cli_db(config)
@@ -93,8 +101,6 @@ def lecture_pipeline(
         click.echo(f"✓ Lecture materials written to {output}")
     else:
         click.echo("\n" + formatted)
-
-
 
 
 def main():

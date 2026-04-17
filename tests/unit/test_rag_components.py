@@ -150,7 +150,7 @@ class TestLocalFileStore:
 
     def test_store_initialization(self, tmp_path: Path) -> None:
         """Test initializing a file store."""
-        store = LocalFileStore(tmp_path / "store")
+        LocalFileStore(tmp_path / "store")
         assert (tmp_path / "store").exists()
 
     def test_put_and_get(self, tmp_path: Path) -> None:

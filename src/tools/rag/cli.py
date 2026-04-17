@@ -35,10 +35,24 @@ def ingest(path: str, collection: str, config: str):
 @click.argument("query")
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--top-k", "-k", default=None, type=int, help="Number of results")
-@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
-@click.option("--section", "-s", multiple=True, help="Filter by section header (can be used multiple times)")
+@click.option(
+    "--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)"
+)
+@click.option(
+    "--section",
+    "-s",
+    multiple=True,
+    help="Filter by section header (can be used multiple times)",
+)
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def query(query: str, collection: str, top_k: int, tag: tuple[str, ...], section: tuple[str, ...], config: str):
+def query(
+    query: str,
+    collection: str,
+    top_k: int,
+    tag: tuple[str, ...],
+    section: tuple[str, ...],
+    config: str,
+):
     """Query a RAG collection with optional metadata filtering."""
     cfg, db = load_cli_db(config, RAGConfig)
     agent = RAGAgent(cfg, db)
@@ -53,11 +67,13 @@ def query(query: str, collection: str, top_k: int, tag: tuple[str, ...], section
         if section:
             # Filter for documents with specific section headers
             # This filters on Document Title, Primary Section, or Subsection metadata
-            section_filter = {"$or": [
-                {"Document Title": {"$in": list(section)}},
-                {"Primary Section": {"$in": list(section)}},
-                {"Subsection": {"$in": list(section)}},
-            ]}
+            section_filter = {
+                "$or": [
+                    {"Document Title": {"$in": list(section)}},
+                    {"Primary Section": {"$in": list(section)}},
+                    {"Subsection": {"$in": list(section)}},
+                ]
+            }
             if "tags" in where:
                 # Combine tag and section filters
                 where = {"$and": [where, section_filter]}
@@ -75,8 +91,15 @@ def query(query: str, collection: str, top_k: int, tag: tuple[str, ...], section
 
 @rag.command()
 @click.option("--collection", "-c", required=True, help="Collection name")
-@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
-@click.option("--section", "-s", multiple=True, help="Filter by section header (can be used multiple times)")
+@click.option(
+    "--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)"
+)
+@click.option(
+    "--section",
+    "-s",
+    multiple=True,
+    help="Filter by section header (can be used multiple times)",
+)
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def chat(collection: str, tag: tuple[str, ...], section: tuple[str, ...], config: str):
     """Interactive chat with RAG agent with optional metadata filtering."""
@@ -90,11 +113,13 @@ def chat(collection: str, tag: tuple[str, ...], section: tuple[str, ...], config
         if tag:
             where["tags"] = {"$in": list(tag)}
         if section:
-            section_filter = {"$or": [
-                {"Document Title": {"$in": list(section)}},
-                {"Primary Section": {"$in": list(section)}},
-                {"Subsection": {"$in": list(section)}},
-            ]}
+            section_filter = {
+                "$or": [
+                    {"Document Title": {"$in": list(section)}},
+                    {"Primary Section": {"$in": list(section)}},
+                    {"Subsection": {"$in": list(section)}},
+                ]
+            }
             if "tags" in where:
                 where = {"$and": [where, section_filter]}
             else:

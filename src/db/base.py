@@ -8,7 +8,9 @@ class DatabaseBackend(ABC):
     """Abstract database interface for vector stores."""
 
     @abstractmethod
-    def create_collection(self, name: str, metadata: dict[str, Any] | None = None) -> None:
+    def create_collection(
+        self, name: str, metadata: dict[str, Any] | None = None
+    ) -> None:
         """Create a new collection.
 
         Args:

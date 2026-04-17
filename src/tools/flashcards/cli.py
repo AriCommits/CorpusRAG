@@ -22,7 +22,9 @@ def flashcards(collection: str, output: str, config: str, difficulty: str, count
     generator = FlashcardGenerator(cfg, db)
 
     # Generate flashcards
-    click.echo(f"Generating {count or cfg.cards_per_topic} flashcards from '{collection}'...")
+    click.echo(
+        f"Generating {count or cfg.cards_per_topic} flashcards from '{collection}'..."
+    )
     cards = generator.generate(collection, difficulty=difficulty, count=count)
 
     # Format output

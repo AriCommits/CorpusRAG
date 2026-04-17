@@ -1,7 +1,6 @@
 """Tests for tool imports and basic functionality."""
 
 
-
 def test_flashcards_imports():
     """Test flashcards tool imports."""
     from tools.flashcards import FlashcardConfig, FlashcardGenerator
@@ -28,12 +27,7 @@ def test_quizzes_imports():
 
 def test_video_imports():
     """Test video tool imports."""
-    from tools.video import (
-        TranscriptAugmenter,
-        TranscriptCleaner,
-        VideoConfig,
-        VideoTranscriber,
-    )
+    from tools.video import TranscriptAugmenter, TranscriptCleaner, VideoConfig, VideoTranscriber
 
     assert VideoConfig is not None
     assert VideoTranscriber is not None

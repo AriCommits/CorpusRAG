@@ -177,8 +177,12 @@ Examples:
     # Store command
     store_parser = subparsers.add_parser("store", help="Store a secret securely")
     store_parser.add_argument("key", help="Secret name/key")
-    store_parser.add_argument("value", nargs="?", help="Secret value (will prompt if not provided)")
-    store_parser.add_argument("--no-keyring", action="store_true", help="Skip system keyring")
+    store_parser.add_argument(
+        "value", nargs="?", help="Secret value (will prompt if not provided)"
+    )
+    store_parser.add_argument(
+        "--no-keyring", action="store_true", help="Skip system keyring"
+    )
     store_parser.set_defaults(func=store_secret)
 
     # Get command
@@ -190,7 +194,9 @@ Examples:
     # Delete command
     delete_parser = subparsers.add_parser("delete", help="Delete a secret")
     delete_parser.add_argument("key", help="Secret name/key")
-    delete_parser.add_argument("--no-keyring", action="store_true", help="Skip system keyring")
+    delete_parser.add_argument(
+        "--no-keyring", action="store_true", help="Skip system keyring"
+    )
     delete_parser.set_defaults(func=delete_secret)
 
     # List command
@@ -207,11 +213,15 @@ Examples:
     migrate_parser.add_argument(
         "--delete", action="store_true", help="Delete from environment after migration"
     )
-    migrate_parser.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
+    migrate_parser.add_argument(
+        "--yes", action="store_true", help="Skip confirmation prompt"
+    )
     migrate_parser.set_defaults(func=migrate_secrets)
 
     # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate required secrets")
+    validate_parser = subparsers.add_parser(
+        "validate", help="Validate required secrets"
+    )
     validate_parser.add_argument("secrets", nargs="*", help="Secret names to validate")
     validate_parser.set_defaults(func=validate_secrets)
 

@@ -13,11 +13,7 @@ from tools.flashcards import FlashcardConfig, FlashcardGenerator
 from tools.quizzes import QuizConfig, QuizGenerator
 from tools.rag import RAGConfig, RAGIngester
 from tools.summaries import SummaryConfig, SummaryGenerator
-from tools.video import (
-    TranscriptCleaner,
-    VideoConfig,
-    VideoTranscriber,
-)
+from tools.video import TranscriptCleaner, VideoConfig, VideoTranscriber
 
 
 class LecturePipelineOrchestrator:

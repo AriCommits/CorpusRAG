@@ -91,6 +91,8 @@ def completion(shell: str) -> None:
         "bash": f'eval "$({env_var}=bash_source corpus)"',
         "zsh": f'eval "$({env_var}=zsh_source corpus)"',
         "fish": f"{env_var}=fish_source corpus | source",
-        "powershell": ("& corpus --show-completion powershell | Out-String | Invoke-Expression"),
+        "powershell": (
+            "& corpus --show-completion powershell | Out-String | Invoke-Expression"
+        ),
     }
     click.echo(f"Add this to your shell profile:\n\n    {snippets[shell]}")

@@ -111,7 +111,11 @@ class RAGAgent:
             conversation_history = []
 
         response = self.query(
-            message, collection, stream=stream, conversation_history=conversation_history, where=where
+            message,
+            collection,
+            stream=stream,
+            conversation_history=conversation_history,
+            where=where,
         )
 
         if session_id:
@@ -122,7 +126,11 @@ class RAGAgent:
         return response
 
     def retrieve(
-        self, query: str, collection: str, top_k: int | None = None, where: dict[str, Any] | None = None
+        self,
+        query: str,
+        collection: str,
+        top_k: int | None = None,
+        where: dict[str, Any] | None = None,
     ) -> list[RetrievedDocument]:
         """Retrieve relevant parent documents without generating a response.
 

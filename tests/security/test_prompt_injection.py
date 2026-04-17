@@ -3,11 +3,7 @@
 import pytest
 
 from utils.security import SecurityError
-from utils.validation import (
-    MAX_CONVERSATION_HISTORY,
-    MAX_QUERY_LENGTH,
-    InputValidator,
-)
+from utils.validation import MAX_CONVERSATION_HISTORY, MAX_QUERY_LENGTH, InputValidator
 
 
 class TestPromptInjectionDetection:
@@ -22,7 +18,7 @@ class TestPromptInjectionDetection:
         ]
 
         for query in malicious_queries:
-            with pytest.raises(SecurityError, match="(?i)suspicious patterns"):
+            with pytest.raises(SecurityError, match=r"(?i)suspicious patterns"):
                 validator.validate_query(query)
 
     def test_rejects_admin_role_override(self):
@@ -35,7 +31,7 @@ class TestPromptInjectionDetection:
         ]
 
         for query in malicious_queries:
-            with pytest.raises(SecurityError, match="(?i)suspicious patterns"):
+            with pytest.raises(SecurityError, match=r"(?i)suspicious patterns"):
                 validator.validate_query(query)
 
     def test_rejects_system_markers(self):
@@ -49,7 +45,7 @@ class TestPromptInjectionDetection:
         ]
 
         for query in malicious_queries:
-            with pytest.raises(SecurityError, match="(?i)suspicious patterns"):
+            with pytest.raises(SecurityError, match=r"(?i)suspicious patterns"):
                 validator.validate_query(query)
 
     def test_rejects_special_tokens(self):
@@ -63,7 +59,7 @@ class TestPromptInjectionDetection:
         ]
 
         for query in malicious_queries:
-            with pytest.raises(SecurityError, match="(?i)suspicious patterns"):
+            with pytest.raises(SecurityError, match=r"(?i)suspicious patterns"):
                 validator.validate_query(query)
 
     def test_rejects_code_execution_patterns(self):
@@ -77,7 +73,7 @@ class TestPromptInjectionDetection:
         ]
 
         for query in malicious_queries:
-            with pytest.raises(SecurityError, match="(?i)suspicious patterns"):
+            with pytest.raises(SecurityError, match=r"(?i)suspicious patterns"):
                 validator.validate_query(query)
 
     def test_rejects_template_injection(self):
@@ -90,7 +86,7 @@ class TestPromptInjectionDetection:
         ]
 
         for query in malicious_queries:
-            with pytest.raises(SecurityError, match="(?i)suspicious patterns"):
+            with pytest.raises(SecurityError, match=r"(?i)suspicious patterns"):
                 validator.validate_query(query)
 
 
@@ -156,7 +152,9 @@ class TestInputValidationBasics:
         """Test special character ratio calculation."""
         validator = InputValidator()
         # Create query with exactly 30% special chars - should pass
-        query = "a" * 70 + "!!@@##" * 2  # 70 normal + 12 special = 82 chars, ~14.6% special
+        query = (
+            "a" * 70 + "!!@@##" * 2
+        )  # 70 normal + 12 special = 82 chars, ~14.6% special
         result = validator.validate_query(query)
         assert len(result) > 0
 
@@ -179,7 +177,12 @@ class TestCollectionNameValidation:
     def test_accepts_alphanumeric_names(self):
         """Test that alphanumeric names are accepted."""
         validator = InputValidator()
-        valid_names = ["mycollection", "Collection123", "my_collection", "my-collection"]
+        valid_names = [
+            "mycollection",
+            "Collection123",
+            "my_collection",
+            "my-collection",
+        ]
         for name in valid_names:
             result = validator.validate_collection_name(name)
             assert result == name
@@ -286,7 +289,8 @@ class TestConversationHistoryValidation:
         """Test that histories longer than max_messages are rejected."""
         validator = InputValidator()
         too_long_history = [
-            {"role": "user", "content": f"Message {i}"} for i in range(MAX_CONVERSATION_HISTORY + 1)
+            {"role": "user", "content": f"Message {i}"}
+            for i in range(MAX_CONVERSATION_HISTORY + 1)
         ]
         with pytest.raises(SecurityError, match="too long"):
             validator.validate_conversation_history(too_long_history)

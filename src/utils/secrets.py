@@ -13,7 +13,8 @@ except ImportError:
     KEYRING_AVAILABLE = False
     warnings.warn(
         "keyring not available. Install with 'pip install keyring' for secure credential storage.",
-        UserWarning, stacklevel=2,
+        UserWarning,
+        stacklevel=2,
     )
 
 try:
@@ -120,7 +121,8 @@ class SecretManager:
             warnings.warn(
                 f"Secret '{key}' found in environment variable. "
                 f"Consider using secure storage: secrets.store_secret('{key}', 'value')",
-                UserWarning, stacklevel=2,
+                UserWarning,
+                stacklevel=2,
             )
             return env_value
 
@@ -159,7 +161,8 @@ class SecretManager:
             # No encryption available, warn and skip
             warnings.warn(
                 f"Cannot store secret '{key}' securely. Install cryptography: pip install cryptography",
-                UserWarning, stacklevel=2,
+                UserWarning,
+                stacklevel=2,
             )
             return False
 

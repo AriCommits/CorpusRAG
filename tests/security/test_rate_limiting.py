@@ -4,10 +4,7 @@ import time
 
 import pytest
 
-from utils.rate_limiting import (
-    OperationRateLimiter,
-    RateLimitConfig,
-)
+from utils.rate_limiting import OperationRateLimiter, RateLimitConfig
 
 
 class TestRateLimitConfiguration:

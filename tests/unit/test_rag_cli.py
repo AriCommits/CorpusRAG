@@ -98,7 +98,9 @@ rag:
         mock_load_db.return_value = (MagicMock(), MagicMock())
         result = runner.invoke(rag, ["ingest", "/tmp/test"])
         assert result.exit_code != 0
-        assert "collection" in result.output.lower() or "required" in result.output.lower()
+        assert (
+            "collection" in result.output.lower() or "required" in result.output.lower()
+        )
 
     @patch("tools.rag.cli.load_cli_db")
     @patch("tools.rag.cli.RAGAgent")
@@ -168,7 +170,9 @@ class TestRAGCLIFiltering:
 
         # Agent.query should have been called with where filter
         if mock_agent.query.called:
-            call_kwargs = mock_agent.query.call_args[1] if mock_agent.query.call_args else {}
+            call_kwargs = (
+                mock_agent.query.call_args[1] if mock_agent.query.call_args else {}
+            )
             # Filter might be passed as 'where' parameter
             assert "where" in call_kwargs or result.exit_code == 0
 
@@ -185,13 +189,13 @@ class TestRAGCLIConfig:
         config_file = tmp_path / "custom.yaml"
         config_file.write_text("llm:\n  model: test")
 
-        result = runner.invoke(
-            rag, ["ingest", "--help", "-f", str(config_file)]
-        )
+        result = runner.invoke(rag, ["ingest", "--help", "-f", str(config_file)])
         assert result.exit_code == 0
 
     @patch("tools.rag.cli.load_cli_db")
-    def test_default_config_file(self, mock_load_db: MagicMock, runner: CliRunner) -> None:
+    def test_default_config_file(
+        self, mock_load_db: MagicMock, runner: CliRunner
+    ) -> None:
         """Test default config file is used."""
         mock_load_db.return_value = (MagicMock(), MagicMock())
         result = runner.invoke(rag, ["ingest", "--help"])

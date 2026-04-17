@@ -28,7 +28,10 @@ class FlashcardGenerator:
         self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def generate(
-        self, collection: str, difficulty: str = "intermediate", count: int | None = None
+        self,
+        collection: str,
+        difficulty: str = "intermediate",
+        count: int | None = None,
     ) -> list[dict[str, str]]:
         """Generate flashcards from collection.
 
@@ -66,7 +69,9 @@ class FlashcardGenerator:
 
             if not sample_docs or not sample_docs.get("documents"):
                 logger.warning(f"No documents found in collection '{full_collection}'")
-                return self._generate_placeholder_flashcards(count, difficulty, collection)
+                return self._generate_placeholder_flashcards(
+                    count, difficulty, collection
+                )
 
             # Extract document texts
             document_texts = sample_docs.get("documents", [[]])[0]
@@ -170,8 +175,12 @@ class FlashcardGenerator:
                 continue
 
             # Look for Q: ... A: ... pattern
-            q_match = re.search(r"Q:\s*(.+?)(?=A:|$)", section, re.DOTALL | re.IGNORECASE)
-            a_match = re.search(r"A:\s*(.+?)(?=Q:|$)", section, re.DOTALL | re.IGNORECASE)
+            q_match = re.search(
+                r"Q:\s*(.+?)(?=A:|$)", section, re.DOTALL | re.IGNORECASE
+            )
+            a_match = re.search(
+                r"A:\s*(.+?)(?=Q:|$)", section, re.DOTALL | re.IGNORECASE
+            )
 
             if q_match and a_match:
                 question = q_match.group(1).strip()
