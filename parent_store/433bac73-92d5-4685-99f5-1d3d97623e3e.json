@@ -1,0 +1,16 @@
+{
+  "page_content": "### Question 34\n- **Question:** Based on Figure 1, hypoxia induces an enzyme of:\n- **Subject:** Biochemistry\n- **Skill:** #Knowledge_of_Scientific_Principles1\n- **Content Category:** #CC_1D_Principles_of_bioenergetics_and_fuel_molecule_metabolism\n- **Subtopic/Error Type:** #GraphicalInterpretation\n- **My Answer:** glycogenesis.\n- **Correct Answer:** glycolysis.\n- **AAMC Reasoning:**\n- Based on my answer choice: The data in Figure 1 shows that the enzyme phosphoglucose isomerase, which is an enzyme involved in glycolysis, is induced.\n- Correct answer choice: The enzyme that is induced in Figure 1, phosphoglucose isomerase, is not involved in glycogenesis\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage: 6",
+    "Subsection": "Question 34",
+    "tags": [
+      "CC_1D_Principles_of_bioenergetics_and_fuel_molecule_metabolism",
+      "ConceptualMisunderstanding",
+      "GraphicalInterpretation",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P6.md",
+    "parent_index": 3,
+    "file_hash": "b57fa1566fe52e9ddc177b2b059fa475da2a0caa870b42732d9d0a9a95019867"
+  }
+}

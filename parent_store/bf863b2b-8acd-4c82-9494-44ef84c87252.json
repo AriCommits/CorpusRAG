@@ -1,0 +1,14 @@
+{
+  "page_content": "### Question 32\n- **Skill:** #Foundations_of_Comprehension\n- **Error_Type:** #InferrenceOnEvidence\n- **Question:** If one assumes that the ants are exhibiting teaching behavior, as the Bristol researchers maintained, the pace at which the leader ant moves would likely be influenced by:\n- **My Answer:** the relative speed of other ants performing the same task.\n- **Correct Answer:** its estimate of the time its follower needs to learn something new.\n- **AAMC Reasoning:**\n- Based on my answer choice: D is incorrect because the passage does not indicate that a teacher looks to others to determine an appropriate speed for a task.\n- Correct answer choice: This is a Foundations of Comprehension question because it requires you to understand passage claims and think through the relationship of these claims to passage options. The answer to this question is C because the lesson \u201cproceeded at a pace set by the followers\u201d (paragraph 4). This is consistent with Franks\u2019s definition of \u201cteaching behavior\u201d in paragraph 2, as the leader would be modifying its behavior (at a potential cost to itself, because it could likely go faster), so that another could learn more quickly.\n- **Personal reasoning:** conflated speed of performing the task with the pace mentioned in the passage\n---",
+  "metadata": {
+    "Document Title": "Passage: 6",
+    "Subsection": "Question 32",
+    "tags": [
+      "Foundations_of_Comprehension",
+      "InferrenceOnEvidence"
+    ],
+    "source_file": "CARS\\PE3_CARS_P6.md",
+    "parent_index": 2,
+    "file_hash": "051b0e06a8e021568d65c5ae8f74e52209fc07c662c042670dd286ab16ec3340"
+  }
+}

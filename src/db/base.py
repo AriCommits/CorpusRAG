@@ -118,6 +118,38 @@ class DatabaseBackend(ABC):
         pass
 
     @abstractmethod
+    def delete_by_metadata(self, collection: str, where: dict[str, Any]) -> None:
+        """Delete documents from collection matching metadata filter.
+
+        Args:
+            collection: Collection name
+            where: Metadata filter dict
+
+        Raises:
+            ValueError: If collection doesn't exist
+        """
+        pass
+
+    @abstractmethod
+    def get_metadata_by_filter(
+        self, collection: str, where: dict[str, Any], limit: int = 1
+    ) -> list[dict[str, Any]]:
+        """Get metadata for documents matching filter.
+
+        Args:
+            collection: Collection name
+            where: Metadata filter dict
+            limit: Maximum number of results
+
+        Returns:
+            List of metadata dicts
+
+        Raises:
+            ValueError: If collection doesn't exist
+        """
+        pass
+
+    @abstractmethod
     def count_documents(self, collection: str) -> int:
         """Count documents in collection.
 

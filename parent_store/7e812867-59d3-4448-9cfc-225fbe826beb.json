@@ -1,0 +1,16 @@
+{
+  "page_content": "### Question\n- **Skill:** #Foundations_of_Comprehension\n- **Error_Type:** #AuthorsEvidence\n- **Question:**  The author\u2019s analysis of image-making rests on the assumption that a capitalist society separates:\n- **My Answer:** free political choice from free economic consumption.\n- **Correct Answer:** private perception from social order.\n- **AAMC Reasoning:**\n- Based on my answer choice: \u201cThe freedom to consume a variety of images and goods is equated with freedom itself\u201d (paragraph 4); therefore, these two are NOT separated.\n- Correct answer choice: This is a Comprehension question, because it asks you to recognize an implicit assumption on which a passage argument is based. The answer is B. In paragraph 3, the author distinguishes the aesthetic approach from the instrumental approach to image-making. The first is matched up with private perception (\u201cCameras capture and \u2018fix\u2019 impressions from that mythical space known as private perception\u201d); and the second linked to the social order (\u201ccameras also arm vision in the service of power \u2013 of the state. . . .\u201d). In the next paragraph, this dichotomy is described as a capacity to \u201csubjectify\u201d reality and to \u201cobjectify it.\u201d\n---  \n### Question\n- **Skill:** #Reasoning_Beyond_the_Text\n- **Error_Type:** #InferringAuthorsActions\n- **Question:** Based on passage information, one can infer that implementing the author\u2019s program for conservation (final paragraph) would most likely include suggestions for:\n- **My Answer:** limiting the use of computer images in architectural models.\n- **Correct Answer:** discouraging the use of photography in magazine advertisements.\n- **AAMC Reasoning:**\n- Based on my answer choice: Architectural models are plans or blueprints for buildings rather than pictures of actual buildings. Therefore, the author would not be likely to single out architectural design as an area in which to implement a conservation program.\n- Correct answer choice: This is a Reasoning Beyond the Text question, because it asks you to apply passage information to a situation outside of the passage. B is the answer, because it suggests \u201cdiscouraging the use of photography,\u201d and not only that, discouraging its use in advertising, which, unlike architectural models, is emphasized in the passage. That said, it\u2019s not the use of photographic images per se that is the problem, according to the passage, but the production of new images; if advertising used the same images, if it didn\u2019t constantly replace images (paragraph 5), the problem described by the author would be lessened.\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "AuthorsEvidence",
+      "Foundations_of_Comprehension",
+      "InferringAuthorsActions",
+      "Reasoning_Beyond_the_Text"
+    ],
+    "source_file": "CARS\\Photography.md",
+    "parent_index": 2,
+    "file_hash": "271652695a9557eb17296e70526f8a1ad4f5a9f3e475bdebbf165fdc303f9bbf"
+  }
+}

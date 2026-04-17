@@ -1,0 +1,18 @@
+{
+  "page_content": "### Question 47\n- **Skill:** #Reasoning_Beyond_the_Text\n- **Error_Type:** #AuthorsLogicInversion\n- **Question:** Which of the following, if assumed to be true, most supports the author\u2019s position on Fairtrade?\n- **My Answer:** It is difficult to monitor producers\u2019 compliance with labor standards.\n- **Correct Answer:** Much of the money given to aid agencies does not reach its intended recipients.\n- **AAMC Reasoning:**\n- Based on my answer choice: A is incorrect because it would actually weaken, rather than strengthen, the author\u2019s stance on Fairtrade.\n- Correct answer choice: This is a Reasoning Beyond the Text question because it asks you to consider the impact on the passage argument of a series of hypothetical scenarios given in the options. The correct answer to this question is D because D helps the author refute the suggestion of economists who would suggest that it is better to give money \u201cto an aid agency that provides food and education to poor children\u201d (paragraph 6) than to purchase expensive Fairtrade products. If, as option D would have it, a significant portion of the money given to aid agencies \u201cdoes not reach its intended recipients,\u201d this only strengthens the author\u2019s argument for the advantages of empowering growers through Fairtrade.\n---",
+  "metadata": {
+    "Document Title": "Passage: 8",
+    "Subsection": "Question 47",
+    "tags": [
+      "AuthorsLogicInversion",
+      "Foundations_of_Comprehension",
+      "Misread_Author_Tone",
+      "PersonalViewsOverAuthorsViews",
+      "Reasoning_Beyond_the_Text",
+      "Reasoning_Within_the_Text"
+    ],
+    "source_file": "CARS\\PE3_CARS_P8.md",
+    "parent_index": 4,
+    "file_hash": "afa00f28d63397d6a611262f2959594af77bc7ef68c2f72d9156b2ff073ebc1e"
+  }
+}

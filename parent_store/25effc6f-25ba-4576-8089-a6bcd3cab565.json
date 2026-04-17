@@ -1,0 +1,18 @@
+{
+  "page_content": "### Question 11\n- **Question:** Consider the following data.\nSubstanceKaK w /Ka\nH2CO34.3 \u00d7 10\u201372.3 \u00d7 10\u20138\nHCO3\u20135.6 \u00d7 10\u2013111.8 \u00d7 10\u20134\nBased on these data, HCO3\u2013 is best categorized as:\n- **Subject:** General Chemistry\n- **Skill:** #Data_Based_Statistical_Reasoning4\n- **Content Category:** #CC_5A_Unique_nature_of_water_and_its_solutions\n- **Subtopic/Error Type:** #InvertedLogic #Misclick\n- **My Answer:** an acid since Kb > Ka for this ion.\n- **Correct Answer:** a base since Kb > Ka for this ion.\n- **AAMC Reasoning:**\n- Correct answer choice:  The ion HCO3\u2013 is categorized as a base because Kw/Ka, or Kb, is the base dissociation constant and is larger than the Ka of HCO3\u2013.\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Subsection": "Question 11",
+    "tags": [
+      "CC_5A_Unique_nature_of_water_and_its_solutions",
+      "CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4",
+      "InvertedLogic",
+      "Misclick",
+      "Reasoning_about_the_Design_and_Execution_of_Research3"
+    ],
+    "source_file": "Physics_Chem\\PE3_Misc_1.md",
+    "parent_index": 2,
+    "file_hash": "0d1a250fa8c27eb2f0d589107749143bb393877c33517dc74cba1cf94eb125c3"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "page_content": "### Question\n- **Question:** If a solution containing the compounds shown in Figure 4, is injected into agas-liquid chromatograph, the first peak observed in the gc trace isattributable to which compound?\n- - **Subject:** Organic Chemistry\n- **Skill:** #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_5C_Separation_and_purification_methods\n- **Subtopic/Error Type:** #Spectroscopy\n- **My Answer:** 2-Methyl-2-butene\n- **Correct Answer:** 2-Methyl-2-butanol\n- **AAMC Reasoning:**\n- Based on my answer choice: 2-Methyl-2-butanol\n- Correct answer choice: In gas-liquid chromatography, the first peak to emerge will be from the least polar, most volatile compound. 2-Methyl-2-butene is nonpolar and the most volatile because it only has London forces for intermolecular attraction.\n- **Personal Reasoning:**  \n---  \n### Question\n- **Question:** What is the product of the reaction of Compound 1 (shown below) with HBr by the pathway shown in Figure 3?\n- **Subject:** Organic Chemistry\n- **Skill:** #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_5B_Nature_of_molecules_and_intermolecular_interactions\n- **Subtopic/Error Type:** #Reactions\n- **My Answer:** (R)-1-bromo-1-deuteriopentane\n- **Correct Answer:** (S)-1-bromo-1-deuteriopentane\n- **AAMC Reasoning:**\n- Based on my answer choice: Although this product has the correct number of carbons, the stereochemistry should be S, not R.\n- Correct answer choice: Because this is an SN2 reaction, there will be inversion of configuration when bromide ion displaces water as a leaving group, changing the stereochemistry from R to S.\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "CC_5B_Nature_of_molecules_and_intermolecular_interactions",
+      "CC_5C_Separation_and_purification_methods",
+      "Reactions",
+      "Scientific_Reasoning_and_Problem_Solving2",
+      "Spectroscopy"
+    ],
+    "source_file": "Physics_Chem\\OChem_2.md",
+    "parent_index": 2,
+    "file_hash": "9651e597257b1775e11c606c5c76ea57020fda5dd183464926dc82e215d80963"
+  }
+}

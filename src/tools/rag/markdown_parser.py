@@ -37,11 +37,10 @@ def extract_tags_from_text(text: str) -> tuple[str, list[str]]:
             # Extract all #word patterns from this line
             tag_matches = re.findall(r"#(\w+)", line)
             if tag_matches:
-                # This is a tag line — extract tags but don't keep the line
+                # Extract tags but KEEP the line in cleaned_text
                 tags.update(tag_matches)
-                continue
 
-        # Keep non-tag lines
+        # Keep all lines to preserve context for LLM
         cleaned_lines.append(line)
 
     cleaned_text = "\n".join(cleaned_lines)

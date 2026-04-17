@@ -1,0 +1,16 @@
+{
+  "page_content": "### Question 3\n- **Question:** Which of the following findings would suggest that the empathy questionnaire is NOT a valid measure?\n- - **Subject:** Psychology\n- **Skill:** #Reasoning_about_the_Design_and_Execution_of_Research3\n- **Content Category:** #CC_8C_Social_interactions\n- **Subtopic/Error Type:** #ConceptualMisunderstanding\n- **My Answer:** No correlation between the scores on the empathy questionnaire and the amount of money won in the competition trials\n- **Correct Answer:** A negative correlation between scores on the empathy questionnaire and the personal distress questionnaire\n- **AAMC Reasoning:**\n- Based on my answer choice The researchers were investigating whether empathy predicted performance on the competition trials. No correlation between these variables would indicate that there is not a relationship between these variables but would not indicate that the empathy assessment is not valid.\n- Correct answer choice: A negative correlation indicates that higher scores on one variable predict lower scores on the second variable. If high scores on the empathy assessment are associated with low scores on the personal distress assessment, that would indicate that the empathy assessment is not valid, as experiencing distress when another person is in distress is a facet of empathy.\n---",
+  "metadata": {
+    "Document Title": "Passage: 1",
+    "Subsection": "Question 3",
+    "tags": [
+      "CC_7A_Individual_influences_on_behavior",
+      "CC_8C_Social_interactions",
+      "ConceptualMisunderstanding",
+      "Reasoning_about_the_Design_and_Execution_of_Research3"
+    ],
+    "source_file": "Psychology_Sociology\\PE3_PsySoc_P1.md",
+    "parent_index": 1,
+    "file_hash": "b0bed1efcfb4c663f5c74746d46af224dd96e870fd6ab4512f848c02936ad7a7"
+  }
+}

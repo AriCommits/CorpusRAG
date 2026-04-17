@@ -1,0 +1,14 @@
+{
+  "page_content": "# Passage:\nGlycogen synthasecatalyzes thelengthening of glycogenpolymers through the addition of glucose. The reaction consists oftransferringa glucosyl moietyfrom uridine diphosphate glucose(UDP-glucose, Figure 1) to thenonreducing end of the glycogenmolecule along with the release of UDP.UDP-glucose is formed from the enzymatically-catalyzed reaction betweenglucose 1-phosphate and UTP.It was discovered that approximately one out of every 600\u20131500 glucose moleculesin muscle glycogen contains phosphate groups covalently linked to theC2 and C3 positions as monoesters.It is hypothesized that glycogen synthase is responsible for the phosphorylation.  \n![CP-9-1-202CP_84074-00P1.gif](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_84074-00P1.gif)  \n|**Figure 1**|The structure of UDP-glucose|  \nLafora disease is a fatal progressive epilepsy that is characterized by the formation of deposits of sparsely branched, insoluble glycogen-like polymers called Lafora bodies(LBs). LBs contain a muchlarger amount of covalently-linked phosphatecompared to normal glycogen. The abundance of phosphate has been linked to amutation in the gene for laforin, aphosphatasespecific to carbohydrates.  \nIn order to test if glycogen synthase is responsible for glycogen phosphorylation, bothUDP-[U-14C]glucoseand[\u03b2-32P]UDP-glucosewere incubated with muscle extracts from wild-type(WT)mice and mice lacking muscle glycogen synthase(MGSKO). The reaction products were separated bySDS-PAGEand visualized byautoradiographythat detects the products of\u03b2\u2212decay(Figure 2). The data werenormalizedto account for thedifferent decay rates.The samples were also treated withglucosidase, an enzyme that breaks down glycogen, and assayed in the same manner.  \n![CP-9-1-202CP_84074-00P2.GIF](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_84074-00P2.GIF)  \n|**Figure 2**|SDS-PAGE analysis from muscle extracts visualized with either14C or32P radioactive decay (Note: The + and \u2013 lanes represent the presence or absence of glucosidase treatment, respectively.)|\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules",
+      "ChemicalBehavior",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Physics_Chem\\BChem_3.md",
+    "parent_index": 1,
+    "file_hash": "82736421d1eb676ba922c7f2e68d3a7828255f7c5b8fe28b8ea6b0d126239391"
+  }
+}

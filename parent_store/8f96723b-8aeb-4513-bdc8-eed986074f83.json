@@ -1,0 +1,22 @@
+{
+  "page_content": "### Question 11\n- **Question:**\n'Monkeys were raised on a diet of either high- or low-quality protein, and then were given free access to high- and low-quality protein diets. The diet preference for both groups of monkeys is shown. (Note: Both groups of monkeys consumed the same amount of food.)  \nthe graph shows two bar charts.\nfirst bar chart, (low quality diet monkeys preferred high quality protein 60 %, and low quality protein 40%) (high quality diet monkeys preferred high quality protein 70 % and low quality protein 30 %)  \nFigure adapted from J. M. Schmidt, P. Sebastian, S. M. Wilder, and A. L. Rypstra, PLOS One. \u00a92012 the Authors.  \nThe data indicate that?\n''\n- **Subject:** Biology\n- **Skill:** #Data_Based_Statistical_Reasoning4\n- **Content Category:** #CC_8C_Social_interactions\n- **Subtopic/Error Type:** #GraphicalInterpretation\n- **My Answer:** prior protein insufficiency was a stronger predictor of future feeding behavior than prior protein sufficiency.\n- **Correct Answer:** - prior feeding history influenced future feeding behavior in monkeys raised on a high-quality protein diet only.\n- **AAMC Reasoning:**\n- Based on my answer choice: Monkeys raised on a low-quality protein diet were likely to experience prior protein insufficiency. However, these monkeys did not exhibit food preference when provided access to both low-quality and high-quality proteins.\n- Correct answer choice: Monkeys raised on a high-quality protein diet exhibited a preference for high-quality proteins when provided access to both high- and low-quality proteins. Meanwhile, monkeys raised on a low-quality diet did not exhibit a food preference when provided access to both high- and low-quality proteins.  \n---",
+  "metadata": {
+    "Subsection": "Question 11",
+    "tags": [
+      "CC_8A_Self_identity",
+      "CC_8C_Social_interactions",
+      "CC_9A_Understanding_social_structure",
+      "CC_9B_Demographic_characteristics_and_processes",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4",
+      "GraphicalInterpretation",
+      "Knowledge_of_Scientific_Principles1",
+      "ScientificContent",
+      "Scientific_Reasoning_and_Problem_Solving2",
+      "UnknownDefintion"
+    ],
+    "source_file": "Psychology_Sociology\\PE3_Misc_1.md",
+    "parent_index": 0,
+    "file_hash": "bdb465c344907a2423d16e7affb60055baca72e814c3efdef7aebbcdeb6676cd"
+  }
+}

@@ -11,15 +11,15 @@ class ChunkingConfig:
     """Text chunking configuration."""
 
     # Parent chunks come from MarkdownHeaderTextSplitter (full sections)
-    child_chunk_size: int = 400
-    child_chunk_overlap: int = 50
+    child_chunk_size: int = 800
+    child_chunk_overlap: int = 100
 
 
 @dataclass
 class RetrievalConfig:
     """Retrieval configuration."""
 
-    top_k_semantic: int = 25
+    top_k_semantic: int = 50
     top_k_bm25: int = 25
     top_k_final: int = 10
     rrf_k: int = 80  # Reciprocal Rank Fusion parameter

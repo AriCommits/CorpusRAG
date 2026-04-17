@@ -1,0 +1,18 @@
+{
+  "page_content": "### Question 52\n- **Question:** Suppose that a blood vessel of cross-sectional area A carries microbubbles at a speed v into a capillary bed. If the capillary bed is made up of n capillaries, each with cross-sectional area a, with what speed will the blood flow in the capillary bed?\n- **Subject:** Physics\n- **Skill:** #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_4B_Importance_of_fluids_for_the_circulation_of_blood_gas_movement_and_gas_exchange\n- **Subtopic/Error Type:**\n- **My Answer:** nav/V\n- **Correct Answer:** Av/na\n- **AAMC Reasoning:**\n- Based on my answer choice: The question states that v is the flow speed in the capillary bed, and the response option uses u for the speed of flow in the capillary bed, therefore the continuity equation is A \u00d7 v = n \u00d7 a \u00d7 u. This response incorrectly uses u as the flow speed in the blood vessel of cross-sectional area A and v as the flow speed in the capillary bed.\n- Correct answer choice: According to the continuity equation, if u is the speed of flow in the capillary bed, then A \u00d7 v = n \u00d7 a \u00d7 u, so u = A \u00d7 v/(n \u00d7 a).\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question 52",
+    "tags": [
+      "CC_4B_Importance_of_fluids_for_the_circulation_of_blood_gas_movement_and_gas_exchange",
+      "CC_4D_How_light_and_sound_interact_with_matter",
+      "ConceptualMisunderstanding",
+      "Knowledge_of_Scientific_Principles1",
+      "Miscalculation",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\PE3_Phys_P9.md",
+    "parent_index": 4,
+    "file_hash": "351a25d651f878cd8d1bf0cc335efeaf884c6e876ad1aea28ce4791e4f1e7257"
+  }
+}

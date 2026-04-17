@@ -59,6 +59,7 @@ class RAGIngester:
 
         Uses semantic markdown splitting to create parent documents, then creates
         child chunks for vector search while maintaining parent-child linkage.
+        Implements incremental sync by checking content hashes.
 
         Args:
             path: Path to file or directory
@@ -120,12 +121,35 @@ class RAGIngester:
             if not content.strip():
                 continue
 
-            files_indexed += 1
             relative_path = (
                 str(file_path.relative_to(source))
                 if file_path != source
                 else file_path.name
             )
+
+            # Compute hash for incremental sync
+            file_hash = sha256(content.encode("utf-8")).hexdigest()
+
+            # Check if file already exists in DB with same hash
+            existing_metadatas = self.db.get_metadata_by_filter(
+                full_collection, where={"source_file": relative_path}, limit=1
+            )
+
+            if existing_metadatas:
+                existing_hash = existing_metadatas[0].get("file_hash")
+                if existing_hash == file_hash:
+                    # File unchanged, skip
+                    continue
+                else:
+                    # File modified, delete old version from DB and parent store
+                    self.db.delete_by_metadata(
+                        full_collection, where={"source_file": relative_path}
+                    )
+                    self.parent_store.delete_by_metadata(
+                        lambda m: m.get("source_file") == relative_path
+                    )
+
+            files_indexed += 1
 
             # Split markdown semantically (parent documents)
             parent_docs = split_markdown_semantic(content)
@@ -138,6 +162,7 @@ class RAGIngester:
                 )
                 parent_metadata["source_file"] = relative_path
                 parent_metadata["parent_index"] = parent_idx
+                parent_metadata["file_hash"] = file_hash
 
                 # Store parent document in document store
                 parent_langchain_doc = Document(

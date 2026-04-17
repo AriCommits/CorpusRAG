@@ -7,6 +7,7 @@ from llm import PromptTemplates, create_backend
 
 from .config import RAGConfig
 from .retriever import RAGRetriever, RetrievedDocument
+from .session import SessionManager
 
 
 class RAGAgent:
@@ -22,6 +23,7 @@ class RAGAgent:
         self.config = config
         self.db = db
         self.retriever = RAGRetriever(config, db)
+        self.session_manager = SessionManager()
         # Create LLM backend for generation
         self.llm_backend = create_backend(config.llm.to_backend_config())
 
@@ -62,11 +64,17 @@ class RAGAgent:
                     }
                 )
 
+            # Truncate conversation history to fit context window
+            # Keeping last 10 messages (5 exchanges) as a default window
+            truncated_history = None
+            if conversation_history:
+                truncated_history = conversation_history[-10:]
+
             # Build prompt with context using the prompt template
             prompt = PromptTemplates.rag_response(
                 query=query,
                 context_chunks=context_chunks,
-                conversation_history=conversation_history,
+                conversation_history=truncated_history,
             )
 
             # Generate response using LLM
@@ -101,27 +109,25 @@ class RAGAgent:
         Returns:
             Response text
         """
-        # TODO: Implement proper conversation history storage
-        # For now, just use single query
-        conversation_history = None
-
+        # Load existing history if session_id is provided
+        history = []
         if session_id:
-            # Placeholder for loading conversation history
-            # In full implementation, this would load from storage
-            conversation_history = []
+            history = self.session_manager.load_session(session_id)
 
+        # Execute query with history
         response = self.query(
             message,
             collection,
             stream=stream,
-            conversation_history=conversation_history,
+            conversation_history=history,
             where=where,
         )
 
+        # Update and save history
         if session_id:
-            # Placeholder for saving conversation history
-            # In full implementation, this would save to storage
-            pass
+            history.append({"role": "user", "content": message})
+            history.append({"role": "assistant", "content": response})
+            self.session_manager.save_session(session_id, history)
 
         return response
 

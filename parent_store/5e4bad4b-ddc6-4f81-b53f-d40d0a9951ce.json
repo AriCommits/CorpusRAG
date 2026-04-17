@@ -1,0 +1,19 @@
+{
+  "page_content": "### Question 32\n- **Question:** What is the identity of the substance that has undergone net reduction after the Reaction 1 is complete?\n- **Subject:** General Chemistry\n- **Skill:** #Knowledge_of_Scientific_Principles1\n- **Content Category:** #CC_4E_Atoms_nuclear_decay_electronic_structure_and_atomic_chemical_behavior\n- **Subtopic/Error Type:** #QuestionMisunderstanding\n- **My Answer:** FAD\n- **Correct Answer:** O2\n- **AAMC Reasoning:**\n- Based on my answer choice: Although FAD is reduced to FADH2 at one stage in the elementary steps of Reaction 1, this cofactor is regenerated, so there is no net reduction.\n- Correct answer choice: Because O2 is converted to H2O in Reaction 1, there is a net reduction because the oxidation state of oxygen in O2 is 0 and in H2O it is \u20132.\n- **Personal Reasoning:**  Thought this question was more about the intermediate step not the full reaction scheme\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question 32",
+    "tags": [
+      "CC_4E_Atoms_nuclear_decay_electronic_structure_and_atomic_chemical_behavior",
+      "CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules",
+      "CC_5E_Principles_of_chemical_thermodynamics_and_kinetics",
+      "ConceptualMisunderstanding",
+      "Knowledge_of_Scientific_Principles1",
+      "QuestionMisunderstanding",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\PE3_Phys_P6.md",
+    "parent_index": 4,
+    "file_hash": "ad0bce5bdb9824d5be15d5218fcdba257c001d03ac258dc366e41578ade54242"
+  }
+}

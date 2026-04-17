@@ -1,0 +1,15 @@
+{
+  "page_content": "# Passage:  \nFas is a cell surface receptor known to be involved in apoptotic signaling. Stimulation of Fas leads to the recruitment of the Fas-associated death domain protein (FADD). FADD then recruits procaspase-8, which is converted to caspase-8 within the receptor-signaling complex. Caspase-8 is a protease that triggers apoptotic cell death.  \nFas activation does not always lead to apoptosis in some cell types. For example, Fas activation has been shown to activate other signaling pathways, such as activation of the transcription factor NF-\u03baB. It has been proposed that the protein cFLIP, a structurally similar homolog of caspase-8 that lacks catalytic activity, controls Fas signaling downstream of FADD. Based on its structural similarity to caspase-8, it is thought that cFLIP binds to FADD at the same site as caspase-8. The association of cFLIP and FADD has been shown to activate the extracellular signal regulated kinases 1 and 2 (ERK1 and ERK2) as evidenced by their phosphorylation.  \nIn order to understand the role of cFLIP in non-apoptotic Fas signaling, two experiments were conducted.  \nExperiment 1  \nCells from the human diploid fibroblast cell line GM6112 were serum-starved and subjected to one of three experimental conditions: exposure to soluble Fas ligand (sFasL), tumor necrosis factor (TNF), or conditioned media (CM) as the negative control. Cell lysates were collected at various times and analyzed by immunoblotting with antibodies specific for phosphorylated tyrosine residues on ERK1, ERK2, and p38 (Figure 1). Phosphorylation of p38 is an indication of normal apoptotic signaling in GM6112 cells. TNF signaling occurs through a non-FADD-dependent pathway.  \nBB-8-1-201BB_84175-00P1.gif  \nFigure 1Immunoblot analysis after sFasL, TNF, and CM treatment of GM6112 cells\nExperiment 2  \nGM6112 cells were serum-starved for four days and analyzed using Western blot analysis. Western blot analysis uses electrophoresis and antibody detection to determine specific protein levels compared to invariant \u03b1-tubulin levels (Figure 2).  \nBB-8-1-201BB_84175-00P2.gif  \nFigure 2Western blot analysis of GM6112 cells during four days of serum starvation  \nAdapted from J.H. Ahn et al., The Journal of Biological Chemistry. \u00a92001 The American Society for Biochemistry and Molecular Biology, Inc.  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_1A_Structure_and_function_of_proteins_and_their_constituent_amino_acids",
+      "CC_2C_Processes_of_cell_division_differentiation_and_specialization",
+      "ConceptualMisunderstanding",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P3.md",
+    "parent_index": 1,
+    "file_hash": "83efebf5d4b7aecc8db3389880d2b97d634fb581c58a4fb4ddb30193167e9ea9"
+  }
+}

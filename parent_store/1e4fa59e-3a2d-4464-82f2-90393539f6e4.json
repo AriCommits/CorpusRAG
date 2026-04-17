@@ -1,0 +1,19 @@
+{
+  "page_content": "### Question 22\n- **Question:** In the absence of digoxin treatment, hydrolysis of one molecule of ATP results in which combination of ion movements across the myocardial cell membrane?\n- **Subject:** Biochemistry\n- **Skill:** #Knowledge_of_Scientific_Principles1\n- **Content Category:** #CC_2A_Assemblies_of_molecules_cells_and_groups_of_cells\n- **Subtopic/Error Type:** #InvertedLogic #NaKAtpase\n- **My Answer:** 3 K+ out; 2 Na+ in\n- **Correct Answer:** 3 Na+ out; 2 K+ in\n- **AAMC Reasoning:**\n- Based on my answer choice: Na+K+ ATPase transports 2 K+ into the cell, not 3 K+ out of the cell, and 3 Na+ out of the cell, not 2 Na+ into the cell.\n- Correct answer choice: Na+K+ ATPase is a transmembrane protein that uses one molecule of ATP to transport 3 Na+ out of the cell and 2 K+ into the cell.\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage: 4",
+    "Subsection": "Question 22",
+    "tags": [
+      "CC_1B_Transmission_of_genetic_information_from_the_gene_to_the_protein",
+      "CC_2A_Assemblies_of_molecules_cells_and_groups_of_cells",
+      "ConceptualMisunderstanding",
+      "InvertedLogic",
+      "Knowledge_of_Scientific_Principles1",
+      "NaKAtpase",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P4.md",
+    "parent_index": 4,
+    "file_hash": "03d792f8d20e51b61f4c40f37fae5baacab2b8d9f4240a4f019ccef3f5e4390e"
+  }
+}

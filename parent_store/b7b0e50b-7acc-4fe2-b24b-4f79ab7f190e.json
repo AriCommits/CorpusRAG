@@ -1,0 +1,15 @@
+{
+  "page_content": "### Question\n- **Question:** Compared to normal glycogen, the amount of what type of bond is decreased in Lafora bodies?\n- - **Subject:** Biochemistry\n- **Skill:** #Knowledge_of_Scientific_Principles1\n- **Content Category:** #CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules\n- **Subtopic/Error Type:** #ChemicalBehavior\n- **My Answer:** $\u03b1-1,4-Glycosidic bond$\n- **Correct Answer:** $\u03b1-1,6-Glycosidic bond$\n- **AAMC Reasoning:**\n- Based on my answer choice: The passage did not indicate that the polymerization of glucose subunits was less in Lafora bodies than normal glycogen.\n- Correct answer choice: The passage stated that Lafora bodies have sparse branching compared to normal glycogen. In glycogen, branching is due to the formation of \u03b1\u22121, 6-glycosidic bonds. Thus, these bonds are decreased in Lafora bodies.\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules",
+      "ChemicalBehavior",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Physics_Chem\\BChem_3.md",
+    "parent_index": 2,
+    "file_hash": "82736421d1eb676ba922c7f2e68d3a7828255f7c5b8fe28b8ea6b0d126239391"
+  }
+}

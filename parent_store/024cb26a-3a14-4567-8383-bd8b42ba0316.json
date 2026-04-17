@@ -1,0 +1,14 @@
+{
+  "page_content": "### Question 13\n- **Skill:** #Reasoning_Within_the_Text\n- **Error_Type:** #TextualEvidence\n- **Question:** The discussion of the Parthenon\u2019s corner columns (paragraph 4) best supports the passage assertion that:\n- **My Answer:** Greek architecture was largely concerned with refining the post-and-lintel system.\n- **Correct Answer:** Greek architects strove to create a sense of balance among elements.\n- **AAMC Reasoning:**\n- Based on my answer choice: A is incorrect as the discussion of the corner columns describes an architectural intervention that goes well beyond \u201crefining the post-and-lintel system;\u201d the system that involves simply \u201csetting up a series of vertical posts for the support of a horizontal member, called the lintel\u201d (first paragraph).\n- Correct answer choice: This is a Humanities passage, which falls under the content category of \u201cArt History.\u201d This is a Reasoning Within the Text question because it asks you to consider how a particular piece of evidence from the passage works to support a passage claim. The answer is B. Paragraph 4 indicates that because of the color of the background against which the corner columns appear, the corner columns would seem to be thinner than those in the middle, if all columns had the same diameter. Therefore, the architect has \u201ccorrected this optical distortion . . . thus promoting the appearance of stability at these important points\u201d (paragraph 4). This supports the claim that \u201cGreek architects strove to create a sense of balance among elements.\u201d This is precisely what the architect is described as doing with the corner columns: working to create a sense of balance, or equality, among the columns, rather than allowing the optical distortion (creating a sense of difference among the columns) to prevail.  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question 13",
+    "tags": [
+      "Reasoning_Within_the_Text",
+      "TextualEvidence"
+    ],
+    "source_file": "CARS\\PE3_CARS_P3.md",
+    "parent_index": 2,
+    "file_hash": "f445fec80b8be33a22cec616747d2abc7648723f54ee7fbea6851095f9f6eed0"
+  }
+}

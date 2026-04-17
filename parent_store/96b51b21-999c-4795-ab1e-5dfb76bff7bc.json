@@ -1,0 +1,14 @@
+{
+  "page_content": "### Question\n- **Skill:** #Reasoning_Beyond_the_Text\n- **Error_Type:** #AuthorsLogicInversion\n- **Question:** If the author of the passage is right that friendship blurs the distinction between one\u2019s own interests and the interests of one\u2019s friends, then it follows that:\n- **My Answer:** friends become more and more alike the longer they are together.\n- **Correct Answer:** by their very nature, friendships foster cooperation and reduce antagonism.\n- **AAMC Reasoning:**\n- Based on my answer choice: The idea that friendship is characterized by a commonality of interests implies that the more similar the friends\u2019 interests, the more likely their friendship is to endure\u2014i.e., similarity promotes friendship. It does not imply that friendship promotes similarity.\n- Correct answer choice: The author\u2019s reason for concluding that between friends, \u201cthe division between self-interest and other-interest is often not applicable\u201d is the premise that reciprocally acknowledged liking, caring, trusting, etc., are integral to friendship. Such feelings imply a mutual inclination to cooperate.  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "AuthorsLogicInversion",
+      "Reasoning_Beyond_the_Text"
+    ],
+    "source_file": "CARS\\Friendships and Excellence.md",
+    "parent_index": 2,
+    "file_hash": "9a5ffa4edc698d1bd3db2ae1f4bc9e5e59b02e2d7d9e9a83b7da9d2da648e5cf"
+  }
+}

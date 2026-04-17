@@ -1,0 +1,17 @@
+{
+  "page_content": "### Question 10\n- **Question:** Which of the following animal pairs best illustrates the outcome of convergent evolution?\n- **Subject:** Biology\n- **Skill:** #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_1C_Transmission_of_heritable_information_and_processes_increasing_genetic_diversity\n- **Subtopic/Error Type:** #ConceptualMisunderstanding #ForgotTerminology\n- **My Answer:** The domestic sheep and the mountain goat\n- **Correct Answer:** The dolphin and the shark\n- **AAMC Reasoning:**\n- Based on my answer choice: The domestic sheep and the mountain goat are both mammals and they live in different environments, thus they have developed slightly different features to survive.\n- Correct answer choice: Convergent evolution is defined as a process whereby distantly related organisms independently evolve similar traits to adapt to similar needs. Dolphins and sharks are genetically different, the dolphin being a mammal and the shark being a fish. Both of them, however, have developed similar structures to be able to survive in a similar environment.\n---",
+  "metadata": {
+    "Subsection": "Question 10",
+    "tags": [
+      "CC_1B_Transmission_of_genetic_information_from_the_gene_to_the_protein",
+      "CC_1C_Transmission_of_heritable_information_and_processes_increasing_genetic_diversity",
+      "ConceptualMisunderstanding",
+      "ForgotTerminology",
+      "Knowledge_of_Scientific_Principles1",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_Misc1.md",
+    "parent_index": 0,
+    "file_hash": "85ab22c07798a45cb01f774cdaef2d2418aa239493f30a349288ef0b84fd2595"
+  }
+}

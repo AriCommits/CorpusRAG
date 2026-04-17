@@ -1,0 +1,14 @@
+{
+  "page_content": "---\nSection: CARS\nCARS Section: Humanities\nSubject: Literature\nTest: AAMC_FL1\nPassage: Writers\n---",
+  "metadata": {
+    "tags": [
+      "AssertionChallenge",
+      "Reasoning_Beyond_the_Text",
+      "Reasoning_Within_the_Text",
+      "StatementFunction"
+    ],
+    "source_file": "CARS\\Writers.md",
+    "parent_index": 0,
+    "file_hash": "3726962d2455210120e340c694ea794234ae7a408c30e693a5d0db0bd4989efb"
+  }
+}

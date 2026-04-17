@@ -1,0 +1,18 @@
+{
+  "page_content": "# Passage: 4  \nDigoxin is a cardiac glycoside, which has a positive inotropic effect (increases the force of contraction) on heart muscle by inhibiting the Na+K+ ATPase on the myocardial cell membrane. Digoxin is not effective in all patients with congestive heart failure because it can be inactivated and excreted as the metabolite dihydrodigoxin. Researchers hypothesized that gut microbiota may inactivate digoxin.  \nEggerthella lenta, a gram-positive bacillus, can reduce digoxin, although high levels of arginine inhibit this reaction. An operon containing two genes, cardiac glycoside reductase 1 and 2 (cgr1 and cgr2), was upregulated in E. lenta (strain DSM2243) cultured in the presence of digoxin.  \nTo test whether variation in E. lenta strains affects digoxin reduction, fecal samples containing the gut flora of 20 healthy individuals were analyzed for: (1) digoxin reducing ability and (2) cgr ratio (abundance of the cgr operon relative to the E. lenta 16S ribosomal RNA gene). These results divided the samples into two groups (Table 1).  \nTable 1Reduction and Cgr Ratio in Fecal Samples\nParameterGroup 1Group 2\nDigoxin reduction (%)96.25*12.82\nCgr ratio (units)1.05*0.42\n(Note: * indicates p < 0.05 compared to Group 2.)\nThe gut flora from Group 1 samples reduced digoxin to a similar extent as E. lenta strain DSM2243, whereas Group 2 was more similar to E. lenta strain FAA 1-3-56. Group 2 fecal samples were then cultured in the presence of either the DSM2243 or FAA 1-3-56 strain. The ability of these mixed cultures to reduce digoxin was compared to the effects of Group 2 gut microbiota alone or each strain alone (Figure 1).  \nBB-8-1-201BB-86065-00P1.gif  \nFigure 1\nPercentage of digoxin reduction in Group 2 gut microbiota samples co-cultured with E. lenta DSM2243 or FAA 1-3-56 strains (Note: * indicates p < 0.05; ** indicates p < 0.001.)  \n---",
+  "metadata": {
+    "Document Title": "Passage: 4",
+    "tags": [
+      "CC_1B_Transmission_of_genetic_information_from_the_gene_to_the_protein",
+      "CC_2A_Assemblies_of_molecules_cells_and_groups_of_cells",
+      "ConceptualMisunderstanding",
+      "InvertedLogic",
+      "Knowledge_of_Scientific_Principles1",
+      "NaKAtpase",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P4.md",
+    "parent_index": 1,
+    "file_hash": "03d792f8d20e51b61f4c40f37fae5baacab2b8d9f4240a4f019ccef3f5e4390e"
+  }
+}

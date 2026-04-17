@@ -30,9 +30,9 @@ rag:
     child_chunk_size: 400
     child_chunk_overlap: 50
   retrieval:
-    top_k_semantic: 25
-    top_k_bm25: 25
-    top_k_final: 10
+    top_k_semantic: 50
+    top_k_bm25: 50
+    top_k_final: 25
     rrf_k: 80
   parent_store:
     type: local_file
@@ -40,8 +40,8 @@ rag:
   collection_prefix: rag
 
 video:
-  whisper_model: medium.en
-  whisper_device: cpu
+  whisper_model: large-v2.en
+  whisper_device: cuda
   whisper_compute_type: int8
   whisper_language: en
   models_dir: ./models/whisper

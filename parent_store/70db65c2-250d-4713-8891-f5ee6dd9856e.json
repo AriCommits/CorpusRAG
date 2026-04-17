@@ -1,0 +1,16 @@
+{
+  "page_content": "# Passage:  \nQuadruplexes are a form of DNA secondary structure that can occur in G-rich or C-rich DNA sequences and are composed of either four individual single strands of DNA or are the result of internal folding of one single strand of DNA. C-rich i-motifs (iMs) are formed when unprotonated and protonated C\u2013C+ base pairs intercalate and stabilize the secondary structure.  \nIn mammalian cells, iMs have been shown to be subject to two epigenetic modifications: methylation and hydroxymethylation. It is possible that the presence of 5-methylcytosine (5mC) or 5-hydroxymethylcytosine (5hmC) within a C-rich DNA sequence can affect iM stability. In order to examine the effects of epigenetic modification on iM stability, researchers subjected three 22-nucleotide sequences to both pH and thermal denaturation. The wild-type (WT) sequence was 5\u2032\u2013TTCCCTACCCTCCCCACCCTAA\u20133\u2032, and the modified sequences had either a 5mC (5mC-WT) or a 5hmC (5hmC-WT) at position five.  \nThe pH-dependent unfolding of each oligonucleotide solution was monitored using circular dichroism (CD) spectroscopy. The CD signal was monitored at 289 nm, and the concentration of DNA was 3 \u03bcM. The results are shown in Figure 1.  \nCP-9-1-202CP_84573-00P1.gif  \nFigure 1The pH-dependence of iM denaturation for each oligonucleotide\nThe temperature-dependence of iM denaturation was also monitored at 289 nm. The midpoint of denaturation of WT, 5mC-WT, and 5hmC-WT were 42.5\u00baC, 43.7\u00baC, and 40.5\u00baC, respectively.  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "AcidBases",
+      "CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4",
+      "Tired"
+    ],
+    "source_file": "Physics_Chem\\PE3_Phys_P8.md",
+    "parent_index": 1,
+    "file_hash": "4f827ad4ea7a3bd10fc299ff47063b7b1c67d291d4d427b30689f8fab65db422"
+  }
+}

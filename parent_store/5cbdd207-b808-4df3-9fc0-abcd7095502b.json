@@ -1,0 +1,17 @@
+{
+  "page_content": "# Passage:\nMicrobubbles, which have been used to enhance ultrasound imaging, are now being used to deliver drug and gene treatments to specifically targeted tissues. The microbubbles used for these treatments have diameters of 1\u20137 \u03bcm and are composed of air (or a nontoxic high-molecular-weight gas like SF6) within a thin shell made of a lipid, a protein, or a sugar. Because capillaries are typically 5\u201310 \u03bcm in diameter, the bloodstream can carry microbubbles to nearly all regions of the body. When subjected to low-intensity ultrasound, a microbubble resonates at integer multiples of its fundamental frequency f0, which is inversely proportional to the microbubble diameter d. The ultrasound echo from a microbubble is much stronger at resonant frequencies than at nonresonant frequencies, making the reflected wave easier to detect and analyze.  \nFor drug and gene treatments, the drug or plasmid DNA is mixed with the shell substance, and the mixture is shaken to form the microbubbles. Once injected, the microbubbles travel throughout the bloodstream. High-intensity ultrasound applied at the treatment site causes the microbubbles to burst there, scattering bits of the shell substance\u2013treatment material mixture through the capillary walls and into the cells of the surrounding tissue.  \nA study was done on the tissues of rats treated with microbubbles burst by 2.3 MHz ultrasound. It was observed that the burst microbubbles made openings of ~2.5 \u00d7 104 \u03bcm2 through the capillary walls.  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_4B_Importance_of_fluids_for_the_circulation_of_blood_gas_movement_and_gas_exchange",
+      "CC_4D_How_light_and_sound_interact_with_matter",
+      "ConceptualMisunderstanding",
+      "Knowledge_of_Scientific_Principles1",
+      "Miscalculation",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\PE3_Phys_P9.md",
+    "parent_index": 1,
+    "file_hash": "351a25d651f878cd8d1bf0cc335efeaf884c6e876ad1aea28ce4791e4f1e7257"
+  }
+}

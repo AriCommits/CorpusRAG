@@ -1,0 +1,18 @@
+{
+  "page_content": "### Question 15\n- **Question:** Using the diagnostic criteria displayed in Figure 1 to classify individuals for treatment, which of the following statements is NOT supported?\n- - **Subject:** Psychology\n- **Skill:**  #Data_Based_Statistical_Reasoning4\n- **Content Category:** #CC_6B_Making_sense_of_the_environment\n- **Subtopic/Error Type:** #GraphicalInterpretation\n- **My Answer:** Immediately after treatment, participants in all three therapy groups scored below the threshold for diagnosis for insomnia.\n- **Correct Answer:** All participants in the study scored below the threshold for diagnosis for insomnia after treatment.\n- **AAMC Reasoning:**\n- Based on my answer choice: This statement is supported by the figure, which shows all three therapy groups below the diagnostic threshold immediately after therapy ends.\n- Correct answer choice:  The findings presented in Figure 1 represent group differences and changes rather than changes for individual participants. Thus, the statement that all participants in the study scored below the threshold for diagnosis cannot be supported from it.\n- ** Personal Explanation of my error: ** I reversed the meaning of my response and the correct response, I thought immediately after meant like immediately after the first day, and since the the correct option was more vague i thought it meant after all treatment was done.\n---",
+  "metadata": {
+    "Document Title": "Passage: 3",
+    "Subsection": "Question 15",
+    "tags": [
+      "CC_6B_Making_sense_of_the_environment",
+      "CC_7C_Attitude_and_behavior_change",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4",
+      "GraphicalInterpretation",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Psychology_Sociology\\PE3_PsySoc_P3.md",
+    "parent_index": 2,
+    "file_hash": "1184d199b028616fd5595a4c780d143b72f96ab0445611eb9ad689da03d5cbf3"
+  }
+}

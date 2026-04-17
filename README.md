@@ -7,10 +7,18 @@ CorpusCallosum is a modular, AI-powered toolkit for personal knowledge managemen
 ## ✨ Recent Improvements (Current Release)
 
 ### 🎯 Advanced RAG Architecture
-- **Parent-Child Retrieval**: Semantic markdown splitting creates parent documents stored in LocalFileStore with child chunks indexed for vector search
-- **Metadata Filtering**: Query with `--tag` and `--section` flags to filter results by document tags and section headers
-- **Tag Extraction**: Automatically extracts `#tags` from markdown bullet lists for automatic metadata enrichment
-- **Improved Quality**: Full parent documents returned instead of isolated chunks, providing better context
+- **Hybrid Search**: Combines semantic vector search with BM25 keyword matching for superior retrieval of technical terms and exact matches.
+- **Reranking**: Uses a cross-encoder (`ms-marco-MiniLM-L-6-v2`) to re-score and refine retrieved documents, ensuring the most relevant context is sent to the LLM.
+- **Incremental Syncing**: Hash-based document ingestion (SHA-256) ensures only new or modified files are processed, making updates instantaneous.
+- **Parent-Child Retrieval**: Semantic markdown splitting creates parent documents stored in LocalFileStore with child chunks indexed for vector search.
+- **Metadata Filtering**: Advanced filtering using `$contains` for list-valued tags and exact matching for section headers.
+- **Context Preservation**: Tag lines and structural headers are preserved during parsing to provide the LLM with full metadata context.
+
+### 🖥️ Terminal User Interface (TUI)
+- **Rich Interactive UI**: Powered by **Textual**, featuring a dual-pane layout with a session sidebar and a scrollable, Markdown-rendered chat area.
+- **Dynamic Filtering**: Apply **Tags** and **Sections** filters directly from the TUI sidebar to refine your retrieval context on the fly.
+- **Persistent Sessions**: Conversation history is automatically saved and loaded from a local `.sessions/` directory, allowing you to resume any past chain of thought.
+- **Async Execution**: Background workers keep the TUI responsive while the LLM generates responses or the RAG pipeline processes queries.
 
 ### 🔧 Developer Experience
 - **Automated Code Quality**: `python scripts/lint_and_format.py --fix` auto-fixes Black, isort, and Ruff issues
@@ -95,11 +103,13 @@ database:
 
 rag:
   chunking:
-    child_chunk_size: 400
-    child_chunk_overlap: 50
+    child_chunk_size: 800
+    child_chunk_overlap: 100
   retrieval:
-    top_k_semantic: 25
+    top_k_semantic: 50
+    top_k_bm25: 25
     top_k_final: 10
+    rrf_k: 80
   parent_store:
     type: local_file
     path: ./parent_store
@@ -137,22 +147,25 @@ ollama pull embeddinggemma
 corpus --help
 ```
 
-#### RAG with Metadata Filtering
+#### RAG with TUI and Metadata Filtering
 
 ```bash
-# Ingest documents (semantic markdown splitting with tag extraction)
+# Launch the rich Terminal User Interface (Recommended for interactive study)
+corpus rag ui --collection notes
+
+# Ingest documents (incremental sync, semantic markdown splitting, tag extraction)
 corpus rag ingest ./documents --collection notes
 
-# Query with results
+# Query with hybrid search (vector + BM25) and cross-encoder reranking
 corpus rag query "What is machine learning?" --collection notes
 
-# Query with tag filter
+# Query with list-valued tag filter
 corpus rag query "machine learning" --collection notes --tag python --tag ml
 
-# Query with section filter
+# Query with section header filter
 corpus rag query "algorithms" --collection notes --section "Sorting"
 
-# Interactive chat
+# Headless interactive chat
 corpus rag chat --collection notes
 ```
 
@@ -226,6 +239,7 @@ For direct access without the unified CLI:
 
 ```bash
 # RAG
+python -m tools.rag.cli ui --collection notes
 python -m tools.rag.cli ingest ./documents --collection notes
 python -m tools.rag.cli query "What is machine learning?" --collection notes
 python -m tools.rag.cli query "ml" --collection notes --tag python --tag ml
@@ -254,13 +268,15 @@ Configuration is loaded in order with later values overriding earlier ones:
 rag:
   # Child chunking for vector search
   chunking:
-    child_chunk_size: 400        # Size of child chunks
-    child_chunk_overlap: 50      # Overlap between chunks
+    child_chunk_size: 800        # Size of child chunks for vector store
+    child_chunk_overlap: 100     # Overlap between chunks
   
   # Retrieval settings
   retrieval:
-    top_k_semantic: 25           # Initial semantic search results
-    top_k_final: 10              # Final results after reranking
+    top_k_semantic: 50           # Initial semantic search results to fetch
+    top_k_bm25: 25               # Initial keyword search results to fetch
+    top_k_final: 10              # Final number of results after RRF and reranking
+    rrf_k: 80                    # Reciprocal Rank Fusion parameter
   
   # Parent document storage (for parent-child retrieval)
   parent_store:
@@ -392,13 +408,14 @@ pip install black isort ruff pytest mypy
 4. **Child Chunking**: Parents recursively split into 400-char children with 50-char overlap
 5. **Embedding**: Children embedded and stored in ChromaDB with parent linkage
 
-### Retrieval (Parent-Child Architecture)
+### Retrieval (Parent-Child & Hybrid Architecture)
 
-1. **Semantic Search**: Query embedded and matched against child chunks
-2. **Parent Lookup**: Parent document ID extracted from child metadata
-3. **Parent Retrieval**: Full parent document retrieved from LocalFileStore
-4. **Deduplication**: Multiple children from same parent return only one instance
-5. **Context**: Full parent returned to LLM, not isolated chunks
+1. **Hybrid Search**: Query is processed simultaneously via semantic vector search (child chunks) and BM25 keyword matching (parent documents).
+2. **Parent Lookup**: For vector results, the full parent document is retrieved from LocalFileStore using the `parent_id`.
+3. **RRF Fusion**: Results from both search paths are combined using Reciprocal Rank Fusion (RRF) to prioritize documents that appear in both or rank highly in one.
+4. **Cross-Encoder Reranking**: The top candidates are re-scored by a cross-encoder model to ensure the most contextually relevant documents are selected.
+5. **Deduplication**: Multiple child chunks from the same parent result in only one high-quality parent document being returned.
+6. **Context Synthesis**: The final, reranked parent documents are provided to the LLM for response generation.
 
 ### Metadata Filtering
 
@@ -436,14 +453,13 @@ See [LINT_AND_FORMAT.md](LINT_AND_FORMAT.md) for code quality issues and [docs/t
 ## Changelog
 
 ### Latest Release
-- ✅ Parent-child RAG retrieval with semantic markdown splitting
-- ✅ Metadata filtering by tags and sections
-- ✅ Comprehensive test suite (120+ new tests)
-- ✅ Automated linting and formatting system
-- ✅ Fixed generator placeholder queries
-- ✅ Fixed MCP server attribute errors
-- ✅ Docker ChromaDB support
-- ✅ Cross-platform path handling
-- ✅ Removed redundant CLI entry points
+- ✅ **Hybrid Search**: Combined semantic vector search and BM25 for maximum precision.
+- ✅ **Cross-Encoder Reranking**: Advanced relevance filtering before LLM synthesis.
+- ✅ **Incremental Syncing**: SHA-256 hash-based ingestion for near-instant updates.
+- ✅ **Interactive TUI**: New **Textual**-powered terminal interface for immersive study.
+- ✅ **Persistent Chat**: Conversation history saved across sessions with context window management.
+- ✅ **Improved Parsing**: Preserved metadata headers in document content for LLM context.
+- ✅ Parent-child RAG retrieval with semantic markdown splitting.
+- ✅ Metadata filtering by tags and sections.
 
 See [docs/plans/plan_2.md](docs/plans/plan_2.md) for complete audit and upgrade details.

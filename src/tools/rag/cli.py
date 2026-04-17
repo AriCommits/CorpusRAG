@@ -9,6 +9,7 @@ from cli_common import load_cli_db
 from .agent import RAGAgent
 from .config import RAGConfig
 from .ingest import RAGIngester
+from .tui import RAGApp
 
 
 @click.group()
@@ -60,25 +61,30 @@ def query(
     # Build where filter for metadata
     where = None
     if tag or section:
-        where = {}
+        tag_filter = None
         if tag:
-            # Filter for documents that have any of the specified tags
-            where["tags"] = {"$in": list(tag)}
+            if len(tag) == 1:
+                tag_filter = {"tags": {"$contains": tag[0]}}
+            else:
+                tag_filter = {"$or": [{"tags": {"$contains": t}} for t in tag]}
+
+        section_filter = None
         if section:
             # Filter for documents with specific section headers
-            # This filters on Document Title, Primary Section, or Subsection metadata
+            # Only use keys that actually exist in the metadata
             section_filter = {
                 "$or": [
                     {"Document Title": {"$in": list(section)}},
-                    {"Primary Section": {"$in": list(section)}},
                     {"Subsection": {"$in": list(section)}},
                 ]
             }
-            if "tags" in where:
-                # Combine tag and section filters
-                where = {"$and": [where, section_filter]}
-            else:
-                where = section_filter
+
+        if tag_filter and section_filter:
+            where = {"$and": [tag_filter, section_filter]}
+        elif tag_filter:
+            where = tag_filter
+        else:
+            where = section_filter
 
     click.echo(f"Querying collection '{collection}'...\n")
     response = agent.query(query, collection, top_k=top_k, where=where)
@@ -109,21 +115,29 @@ def chat(collection: str, tag: tuple[str, ...], section: tuple[str, ...], config
     # Build where filter for metadata
     where = None
     if tag or section:
-        where = {}
+        tag_filter = None
         if tag:
-            where["tags"] = {"$in": list(tag)}
+            if len(tag) == 1:
+                tag_filter = {"tags": {"$contains": tag[0]}}
+            else:
+                tag_filter = {"$or": [{"tags": {"$contains": t}} for t in tag]}
+
+        section_filter = None
         if section:
+            # Only use keys that actually exist in the metadata
             section_filter = {
                 "$or": [
                     {"Document Title": {"$in": list(section)}},
-                    {"Primary Section": {"$in": list(section)}},
                     {"Subsection": {"$in": list(section)}},
                 ]
             }
-            if "tags" in where:
-                where = {"$and": [where, section_filter]}
-            else:
-                where = section_filter
+
+        if tag_filter and section_filter:
+            where = {"$and": [tag_filter, section_filter]}
+        elif tag_filter:
+            where = tag_filter
+        else:
+            where = section_filter
 
     click.echo(f"RAG Chat - Collection: {collection}")
     if where:
@@ -142,6 +156,17 @@ def chat(collection: str, tag: tuple[str, ...], section: tuple[str, ...], config
             break
 
     click.echo("\nGoodbye!")
+
+
+@rag.command()
+@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def ui(collection: str, config: str):
+    """Launch the Terminal User Interface."""
+    cfg, db = load_cli_db(config, RAGConfig)
+    agent = RAGAgent(cfg, db)
+    app = RAGApp(agent, collection)
+    app.run()
 
 
 def main():

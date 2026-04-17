@@ -1,0 +1,17 @@
+{
+  "page_content": "# Passage:  \nHumanrhodopsinis a G protein-coupled receptor(GPCR)found in rod cells of the retina. Rhodopsin is composed ofopsin, a family ofseven helix transmembrane proteins, and acovalently attached coenzyme, retinal. Retinal is derived fromall-_trans_-retinol, also known asvitamin A(Figure 1). When rhodopsin is exposed to light, the11-_cis_-retinal(Figure 1) converts toall-_trans_-retinal. Subsequent structural changes in rhodopsin allow it to interact with and activate theintracellular G protein transducin. The signal isturned off via phosphorylation of rhodopsinbyrhodopsin kinaseand subsequentbinding of the protein arrestin to rhodopsin. Rhodopsin has a maximum absorption at500 nm. Additional opsin based receptors are expressed in specialized cone cells and havemaximum absorptionsat420 nm, 530 nm, and 560 nmwhen reconstituted with11-_cis-_retinal.  \n![CP-9-1-202CP_84061-00P1.gif](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_84061-00P1.gif)  \n|**Figure 1**|Structural representations of all-_trans_-retinol and 11-_cis_-retinal|  \nPrevious studies indicated thatvarious intracellular loopsof rhodopsin are important for interactingwith arrestin. In order to determine which amino acids within the loops have the greatest impact on binding to arrestin, variants of rhodopsin containing one or more amino acid changes were prepared, and their binding to arrestin measured. Researchers focused on two loops,Loop I(Figure 2)andLoop II(Figure 3). Wild-type or variant rhodopsin was reconstituted with 11-_cis_-retinal and phosphorylated by rhodopsin kinase in the presence of ATP before examining arrestin binding. In theabsence of phosphorylation,arrestin bindingto wild-type rhodopsin decreased by 90%.  \n![CP-9-1-202CP_84061-00P2.gif](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_84061-00P2.gif)  \n|**Figure 2**|Arrestin binding to Loop I variants of rhodopsin: (A) Reconstituted with 11-_cis_-retinal and phosphorylated by rhodopsin kinase; (B) Reconstituted with 11-_cis_-retinal in the presence of rhodopsin kinase with ATP (+ATP) or without ATP (\u2013ATP)|  \n![CP-9-1-202CP_84061-00P3.gif](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_84061-00P3.gif)  \n|**Figure 3**|Arrestin binding to Loop II variants of rhodopsin: (A) Reconstituted with 11-_cis_-retinal and phosphorylated by rhodopsin kinase; (B) Reconstituted with 11-_cis_-retinal in the presence of rhodopsin kinase with ATP (+ATP) or without ATP (\u2013ATP)|  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_4D_How_light_and_sound_interact_with_matter",
+      "CC_5B_Nature_of_molecules_and_intermolecular_interactions",
+      "Hybridization",
+      "Knowledge_of_Scientific_Principles1",
+      "Light",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\OChem_3.md",
+    "parent_index": 1,
+    "file_hash": "1daa0cb19ba004be7e0c832731d3a7aa2968ec2bba6642b8f9adfef2b77331b0"
+  }
+}

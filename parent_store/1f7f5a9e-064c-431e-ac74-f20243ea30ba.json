@@ -1,0 +1,15 @@
+{
+  "page_content": "### Question\n- **Question:** Knowing that the speed of light in the vitreous humor is 2.1 \u00d7 108 m/s, what is the index of refraction of the vitreous humor? (Note: The speed of light in a vacuum is 3.0 \u00d7 108 m/s.)\n- - **Subject:** Physics\n- **Skill:** #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_4D_How_light_and_sound_interact_with_matter\n- **Subtopic/Error Type:** #Optics\n- **My Answer:** 0.7\n- **Correct Answer:** 1.4\n- **AAMC Reasoning:**\n- Based on my answer choice: This option implies light travels faster through the vitreous humor than through vacuum, which is a scientific impossibility.\n- Correct answer choice: The index of refraction of a medium is equal to the ratio of the speed of light in vacuum to the speed of light in the medium, thus in this case is equal to (3.0 \u00d7 108 m/s)/(2.1 \u00d7 108 m/s) = 1.4.\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "CC_4D_How_light_and_sound_interact_with_matter",
+      "Optics",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\Physics_1.md",
+    "parent_index": 2,
+    "file_hash": "7bdd18f1f1c3841c9d7493ecf8751c4fd16b6f95523325eb3ae601b01d6b116f"
+  }
+}

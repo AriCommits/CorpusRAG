@@ -1,0 +1,23 @@
+{
+  "page_content": "### Question 31\n- **Question:** In the experiment with wild-type rats, each press of the lever delivered 0.1 mL ethanol. Which figure shows the expected effect of R121919 treatment on the number of lever presses of dependent rats versus nondependent rats after vapor exposure ceased?\n- **Subject:** Biology\n- **Skill:** #Data_Based_Statistical_Reasoning4\n- **Content Category:** #CC_7A_Individual_influences_on_behavior\n- **Subtopic/Error Type:** #GraphicalInterpretation #InvertedLogic\n- **My Answer:**\n- **Correct Answer:**\n- **AAMC Reasoning:**\n- Based on my answer choice: In the absence of R121919, dependent rats have a higher number of lever presses compared to nondependent rats. However, passage indicates that R121919 reduces rather than enhances this effect.\n- Correct answer choice: According to the passage, dependent rats self-administer ethanol via a higher number of lever presses compared to nondependent rats. Further, this effect is reduced by treatment with R121919.  \n---",
+  "metadata": {
+    "Document Title": "Passage: 6",
+    "Subsection": "Question 31",
+    "tags": [
+      "CC_7A_Individual_influences_on_behavior",
+      "CC_7B_Social_processes_that_influence_human_behavior",
+      "CC_7C_Attitude_and_behavior_change",
+      "CC_8A_Self_identity",
+      "ChooseWeakerVersionOfFinalTwo",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4",
+      "GraphicalInterpretation",
+      "InvertedLogic",
+      "Knowledge_of_Scientific_Principles1",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Psychology_Sociology\\PE3_PsySoc_P6.md",
+    "parent_index": 3,
+    "file_hash": "f8e312c9214ffe0eb9271913d4d18219d13819ed31f3754088ee27251ce3d59b"
+  }
+}

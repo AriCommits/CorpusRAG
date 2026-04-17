@@ -1,0 +1,17 @@
+{
+  "page_content": "### Question 53\n- **Question:** Based on the passage, which of the following conditions most likely contributed to the boy\u2019s weight loss?\n- - **Subject:** Biology\n- **Skill:**  #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_3B_Structure_and_integrative_functions_of_the_main_organ_systems\n- **Subtopic/Error Type:** #ConceptualMisunderstanding\n- **My Answer:** A decrease in enzyme secretion by the mucosal epithelium into the intestinal lumen, leading to incomplete digestion of nutrients\n- **Correct Answer:** A decrease in the surface area of the small intestine, leading to a decrease in nutrient absorption\n- **AAMC Reasoning:**\n- Based on my answer choice: The digestive enzymes that are active in the intestine are produced by the pancreas and the first portion of the intestine (duodenum), which is not affected by the condition. Thus, decreased levels of digestive enzymes are not likely.\n- Correct answer choice: The passage indicates damage to the intestinal epithelium, which is the main site of food absorption for the body. The small intestine relies on a large surface area for absorption, such that decreasing surface area will decrease nutrient absorption.  \n---",
+  "metadata": {
+    "Document Title": "Passage: 10",
+    "Subsection": "Question 53",
+    "tags": [
+      "CC_3B_Structure_and_integrative_functions_of_the_main_organ_systems",
+      "ConceptualMisunderstanding",
+      "OppossingDirectionWording",
+      "Reasoning_about_the_Design_and_Execution_of_Research3",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P10.md",
+    "parent_index": 2,
+    "file_hash": "0708cb5b8b06095ab196a46b83ebb85a80c7bb68d88268cb8d7c5f4d01c3b114"
+  }
+}

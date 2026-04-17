@@ -1,0 +1,16 @@
+{
+  "page_content": "### Question 33\n- **Question:** What are the effects of hypoxia on energy metabolism? In hypoxia:\n- - **Subject:** Biochemistry\n- **Skill:** #Knowledge_of_Scientific_Principles1\n- **Content Category:** #CC_1D_Principles_of_bioenergetics_and_fuel_molecule_metabolism\n- **Subtopic/Error Type:** #ConceptualMisunderstanding\n- **My Answer:** glycogenesis is induced to regenerate NAD+.\n- **Correct Answer:** lactic fermentation is induced to regenerate NAD+.\n- **AAMC Reasoning:**\n- Based on my answer choice: Glycogenesis occurs independently of hypoxia.\n- Correct answer choice:  During hypoxia, due to the scarcity of oxygen, NADH is not reoxidized by the electron transport chain. Therefore, to replenish NADH molecules for sustaining glycolysis, NADH must be reoxidized to NAD+ by lactic fermentation.  \n---",
+  "metadata": {
+    "Document Title": "Passage: 6",
+    "Subsection": "Question 33",
+    "tags": [
+      "CC_1D_Principles_of_bioenergetics_and_fuel_molecule_metabolism",
+      "ConceptualMisunderstanding",
+      "GraphicalInterpretation",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P6.md",
+    "parent_index": 2,
+    "file_hash": "b57fa1566fe52e9ddc177b2b059fa475da2a0caa870b42732d9d0a9a95019867"
+  }
+}

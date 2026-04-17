@@ -1,0 +1,15 @@
+{
+  "page_content": "### Question\n- **Skill:** #Foundations_of_Comprehension\n- **Error_Type:** #AuthorsImplications\n- **Question:** Which of the following underlying assumptions about professors is implied by the passage argument?\n- **My Answer:** Most of them in the U.S. attended college or graduate school outside their home states.\n- **Correct Answer:** Most of them care more about ideas than they do about actual places.\n- **AAMC Reasoning:**\n- Based on my answer choice: The author says that \u201cthe majority of U.S. college students attend institutions in their home states\u201d (paragraph 2) and that professors often obtain their jobs (not their educations) outside their home states.\n- Correct answer choice: This is a Humanities passage, which belongs to the content category \u201cPhilosophy.\u201d This is a Comprehension question, because it asks you to recognize a fundamental assumption of the passage argument. The author says that rootless professors (deemed to be most professors) \u201care ignorant of the values of connectedness to place\u201d (paragraph 2), that they should include local content rather than \u201cabstract theories about distant peoples\u201d in their courses (paragraph 4), and that \u201cwhat is needed is . . . educators willing to take root and cultivate a sense of place\u201d (paragraph 6). All of these suggest that professors care more about ideas than they do about actual places. C is correct.\n---  \n### Question\n- **Skill:** #Foundations_of_Comprehension\n- **Error_Type:** #AuthorsAssumptions\n- **Question:** The passage discussion of local content (paragraph 5) assumes which of the following?\n- **My Answer:** - Students lack the ability to criticize \u201cconcrete realizations about observable communities.\u201d\n- **Correct Answer:** There is an \u201cartificial boundary between the roles of student and citizen.\u201d\n- **AAMC Reasoning:**\n- Based on my answer choice: The author does not assume this; rather, she suggests that current curricular models have implicitly assumed this.\n- Correct answer choice: The answer is C. In paragraph 5, the author advocates a locally-based curriculum that is meant to allow students to do more than study \u201cabstract theories and . . . airy generalizations. The author writes that this \u201crooted education . . . will tend to erase the artificial boundary between the roles of student and citizen.\u201d Because the author seeks to erase this boundary, the author must believe that such a boundary has been erected and enforced to begin with. This is a Comprehension question, because it asks you to understand a passage claim and how it functions as part of the author\u2019s argument.  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "AuthorsAssumptions",
+      "AuthorsImplications",
+      "Foundations_of_Comprehension"
+    ],
+    "source_file": "CARS\\Professors.md",
+    "parent_index": 1,
+    "file_hash": "f15093d74a66575b54d74bcac1273cc47d6953ee94d466c94b57e3bf43f6c4be"
+  }
+}

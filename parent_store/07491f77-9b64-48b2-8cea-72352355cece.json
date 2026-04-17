@@ -1,0 +1,14 @@
+{
+  "page_content": "# Passage:\nThe crystal structure of the protein lysosomal lipase(LipA)was determined. Crystal structure B factors, which are an indication of structural rigidity, were used to identify regions of high flexibility. Sites within these regions were varied in an attempt to create versions of LipA withhigher thermal stability. All variants were then screened for retention of enzymatic activity. The three most thermally stable variants that retained enzymatic activity are shown in Table1.  \n|**Table 1**|Variants of LipA|  \n|Variant|Amino acid substitutions|\n|---|---|\n|IX|K112D, M134D, Y139C, I157M|\n|X|R33Q, D34N, K35D, K112D, M134D, Y139C, I157M|\n|XI|R33G, K112D, M134D, Y139C, I157M|  \nAll proteins were expressed in_Escherichia coli_andpurified chromatographically. After protein purity was verified viaSDS-PAGE, wild-type and variant LipA proteins were characterized. The enzymatic activity of the proteins was measured at37\u00b0Cand then againafter the protein was briefly exposed to higher temperatures and cooled down to 37\u00b0C(Figure1). The thermal unfolding of the proteins was followed by loss of secondary structure (Table2). Structural integrity was verified usingNMR spectroscopy.  \n![CP-9-1-202CP_84062-00P1.gif](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_84062-00P1.gif)  \n|**Figure 1**|Enzymatic activity retention as a function of exposure temperature for wild-type and variant LipA proteins (Note: The solutioncontained either a pH7 buffer (A) or a pH4 buffer (B). The_x_-axis represents the temperature that the protein was heated to prior to the activity assay.)|  \n|   |   |\n|---|---|\n|**Table 2**|Parameters for Thermal Unfolding as Monitored by Loss of Secondary Structure|  \n|Parameter|   |Reference|2M Urea|4M Urea|\n|---|---|---|---|---|\n|Ti, (\u00b0C)|Wild-type|51.8|39.6|26.3|\n|Variant IX|45.6|32.0|24.9|\n|Variant X|48.5|33.1|24.0|\n|Variant XI|49.3|34.3|25.4|\n|Slope,  <br>deg cm2/(mmol K)|Wild-type|8.2|3.9|3.5|\n|Variant IX|5.7|3.3|2.6|\n|Variant X|4.6|4.6|2.1|\n|Variant XI|6.0|3.9|3.0|  \nNote: Ti is the temperature at the start of unfolding and the slope is measured for the unfolding transition. The experiments were performed in a pH 7 buffer (reference) and in the presence of 2 M and 4 M urea, which is a chemical denaturant.\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_5D_Structure_function_and_reactivity_of_biologically_relevant_molecules",
+      "ProteinCharge",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\BChem_2.md",
+    "parent_index": 1,
+    "file_hash": "34c7c22655e4d836530fb7e8ae3132a5e414e7aec68004b24878c0753ef474c1"
+  }
+}

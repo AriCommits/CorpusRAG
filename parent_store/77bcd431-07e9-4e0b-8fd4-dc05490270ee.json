@@ -1,0 +1,14 @@
+{
+  "page_content": "# Passage:\n**Passage 1 (Questions 1-4)**  \nPassage 2 (Questions 5-8)  \nA 60 kg person stands inside a 20,000 kg railcar that is attached to a locomotive. For experimental purposes, the person has a ball, a string, a 600 nm wavelength laser, a concave lens, a 100 mF capacitor, and some 12 V, 100 W lightbulbs. The ball and string can be joined to make a pendulum of mass M and length L.  \nAfter the locomotive releases the railcar, two systems are available to slow the moving railcar. The first system connects an electric generator to the railcar\u2019s wheels to charge a 12 V battery mounted on the railcar. Engaging the generator to the wheels puts a decelerating force of 5000 N at 40 m/s, and the force declines linearly with speed. This generator transfers about 80% of the kinetic energy dissipated by this braking force to the battery. The second system allows the person to slow the railcar by the friction of its wheels against a stationary surface in a manner similar to that of the brakes on an automobile. This system can generate a maximum braking force of 14,000 N. The rolling friction of the wheels and the internal friction between the wheels and axles contribute a continuous 1000 N decelerating force any time that the railcar is in motion.  \n(Note: Use g = 10 m/s2 and c = 3.0 \u00d7 108 m/s, if needed.)  \nIf the generator\u2013brake system alone were engaged when the railcar was moving, which of the following graphs would most accurately represent the subsequent speed of the railcar?  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_4A_Translational_motion_forces_work_energy_and_equilibrium_in_living_systems",
+      "Data_Based_Statistical_Reasoning4",
+      "GraphInterpretation"
+    ],
+    "source_file": "Physics_Chem\\PE3_Phys_P2.md",
+    "parent_index": 1,
+    "file_hash": "48e101ba624c9895698872beb13ac6eb28123eac63985ed93ac9d5cdaa9d13e2"
+  }
+}

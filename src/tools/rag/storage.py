@@ -71,6 +71,42 @@ class LocalFileStore:
         if file_path.exists():
             file_path.unlink()
 
+    def delete_by_metadata(self, filter_func: callable) -> int:
+        """Delete documents that match the filter function.
+
+        Args:
+            filter_func: Function that takes metadata dict and returns True to delete
+
+        Returns:
+            Number of deleted documents
+        """
+        deleted_count = 0
+        keys = self.list_keys()
+        for key in keys:
+            doc = self.get(key)
+            if doc and filter_func(doc.metadata):
+                self.delete(key)
+                deleted_count += 1
+        return deleted_count
+
+    def list_keys(self) -> list[str]:
+        """List all document IDs in store.
+
+        Returns:
+            List of document IDs
+        """
+        return [f.stem for f in self.path.glob("*.json")]
+
+    def mget_all(self) -> list[tuple[str, Document]]:
+        """Retrieve all documents in store.
+
+        Returns:
+            List of (id, document) tuples
+        """
+        keys = self.list_keys()
+        docs = self.mget(keys)
+        return [(k, d) for k, d in zip(keys, docs) if d is not None]
+
     def _save_document(self, doc_id: str, doc: Document) -> None:
         """Save a document as JSON.
 

@@ -1,0 +1,13 @@
+{
+  "page_content": "# Passage:\nHepatocyte growth factor (HGF) is a protein secreted by mesenchymal cells that acts as a signaling molecule on cells of epithelial origin. HGF is a heterodimeric protein consisting of an \u03b1 subunit and a \u03b2 subunit joined by a disulfide bond. The two subunits originate from a single inactive polypeptide that is cleaved by serine proteases. Multiple isoforms of HGF can be produced from the HGF gene through alternative splicing.  \nThe HGF receptor (MET) is a receptor tyrosine kinase, and activation of the HGF\u2013MET signaling pathway elicits multiple cellular responses, which include cell proliferation, differentiation, and motility. Mutations in MET have been implicated in hereditary papillary renal cell carcinoma (HPRCC), a form of inherited kidney cancer. Affected individuals are predisposed to develop multiple renal tumors. One of these mutations is a single base pair change in exon 16 of MET, which substitutes an arginine residue for a histidine residue at position 1112. The mutation results in continuous activation of MET. Whereas normal kidney tissue has two copies of the chromosome containing the MET gene, renal tumors from patients carrying the MET mutation have three copies of this chromosome. Figure 1 shows a pedigree from a family with HPRCC.  \nFigure 1Pedigree from a family with HPRCC  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_1A_Structure_and_function_of_proteins_and_their_constituent_amino_acids",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P2.md",
+    "parent_index": 1,
+    "file_hash": "7cf0991a2711ff88cbf2041bc83d72dacc81b837242932ed70d3417f52fb4289"
+  }
+}

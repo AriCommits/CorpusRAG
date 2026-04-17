@@ -1,0 +1,14 @@
+{
+  "page_content": "### Question\n- **Skill:** #Reasoning_Within_the_Text\n- **Error_Type:** #AuthorsImplications\n- **Question:** What does the passage suggest about the use of blue paint for a house in the sixteenth century?\n- **My Answer:** The original paint may have been titanium-white.\n- **Correct Answer:** It may have been a statement of wealth.\n- **AAMC Reasoning:**\n- Based on my answer choice: The passage does not support this suggestion.\n- Correct answer choice: This is a Humanities passage that falls under the content category of Art History. This is a Reasoning Beyond the Text question, as it asks you to use passage information to answer a question about a scenario that is not discussed in the passage. The answer is B, because the passage refers to a development in the seventeenth century, when a particular kind of blue pigment was developed \u201cas a cheaper and more workable alternative to the expensive pigments azurite and smalt\u201d (paragraph 2). Thus, you can infer that, in the sixteenth century, it was still expensive to produce blue paint; in these circumstances, using blue paint might well have been a sign of wealth.\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "AuthorsImplications",
+      "Reasoning_Within_the_Text"
+    ],
+    "source_file": "CARS\\Paint Research.md",
+    "parent_index": 2,
+    "file_hash": "dd8f9e820e87db478148f52f89b9b06a41441c8300039e88272b293af8279de2"
+  }
+}

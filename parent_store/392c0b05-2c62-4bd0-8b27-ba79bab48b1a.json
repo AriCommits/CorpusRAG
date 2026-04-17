@@ -1,0 +1,15 @@
+{
+  "page_content": "### Question\n- **Question:** Which of the following graphs shows the radioactivity of the antibody\u2013Protein X precipitate in the extracellular growth medium if Hypothesis 2 is correct?\n- - **Subject:** Biology\n- **Skill:** #Data_Based_Statistical_Reasoning4\n- **Content Category:** #CC_3B_Structure_and_integrative_functions_of_the_main_organ_systems\n- **Subtopic/Error Type:** #ConceptualMisunderstanding\n- **My Answer:** B\n- **Correct Answer:** D\n- **AAMC Reasoning:**\n- Based on my answer choice: This graph shows a steady high presence of Protein X outside the cell from 50 to 1200 seconds and then a decline. This graph is incorrect, because the extracellular increase in Protein X should occur after 1200 seconds, not before.\n- Correct answer choice: This graph correctly represents the extracellular concentration of Protein X if Hypothesis 2 were correct. Hypothesis 2 indicates that Protein X is secreted once the intracellular levels of Protein X reach a specific level. According to Figure 1, the intracellular concentration of Protein X starts to decrease after 1200 seconds; this should also be the time when the extracellular concentration of Protein X increases.\n- **Personal Reasoning:**  \n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "CC_3B_Structure_and_integrative_functions_of_the_main_organ_systems",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P8.md",
+    "parent_index": 2,
+    "file_hash": "9cc20dea53ff301220fa7aad6ba7d716c78e28dcfe405234955fed355ac4d562"
+  }
+}

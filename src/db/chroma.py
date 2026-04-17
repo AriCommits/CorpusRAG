@@ -46,12 +46,12 @@ class ChromaDBBackend(DatabaseBackend):
             ValueError: If collection already exists
         """
         try:
-            # ChromaDB requires non-empty metadata or no metadata kwarg at all
-            meta = metadata or None
-            if meta:
-                self.client.create_collection(name=name, metadata=meta)
-            else:
-                self.client.create_collection(name=name)
+            # Default to cosine distance for better text search results
+            meta = metadata or {}
+            if "hnsw:space" not in meta:
+                meta["hnsw:space"] = "cosine"
+
+            self.client.create_collection(name=name, metadata=meta)
         except Exception as e:
             if "already exists" in str(e).lower():
                 raise ValueError(f"Collection '{name}' already exists")
@@ -179,6 +179,39 @@ class ChromaDBBackend(DatabaseBackend):
             if "does not exist" in str(e).lower() or "not found" in str(e).lower():
                 raise ValueError(f"Collection '{name}' does not exist")
             raise
+
+    def delete_by_metadata(self, collection: str, where: dict[str, Any]) -> None:
+        """Delete documents from collection matching metadata filter.
+
+        Args:
+            collection: Collection name
+            where: Metadata filter dict
+
+        Raises:
+            ValueError: If collection doesn't exist
+        """
+        col = self.get_collection(collection)
+        col.delete(where=where)
+
+    def get_metadata_by_filter(
+        self, collection: str, where: dict[str, Any], limit: int = 1
+    ) -> list[dict[str, Any]]:
+        """Get metadata for documents matching filter.
+
+        Args:
+            collection: Collection name
+            where: Metadata filter dict
+            limit: Maximum number of results
+
+        Returns:
+            List of metadata dicts
+
+        Raises:
+            ValueError: If collection doesn't exist
+        """
+        col = self.get_collection(collection)
+        results = col.get(where=where, limit=limit, include=["metadatas"])
+        return results.get("metadatas", [])
 
     def count_documents(self, collection: str) -> int:
         """Count documents in collection.

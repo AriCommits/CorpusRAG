@@ -1,0 +1,5 @@
+$env:OLLAMA_CONTEXT_LENGTH="32k";
+$env:OLLAMA_CONTEXT_LENGTH="10m";
+$env:OLLAMA_SCHED_SPREAD=1;
+$env:OLLAMA_HOST="0.0.0.0";
+ollama serve;

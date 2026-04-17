@@ -1,0 +1,23 @@
+{
+  "page_content": "### Question 30\n- **Question:** The predictive models described in the final paragraph of the passage are most likely based on which assumption?\n- - **Subject:** Sociology\n- **Skill:** #Scientific_Reasoning_and_Problem_Solving2\n- **Content Category:** #CC_8A_Self_identity\n- **Subtopic/Error Type:** #ConceptualMisunderstanding\n- **My Answer:** Some psychosocial stressors will be perceived as out-group socialization.\n- **Correct Answer:** Exposure to some psychosocial stressors will be attributed to social identity.\n- **AAMC Reasoning:**\n- Based on my answer choice: Out-group socialization indicates learning the values and behaviors of groups an individual is not a member of. This is not the assumption underlying the predictive models discussed in the passage.\n- Correct answer choice: The passage describes the predictions of theoretical models, which suggest that the stressors of prejudice and discrimination will contribute to elevated levels of alcohol consumption among certain racial/ethnic group members. The question asks for an assumption that underlies this prediction. The link between prejudice, discrimination, and health rests, at least partly, on the assumption that individuals will attribute stressful experiences to their status as members of a racial/ethnic group. Therefore, stressors are expected to be linked to their social identity.  \n---",
+  "metadata": {
+    "Document Title": "Passage: 6",
+    "Subsection": "Question 30",
+    "tags": [
+      "CC_7A_Individual_influences_on_behavior",
+      "CC_7B_Social_processes_that_influence_human_behavior",
+      "CC_7C_Attitude_and_behavior_change",
+      "CC_8A_Self_identity",
+      "ChooseWeakerVersionOfFinalTwo",
+      "ConceptualMisunderstanding",
+      "Data_Based_Statistical_Reasoning4",
+      "GraphicalInterpretation",
+      "InvertedLogic",
+      "Knowledge_of_Scientific_Principles1",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Psychology_Sociology\\PE3_PsySoc_P6.md",
+    "parent_index": 2,
+    "file_hash": "f8e312c9214ffe0eb9271913d4d18219d13819ed31f3754088ee27251ce3d59b"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "page_content": "### Question\n- **Question:** What is the structure of the amino acid residue that is replaced at position 1112 as a result of the MET mutation?\n- **Skill:** #Knowledge_of_Scientific_Principles1\n- **Content Category:** #CC_1A_Structure_and_function_of_proteins_and_their_constituent_amino_acids\n- **Subtopic/Error Type:** Organic Chemistry\n- **My Answer:** proline\n- **Correct Answer:** Histidine\n- **AAMC Reasoning:**\n- Based on my answer choice: The figure shows the structure of proline, not histidine.\n- Correct answer choice: The passage indicates that a histidine was replaced by an arginine. The figure shows the structure of histidine.\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "CC_1A_Structure_and_function_of_proteins_and_their_constituent_amino_acids",
+      "Knowledge_of_Scientific_Principles1"
+    ],
+    "source_file": "Biology_BChem\\PE3_BBCHEM_P2.md",
+    "parent_index": 2,
+    "file_hash": "7cf0991a2711ff88cbf2041bc83d72dacc81b837242932ed70d3417f52fb4289"
+  }
+}

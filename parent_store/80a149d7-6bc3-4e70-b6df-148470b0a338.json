@@ -1,0 +1,14 @@
+{
+  "page_content": "# Passage:\nResearchers are designing a micro-robot equipped with anoxygen sensorfor intraocular procedures. The micro-robot will be injected into the patient\u2019s eye to determine if ablood clot is present. The micro-robot is powered byelectromagnetic radiationsthat induce a current in its interior circuit. The current powers a motor that propels the micro-robot through the fluid of the vitreous humor. Inside the eye, the micro-robot experiences aviscous drag force**F**dependent on the vitreous humorviscosity_\u03b7_,and the micro-robot\u2019sdiameter_d_andvelocity**v**:  \n$F= \u20133\u03c0_d__\u03b7_v$  \n**Equation 1**  \nThe micro-robot uses aluminescent sensor film to determine the oxygen concentration, and potential blood clots, in the retina. In this method, a blue LED is shined into the eye and strikes the surface of the sensor. The sensor coatingabsorbs the photonsfrom the LED and a short time lateremits photonsthat are subsequently detected by a photodiode (Figure 1). Experiments in which oxygen parameters were controlled showed that oxygen,if present in the retina, affects both thetime it takes the sensor to emitthe photons and the intensity of the emitted radiation.  \n![CP-9-1-202CP_74393-00P1.gif](https://s3.amazonaws.com/wmx-api-production/courses/1657/images/CP-9-1-202CP_74393-00P1.gif)  \n|**Figure 1**|Micro-robot equipped with oxygen sensor used to detect blood clots|  \nIf the results of the test indicate that the patient has a clot that is obstructing blood flow, a second micro-robot,coated with tissue plasminogen activator (t-PA), is steered to the thrombus site where it punctures and docks with a retinal vein. The enzyme t-PA is aserine proteasethatconverts plasminogen into plasmin, which subsequently degrades the clot byfibrinolysis.\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "tags": [
+      "CC_4D_How_light_and_sound_interact_with_matter",
+      "Optics",
+      "Scientific_Reasoning_and_Problem_Solving2"
+    ],
+    "source_file": "Physics_Chem\\Physics_1.md",
+    "parent_index": 1,
+    "file_hash": "7bdd18f1f1c3841c9d7493ecf8751c4fd16b6f95523325eb3ae601b01d6b116f"
+  }
+}

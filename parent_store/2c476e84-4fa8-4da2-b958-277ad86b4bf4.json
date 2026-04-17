@@ -1,0 +1,14 @@
+{
+  "page_content": "### Question\n- **Skill:** #Reasoning_Beyond_the_Text\n- **Error_Type:** #InferrenceOnEvidence\n- **Question:** It may be inferred from the passage that Portugal might have avoided the unfavorable attention of Napoleon if it had:\n- **My Answer:** not followed Spain into war in the Mediterranean.\n- **Correct Answer:** refused to have commerce with Britain.\n- **AAMC Reasoning:**\n- Based on my answer choice: Again, the passage does say that \u201cthe Portuguese government followed Spain in a holy war against France\u201d (paragraph 5), but Spain negotiated a peace with France. When \u201cPortugal asked for a like accommodation. . . . France refused\u201d (paragraph 5). However, nothing in the passage suggests that this refusal was based on Portugal\u2019s entry into war.\n- Correct answer choice: This is a Reasoning Beyond the Text question because it asks you to use passage information to assess the effects of a hypothetical scenario not discussed in the passage. The last sentence of the passage contains the statement that \u201cNapoleon, after conquering half of Europe, reached out for the little state that was refusing to join in his continental blockade of Britain.\u201d The implication, then, is that if Portugal had joined the blockade, it might have avoided Napoleon\u2019s action. Option A is correct.\n---",
+  "metadata": {
+    "Document Title": "Passage:",
+    "Subsection": "Question",
+    "tags": [
+      "InferrenceOnEvidence",
+      "Reasoning_Beyond_the_Text"
+    ],
+    "source_file": "CARS\\French Revolution.md",
+    "parent_index": 2,
+    "file_hash": "7db3eae7d9842f9ca922ff0fd64790099a47b5c95ee5c96a7582af668eece5ee"
+  }
+}
