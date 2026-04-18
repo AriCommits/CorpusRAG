@@ -49,9 +49,17 @@ class RAGAgent:
         Returns:
             Response text
         """
+        import time
+
+        from utils.benchmarking import benchmarker
+
+        start_total = time.perf_counter()
         try:
+            # 1. Retrieve
+            start_retrieval = time.perf_counter()
             # Retrieve relevant parent documents
             documents = self.retriever.retrieve(query, collection, top_k, where=where)
+            retrieval_time = time.perf_counter() - start_retrieval
 
             # Convert documents to format expected by prompt template
             context_chunks = []
@@ -77,14 +85,22 @@ class RAGAgent:
                 conversation_history=truncated_history,
             )
 
+            # 2. Generate
+            start_gen = time.perf_counter()
             # Generate response using LLM
             if stream:
                 # TODO: Implement streaming response
                 response = self.llm_backend.complete(prompt)
-                return response.text
+                result_text = response.text
             else:
                 response = self.llm_backend.complete(prompt)
-                return response.text
+                result_text = response.text
+            gen_time = time.perf_counter() - start_gen
+
+            total_time = time.perf_counter() - start_total
+            benchmarker.record(retrieval_time, gen_time, total_time)
+
+            return result_text
 
         except Exception as e:
             return f"Error generating response: {e}"

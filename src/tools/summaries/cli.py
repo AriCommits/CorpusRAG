@@ -13,6 +13,13 @@ from .generator import SummaryGenerator
 @click.command()
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--output", "-o", default=None, help="Output file")
+@click.option(
+    "--export",
+    "-e",
+    type=click.Choice(["markdown", "text"]),
+    default="markdown",
+    help="Export format",
+)
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 @click.option(
     "--length",
@@ -21,7 +28,7 @@ from .generator import SummaryGenerator
     type=click.Choice(["short", "medium", "long"]),
     help="Summary length",
 )
-def summaries(collection: str, output: str, config: str, length: str):
+def summaries(collection: str, output: str, export: str, config: str, length: str):
     """Generate summary from a collection."""
     cfg, db = load_cli_db(config, SummaryConfig)
     cfg.summary_length = length
@@ -32,7 +39,17 @@ def summaries(collection: str, output: str, config: str, length: str):
     click.echo(f"Generating {length} summary from '{collection}'...")
     summary = generator.generate(collection)
 
-    # Format output
+    if export == "markdown":
+        if not output:
+            output = f"summary_{collection}.md"
+        from .export import MarkdownSummaryExporter
+
+        exporter = MarkdownSummaryExporter()
+        exporter.export(summary.text, collection, f"Summary of {collection}", output)
+        click.echo(f"✓ Exported summary to Markdown: {output}")
+        return
+
+    # Format output (plain text)
     formatted = generator.format_summary(summary)
 
     # Write or print

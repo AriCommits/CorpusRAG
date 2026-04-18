@@ -163,3 +163,15 @@ class DatabaseBackend(ABC):
             ValueError: If collection doesn't exist
         """
         pass
+
+    @abstractmethod
+    def get_collection_stats(self, collection_name: str) -> dict[str, Any]:
+        """Get statistics for a collection.
+
+        Args:
+            collection_name: Collection name
+
+        Returns:
+            Dictionary with statistics: doc_count, chunk_count, unique_files, size_estimate
+        """
+        pass

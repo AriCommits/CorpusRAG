@@ -35,7 +35,22 @@ def quizzes(collection: str, output: str, config: str, count: int, format: str):
     )
     questions = generator.generate(collection, count=count)
 
-    # Format output
+    if format in ["json", "csv"]:
+        if not output:
+            output = f"quiz_{collection}.{format}"
+        from .export import QuizExporter
+
+        exporter = QuizExporter()
+        # Convert questions to list of dicts for export
+        quiz_data = [q.to_dict() if hasattr(q, "to_dict") else q for q in questions]
+        if format == "json":
+            exporter.export_json(quiz_data, output)
+        else:
+            exporter.export_csv(quiz_data, output)
+        click.echo(f"✓ Exported quiz to {format.upper()}: {output}")
+        return
+
+    # Format output (markdown)
     formatted = generator.format_quiz(questions)
 
     # Write or print

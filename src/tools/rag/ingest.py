@@ -170,6 +170,7 @@ class RAGIngester:
                     dict(parent_doc.metadata) if parent_doc.metadata else {}
                 )
                 parent_metadata["source_file"] = relative_path
+                parent_metadata["source_file_name"] = file_path.name
                 parent_metadata["parent_index"] = parent_idx
                 parent_metadata["file_hash"] = file_hash
 

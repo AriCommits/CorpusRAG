@@ -63,6 +63,34 @@ def ingest(path: str, collection: str, config: str):
 
 
 @rag.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--dry-run", is_flag=True, help="Report changes without applying them")
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def sync(path: str, collection: str, dry_run: bool, config: str):
+    """Sync a directory with a RAG collection (detect new, modified, deleted files)."""
+    cfg, db = load_cli_db(config, RAGConfig)
+    from .sync import RAGSyncer
+
+    syncer = RAGSyncer(cfg, db)
+
+    click.echo(f"Syncing '{path}' -> collection '{collection}'...")
+    res = syncer.sync(path, collection, dry_run=dry_run)
+
+    click.echo(f"\n  NEW:       {len(res.new_files)} files")
+    click.echo(f"  MODIFIED:  {len(res.modified_files)} files")
+    click.echo(f"  DELETED:   {len(res.deleted_files)} files")
+    click.echo(f"  UNCHANGED: {len(res.unchanged_files)} files\n")
+
+    if dry_run:
+        click.echo("[DRY RUN] Sync complete: +0 chunks, -0 chunks")
+    else:
+        click.echo(
+            f"Sync complete: +{res.chunks_added} chunks, -{res.chunks_removed} chunks"
+        )
+
+
+@rag.command()
 @click.argument("query")
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--top-k", "-k", default=None, type=int, help="Number of results")

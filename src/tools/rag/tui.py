@@ -8,6 +8,7 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Markdown, Static
 
 from .agent import RAGAgent
+from .slash_commands import SlashCommandResult, SlashCommandRouter
 
 
 class SessionItem(ListItem):
@@ -37,6 +38,11 @@ class ChatMessage(Static):
 class RAGApp(App):
     """Textual RAG Application."""
 
+    BINDINGS = [
+        ("ctrl+l", "manage_collections", "Manage Collections"),
+        ("ctrl+s", "sync", "Sync"),
+    ]
+
     CSS = """
     Screen {
         layers: sidebar main;
@@ -49,32 +55,14 @@ class RAGApp(App):
         height: 100%;
     }
 
+    #sync-status {
+        margin: 0 0 1 2;
+        color: $text-muted;
+    }
+
     #main-chat {
         height: 100%;
         padding: 1 2;
-    }
-
-    #chat-log {
-        height: 1fr;
-        overflow-y: scroll;
-    }
-
-    #input-container {
-        height: auto;
-        border-top: tall $primary;
-        padding: 1;
-    }
-
-    .user-message {
-        background: $primary-darken-2;
-        margin: 1 0;
-        padding: 1;
-    }
-
-    .assistant-message {
-        background: $surface-lighten-1;
-        margin: 1 0;
-        padding: 1;
     }
     """
 
@@ -83,11 +71,14 @@ class RAGApp(App):
         self.agent = agent
         self.collection = collection
         self.current_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        self.router = SlashCommandRouter()
 
     def compose(self) -> ComposeResult:
         yield Header()
         with Horizontal():
             with Vertical(id="sidebar"):
+                yield Label("  Sync Status", variant="title")
+                yield Label("Unknown", id="sync-status")
                 yield Label("  Filters", variant="title")
                 yield Input(placeholder="Tags (comma separated)", id="tag-input")
                 yield Input(
@@ -105,6 +96,8 @@ class RAGApp(App):
         """Initialize the app."""
         self.refresh_sessions()
         self.load_session(self.current_session_id)
+        # Initial sync check (dry-run)
+        self.run_sync(dry_run=True)
 
     def refresh_sessions(self) -> None:
         """Refresh the session list."""
@@ -140,6 +133,12 @@ class RAGApp(App):
         # Clear input
         event.input.value = ""
 
+        # Handle slash commands
+        if self.router.is_slash_command(message):
+            result = self.router.dispatch(self.router.parse(message))
+            self.handle_slash_result(result)
+            return
+
         # Get current filters from sidebar
         tags_raw = self.query_one("#tag-input", Input).value.strip()
         sections_raw = self.query_one("#section-input", Input).value.strip()
@@ -158,6 +157,102 @@ class RAGApp(App):
 
         # Generate assistant response asynchronously
         self.generate_response(message, tags, sections)
+
+    def handle_slash_result(self, result: SlashCommandResult) -> None:
+        """Process the result of a slash command."""
+        if result.type == "text" or result.type == "error":
+            chat_log = self.query_one("#chat-log", Vertical)
+            chat_log.mount(ChatMessage("assistant", result.content or ""))
+            chat_log.scroll_end()
+        elif result.type == "toast":
+            msg = result.toast_message or ""
+            if msg.startswith("switch_collection:"):
+                new_col = msg.split(":", 1)[1]
+                self.collection = new_col
+                self.notify(f"Switched collection to: {new_col}")
+                # Refresh session id for new collection
+                self.current_session_id = (
+                    f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                )
+                self.load_session(self.current_session_id)
+                # Refresh sync status for new collection
+                self.run_sync(dry_run=True)
+            elif msg.startswith("sync:"):
+                action = msg.split(":", 1)[1]
+                if action == "full":
+                    self.run_sync(dry_run=False)
+                elif action == "dry-run" or action == "status":
+                    self.run_sync(dry_run=True)
+            elif msg.startswith("export:"):
+                fmt = msg.split(":", 1)[1]
+                self.notify(
+                    f"Exporting to {fmt}... (Feature implementation in progress)"
+                )
+            else:
+                self.notify(msg)
+                if msg == "Chat history cleared":
+                    self.agent.session_manager.clear_session(self.current_session_id)
+                    self.load_session(self.current_session_id)
+        elif result.type == "stream":
+            # For stream, treat it as a regular message
+            tags_raw = self.query_one("#tag-input", Input).value.strip()
+            sections_raw = self.query_one("#section-input", Input).value.strip()
+            tags = (
+                [t.strip() for t in tags_raw.split(",") if t.strip()]
+                if tags_raw
+                else []
+            )
+            sections = (
+                [s.strip() for s in sections_raw.split(",") if s.strip()]
+                if sections_raw
+                else []
+            )
+
+            chat_log = self.query_one("#chat-log", Vertical)
+            chat_log.mount(ChatMessage("user", result.content or ""))
+            chat_log.scroll_end()
+            self.generate_response(result.content or "", tags, sections)
+        elif result.type == "screen" and result.screen:
+            self.push_screen(result.screen)
+
+    def action_manage_collections(self) -> None:
+        """Action for ctrl+l binding."""
+        from tools.rag.tui_collections import CollectionManagerScreen
+
+        self.push_screen(CollectionManagerScreen())
+
+    def action_sync(self) -> None:
+        """Action for ctrl+s binding."""
+        self.run_sync(dry_run=False)
+
+    def update_sync_status(self, status: str) -> None:
+        """Update the sync status label."""
+        self.query_one("#sync-status", Label).update(status)
+
+    @work(exclusive=True, thread=True)
+    def run_sync(self, dry_run: bool = False) -> None:
+        """Run sync in background."""
+        from .sync import RAGSyncer
+
+        self.call_from_thread(
+            self.update_sync_status, "Syncing..." if not dry_run else "Checking..."
+        )
+
+        try:
+            syncer = RAGSyncer(self.agent.config, self.agent.db)
+            # Use vault path from config
+            vault_path = self.agent.config.paths.vault
+            res = syncer.sync(vault_path, self.collection, dry_run=dry_run)
+
+            status = f"{len(res.new_files)}N, {len(res.modified_files)}M, {len(res.deleted_files)}D"
+            if not dry_run:
+                status += f" (+{res.chunks_added})"
+
+            self.call_from_thread(self.update_sync_status, status)
+            if not dry_run:
+                self.notify(f"Sync complete: {status}")
+        except Exception as e:
+            self.call_from_thread(self.update_sync_status, f"Error: {e}")
 
     @work(exclusive=True, thread=True)
     def generate_response(
@@ -208,8 +303,15 @@ class RAGApp(App):
     def display_response(self, response: str) -> None:
         """Display response and cleanup."""
         self.sub_title = ""
+        from utils.benchmarking import benchmarker
+
+        latency_info = ""
+        if benchmarker.history:
+            last = benchmarker.history[-1]
+            latency_info = f" ({last.total_ms:.0f}ms)"
+
         chat_log = self.query_one("#chat-log", Vertical)
-        chat_log.mount(ChatMessage("assistant", response))
+        chat_log.mount(ChatMessage("assistant", f"{response}{latency_info}"))
         chat_log.scroll_end()
 
         # Refresh session list in case it's a new session

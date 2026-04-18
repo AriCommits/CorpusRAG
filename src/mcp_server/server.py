@@ -21,6 +21,7 @@ from tools.rag import RAGAgent, RAGConfig, RAGIngester, RAGRetriever
 from tools.summaries import SummaryConfig, SummaryGenerator
 from tools.video import TranscriptCleaner, VideoConfig, VideoTranscriber
 from utils.auth import AuthConfig, MCPAuthenticator, add_security_headers
+from utils.security import SecurityError
 from utils.validation import get_validator
 
 
@@ -98,7 +99,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
             SecurityError: If file path is unsafe
         """
         # Validate file path for security
-        from utils.security import SecurityError, validate_file_path
+        from utils.security import validate_file_path
 
         try:
             validated_path = validate_file_path(path, must_exist=True)

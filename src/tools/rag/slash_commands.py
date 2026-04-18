@@ -1,0 +1,110 @@
+from dataclasses import dataclass
+from typing import Any, Callable, Literal
+
+
+@dataclass
+class SlashCommand:
+    name: str
+    args: list[str]
+    raw: str
+
+
+@dataclass
+class SlashCommandResult:
+    type: Literal["text", "screen", "toast", "error", "stream"]
+    content: str | None = None
+    screen: Any | None = (
+        None  # text.Screen is tricky to import without context, we can type hint later or import Any
+    )
+    toast_message: str | None = None
+
+
+_registry: dict[str, dict] = {}
+
+
+def slash_command(name: str, description: str):
+    def decorator(fn: Callable) -> Callable:
+        _registry[name] = {"fn": fn, "description": description}
+        return fn
+
+    return decorator
+
+
+class SlashCommandRouter:
+    """Intercept and route slash commands before LLM dispatch."""
+
+    def is_slash_command(self, text: str) -> bool:
+        return text.strip().startswith("/")
+
+    def parse(self, text: str) -> SlashCommand:
+        parts = text.strip().lstrip("/").split()
+        if not parts:
+            return SlashCommand(name="", args=[], raw=text)
+        return SlashCommand(name=parts[0], args=parts[1:], raw=text)
+
+    def dispatch(self, command: SlashCommand) -> SlashCommandResult:
+        if not command.name:
+            return SlashCommandResult(
+                type="error",
+                content="Empty command.\nType /help to see available commands.",
+            )
+
+        handler_info = _registry.get(command.name)
+        if handler_info is None:
+            return SlashCommandResult(
+                type="error",
+                content=f"Unknown command: /{command.name}\nType /help to see available commands.",
+            )
+
+        handler = handler_info["fn"]
+        return handler(command.args)
+
+
+@slash_command("help", "List all registered slash commands with descriptions")
+def handle_help(args: list[str]) -> SlashCommandResult:
+    lines = ["Available commands:"]
+    for cmd_name, info in sorted(_registry.items()):
+        lines.append(f"  /{cmd_name.ljust(15)} {info['description']}")
+    return SlashCommandResult(type="text", content="\n".join(lines))
+
+
+@slash_command("clear", "Clear chat history for current session")
+def handle_clear(args: list[str]) -> SlashCommandResult:
+    return SlashCommandResult(
+        type="toast", toast_message="Chat history cleared"
+    )  # Implementation of clearing needs to happen in TUI handler if needed or we pass clear action
+
+
+@slash_command("ask", "Explicit RAG query (same as typing without /)")
+def handle_ask(args: list[str]) -> SlashCommandResult:
+    if not args:
+        return SlashCommandResult(
+            type="error",
+            content="Please provide a question. Example: /ask What is RAG?",
+        )
+    return SlashCommandResult(type="stream", content=" ".join(args))
+
+
+@slash_command("sync", "Synchronize current collection with source directory")
+def handle_sync(args: list[str]) -> SlashCommandResult:
+    if not args:
+        return SlashCommandResult(type="toast", toast_message="sync:full")
+    if args[0] == "status":
+        return SlashCommandResult(type="toast", toast_message="sync:status")
+    if args[0] == "--dry-run":
+        return SlashCommandResult(type="toast", toast_message="sync:dry-run")
+    return SlashCommandResult(
+        type="error", content="Usage: /sync, /sync status, or /sync --dry-run"
+    )
+
+
+@slash_command("export", "Export data (anki, markdown, json)")
+def handle_export(args: list[str]) -> SlashCommandResult:
+    if not args:
+        return SlashCommandResult(
+            type="error", content="Usage: /export <format> (anki, markdown, json)"
+        )
+    fmt = args[0].lower()
+    if fmt in ["anki", "markdown", "json", "csv"]:
+        return SlashCommandResult(type="toast", toast_message=f"export:{fmt}")
+    return SlashCommandResult(type="error", content=f"Unknown export format: {fmt}")

@@ -14,6 +14,7 @@ from .agent import RAGAgent
 from .config import RAGConfig
 from .ingest import IngestResult, RAGIngester
 from .retriever import RAGRetriever, RetrievedDocument
+from .sync import RAGSyncer, SyncResult
 
 __all__ = [
     "IngestResult",
@@ -21,5 +22,7 @@ __all__ = [
     "RAGConfig",
     "RAGIngester",
     "RAGRetriever",
+    "RAGSyncer",
     "RetrievedDocument",
+    "SyncResult",
 ]

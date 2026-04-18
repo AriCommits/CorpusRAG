@@ -45,6 +45,9 @@ observability = [
   "opentelemetry-instrumentation-httpx>=0.41b0",
   "openllmetry>=0.3.0",
 ]
+export = [
+  "genanki>=0.13.0",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -84,6 +87,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/test_smoke.py" = ["E402"]  # imports after sys.path manipulation
+"src/tools/rag/retriever.py" = ["E402"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["config", "db", "llm", "mcp_server", "orchestrations", "tools", "utils"]

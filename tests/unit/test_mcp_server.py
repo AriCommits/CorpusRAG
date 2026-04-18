@@ -27,7 +27,7 @@ def test_create_mcp_server(config_file):
     """Test MCP server creation."""
     server = create_mcp_server(config_file)
     assert server is not None
-    assert server.name == "Corpus Callosum"
+    assert server.name == "CorpusRAG"
 
 
 def test_mcp_server_has_rag_tools(config_file):

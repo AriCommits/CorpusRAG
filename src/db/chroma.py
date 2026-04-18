@@ -227,3 +227,42 @@ class ChromaDBBackend(DatabaseBackend):
         """
         col = self.get_collection(collection)
         return col.count()
+
+    def get_collection_stats(self, collection_name: str) -> dict[str, Any]:
+        """Get statistics for a collection.
+
+        Args:
+            collection_name: Collection name
+
+        Returns:
+            Dictionary with statistics: doc_count, chunk_count, unique_files, size_estimate
+        """
+        col = self.get_collection(collection_name)
+
+        try:
+            data = col.get(include=["metadatas", "documents"])
+        except Exception as e:
+            if "does not exist" in str(e).lower() or "not found" in str(e).lower():
+                raise ValueError(f"Collection '{collection_name}' does not exist")
+            raise
+
+        metadatas = data.get("metadatas") or []
+        documents = data.get("documents") or []
+
+        chunk_count = len(metadatas)
+
+        unique_files = set()
+        for meta in metadatas:
+            if meta and "source" in meta:
+                unique_files.add(meta["source"])
+
+        doc_count = len(unique_files)
+
+        size_estimate = sum(len(doc.encode("utf-8")) for doc in documents if doc)
+
+        return {
+            "doc_count": doc_count,
+            "chunk_count": chunk_count,
+            "unique_files": doc_count,
+            "size_estimate": size_estimate,
+        }
