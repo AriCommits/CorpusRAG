@@ -99,9 +99,7 @@ class CollectionManagerScreen(Screen):
             return
 
         if not isinstance(self.db, ChromaDBBackend):
-            self.notify(
-                "Stats are only supported on ChromaDB backends", severity="warning"
-            )
+            self.notify("Stats are only supported on ChromaDB backends", severity="warning")
             return
 
         try:

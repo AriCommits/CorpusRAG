@@ -55,9 +55,7 @@ def validate_editor_command(editor: str) -> str:
 
     editor_cmd = editor_parts[0]
     if not shutil.which(editor_cmd):
-        raise CommandInjectionError(
-            f"Editor command not found or not executable: {editor_cmd}"
-        )
+        raise CommandInjectionError(f"Editor command not found or not executable: {editor_cmd}")
 
     return editor
 

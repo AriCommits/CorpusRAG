@@ -132,15 +132,9 @@ def main():
     # Generate command
     gen_parser = subparsers.add_parser("generate", help="Generate a new API key")
     gen_parser.add_argument("name", help="Human-readable name for the key")
-    gen_parser.add_argument(
-        "--expires", help='Expiration (e.g., "30d", "24h", or ISO datetime)'
-    )
-    gen_parser.add_argument(
-        "--read-only", action="store_true", help="Create read-only key"
-    )
-    gen_parser.add_argument(
-        "--admin", action="store_true", help="Grant admin permissions"
-    )
+    gen_parser.add_argument("--expires", help='Expiration (e.g., "30d", "24h", or ISO datetime)')
+    gen_parser.add_argument("--read-only", action="store_true", help="Create read-only key")
+    gen_parser.add_argument("--admin", action="store_true", help="Grant admin permissions")
     gen_parser.set_defaults(func=generate_key)
 
     # List command

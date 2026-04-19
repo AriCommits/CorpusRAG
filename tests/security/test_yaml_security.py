@@ -175,7 +175,9 @@ llm:
     def test_rejects_excessive_nesting(self, tmp_path):
         """Test that excessive nesting is rejected."""
         # Create deeply nested YAML beyond MAX_NESTING_DEPTH
-        yaml_content = "a:\n  b:\n    c:\n      d:\n        e:\n          f:\n            g: value\n"
+        yaml_content = (
+            "a:\n  b:\n    c:\n      d:\n        e:\n          f:\n            g: value\n"
+        )
         yaml_file = tmp_path / "deep.yaml"
         yaml_file.write_text(yaml_content)
 

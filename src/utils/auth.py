@@ -235,9 +235,7 @@ class MCPAuthenticator:
     async def authenticate_request(
         self,
         request: Request,
-        credentials: HTTPAuthorizationCredentials | None = Depends(
-            HTTPBearer(auto_error=False)
-        ),
+        credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
     ) -> dict[str, Any]:
         """Authenticate a request.
 
@@ -320,8 +318,6 @@ def add_security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = (
-        "max-age=31536000; includeSubDomains"
-    )
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Content-Security-Policy"] = "default-src 'self'"
     return response

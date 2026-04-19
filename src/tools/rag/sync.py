@@ -26,9 +26,7 @@ class RAGSyncer:
         self.db = db
         self.ingester = RAGIngester(config, db)
 
-    def sync(
-        self, path: Path | str, collection: str, dry_run: bool = False
-    ) -> SyncResult:
+    def sync(self, path: Path | str, collection: str, dry_run: bool = False) -> SyncResult:
         """Sync a directory with the RAG collection."""
         source = Path(path).expanduser().resolve()
         if not source.exists():
@@ -42,9 +40,7 @@ class RAGSyncer:
         disk_file_hashes = {}
         for file_path in disk_files:
             relative_path = (
-                str(file_path.relative_to(source))
-                if file_path != source
-                else file_path.name
+                str(file_path.relative_to(source)) if file_path != source else file_path.name
             )
             content = self.ingester._read_file(file_path)
             file_hash = sha256(content.encode("utf-8")).hexdigest()
@@ -102,9 +98,7 @@ class RAGSyncer:
                             full_collection, where={"source_file": rel_path}
                         )
                         chunks_removed += len(metadatas) if metadatas else 0
-                        self.db.delete_by_metadata(
-                            full_collection, where={"source_file": rel_path}
-                        )
+                        self.db.delete_by_metadata(full_collection, where={"source_file": rel_path})
                     except Exception:
                         pass
                 try:
@@ -122,9 +116,7 @@ class RAGSyncer:
                             full_collection, where={"source_file": rel_path}
                         )
                         chunks_removed += len(metadatas) if metadatas else 0
-                        self.db.delete_by_metadata(
-                            full_collection, where={"source_file": rel_path}
-                        )
+                        self.db.delete_by_metadata(full_collection, where={"source_file": rel_path})
                     except Exception:
                         pass
                 try:

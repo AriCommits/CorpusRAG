@@ -152,9 +152,7 @@ class TestInputValidationBasics:
         """Test special character ratio calculation."""
         validator = InputValidator()
         # Create query with exactly 30% special chars - should pass
-        query = (
-            "a" * 70 + "!!@@##" * 2
-        )  # 70 normal + 12 special = 82 chars, ~14.6% special
+        query = "a" * 70 + "!!@@##" * 2  # 70 normal + 12 special = 82 chars, ~14.6% special
         result = validator.validate_query(query)
         assert len(result) > 0
 
@@ -289,8 +287,7 @@ class TestConversationHistoryValidation:
         """Test that histories longer than max_messages are rejected."""
         validator = InputValidator()
         too_long_history = [
-            {"role": "user", "content": f"Message {i}"}
-            for i in range(MAX_CONVERSATION_HISTORY + 1)
+            {"role": "user", "content": f"Message {i}"} for i in range(MAX_CONVERSATION_HISTORY + 1)
         ]
         with pytest.raises(SecurityError, match="too long"):
             validator.validate_conversation_history(too_long_history)

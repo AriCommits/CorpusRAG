@@ -199,9 +199,7 @@ class TestDeepMerge:
         base = {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.7}}
         override = {"llm": {"temperature": 0.5}}
         result = deep_merge(base, override)
-        assert result == {
-            "llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.5}
-        }
+        assert result == {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M", "temperature": 0.5}}
 
     def test_merge_deep_nested(self) -> None:
         """Test merging deeply nested dictionaries."""
@@ -295,9 +293,7 @@ class TestLoadConfig:
         assert config.llm.model == "gemma4:26b-a4b-it-q4_K_M"  # from base
         assert config.llm.temperature == 0.5  # overridden
 
-    def test_load_with_env_override(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_load_with_env_override(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test loading with environment variable override."""
         config_file = tmp_path / "config.yaml"
         config_data = {"llm": {"model": "gemma4:26b-a4b-it-q4_K_M"}}

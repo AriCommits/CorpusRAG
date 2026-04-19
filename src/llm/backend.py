@@ -28,9 +28,7 @@ class LLMBackend(ABC):
         self.config = config
 
     @abstractmethod
-    def stream_completion(
-        self, prompt: str, *, model: str | None = None
-    ) -> Iterator[str]:
+    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
         """Stream tokens from the model."""
 
     @abstractmethod
@@ -71,9 +69,7 @@ class OllamaBackend(LLMBackend):
 
     _cached_default_model: str | None = None
 
-    def stream_completion(
-        self, prompt: str, *, model: str | None = None
-    ) -> Iterator[str]:
+    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
         model_name = model or self.config.model or self._get_default_model()
         payload = {
             "model": model_name,
@@ -173,9 +169,7 @@ class OllamaBackend(LLMBackend):
 class OpenAICompatibleBackend(LLMBackend):
     """OpenAI-compatible /v1/chat/completions backend."""
 
-    def stream_completion(
-        self, prompt: str, *, model: str | None = None
-    ) -> Iterator[str]:
+    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
         messages = [{"role": "user", "content": prompt}]
         yield from self.chat_completion(messages, model=model)
 
@@ -236,9 +230,7 @@ class OpenAICompatibleBackend(LLMBackend):
 class AnthropicCompatibleBackend(LLMBackend):
     """Anthropic-compatible /v1/messages backend."""
 
-    def stream_completion(
-        self, prompt: str, *, model: str | None = None
-    ) -> Iterator[str]:
+    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
         messages = [{"role": "user", "content": prompt}]
         yield from self.chat_completion(messages, model=model)
 

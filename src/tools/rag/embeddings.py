@@ -47,10 +47,7 @@ class EmbeddingClient:
                 error_message = response.text
 
             # Ollama may return 404 when the model is missing, not only when the route is missing.
-            if (
-                "model" in error_message.lower()
-                and "not found" in error_message.lower()
-            ):
+            if "model" in error_message.lower() and "not found" in error_message.lower():
                 raise ValueError(
                     f"Embedding model '{self.config.embedding.model}' is not available in Ollama. "
                     "Set CC_EMBEDDING_MODEL to an installed embedding model or pull the configured one."
@@ -98,18 +95,14 @@ class EmbeddingClient:
             if len(embeddings) != len(texts) or any(
                 not isinstance(item, list) for item in embeddings
             ):
-                raise ValueError(
-                    "OpenAI-compatible Ollama embedding response was invalid"
-                )
+                raise ValueError("OpenAI-compatible Ollama embedding response was invalid")
             return embeddings
 
         response.raise_for_status()
         data = response.json()
         embeddings = data.get("embeddings", [])
         if not isinstance(embeddings, list) or len(embeddings) != len(texts):
-            raise ValueError(
-                "Ollama embedding response did not match requested text count"
-            )
+            raise ValueError("Ollama embedding response did not match requested text count")
         return embeddings
 
     def _embed_with_sentence_transformers(self, texts: list[str]) -> list[list[float]]:

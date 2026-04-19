@@ -86,9 +86,7 @@ def rename_collection(old_name: str, new_name: str, config: str) -> None:
     try:
         col = db.get_collection(old_name)
         col.modify(name=new_name)
-        console.print(
-            f"[green]Successfully renamed '{old_name}' to '{new_name}'.[/green]"
-        )
+        console.print(f"[green]Successfully renamed '{old_name}' to '{new_name}'.[/green]")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
 

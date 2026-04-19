@@ -81,9 +81,7 @@ class RAGApp(App):
                 yield Label("Unknown", id="sync-status")
                 yield Label("  Filters", variant="title")
                 yield Input(placeholder="Tags (comma separated)", id="tag-input")
-                yield Input(
-                    placeholder="Sections (comma separated)", id="section-input"
-                )
+                yield Input(placeholder="Sections (comma separated)", id="section-input")
                 yield Label("  Sessions", variant="title")
                 yield ListView(id="session-list")
             with Vertical(id="main-chat"):
@@ -144,11 +142,7 @@ class RAGApp(App):
         sections_raw = self.query_one("#section-input", Input).value.strip()
 
         tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
-        sections = (
-            [s.strip() for s in sections_raw.split(",") if s.strip()]
-            if sections_raw
-            else []
-        )
+        sections = [s.strip() for s in sections_raw.split(",") if s.strip()] if sections_raw else []
 
         # Display user message immediately
         chat_log = self.query_one("#chat-log", Vertical)
@@ -171,9 +165,7 @@ class RAGApp(App):
                 self.collection = new_col
                 self.notify(f"Switched collection to: {new_col}")
                 # Refresh session id for new collection
-                self.current_session_id = (
-                    f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                )
+                self.current_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 self.load_session(self.current_session_id)
                 # Refresh sync status for new collection
                 self.run_sync(dry_run=True)
@@ -185,9 +177,7 @@ class RAGApp(App):
                     self.run_sync(dry_run=True)
             elif msg.startswith("export:"):
                 fmt = msg.split(":", 1)[1]
-                self.notify(
-                    f"Exporting to {fmt}... (Feature implementation in progress)"
-                )
+                self.notify(f"Exporting to {fmt}... (Feature implementation in progress)")
             else:
                 self.notify(msg)
                 if msg == "Chat history cleared":
@@ -197,15 +187,9 @@ class RAGApp(App):
             # For stream, treat it as a regular message
             tags_raw = self.query_one("#tag-input", Input).value.strip()
             sections_raw = self.query_one("#section-input", Input).value.strip()
-            tags = (
-                [t.strip() for t in tags_raw.split(",") if t.strip()]
-                if tags_raw
-                else []
-            )
+            tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
             sections = (
-                [s.strip() for s in sections_raw.split(",") if s.strip()]
-                if sections_raw
-                else []
+                [s.strip() for s in sections_raw.split(",") if s.strip()] if sections_raw else []
             )
 
             chat_log = self.query_one("#chat-log", Vertical)
@@ -255,9 +239,7 @@ class RAGApp(App):
             self.call_from_thread(self.update_sync_status, f"Error: {e}")
 
     @work(exclusive=True, thread=True)
-    def generate_response(
-        self, message: str, tags: list[str], sections: list[str]
-    ) -> None:
+    def generate_response(self, message: str, tags: list[str], sections: list[str]) -> None:
         """Generate response from RAG agent in a background thread."""
         self.sub_title = "Thinking..."
 

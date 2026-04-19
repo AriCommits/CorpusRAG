@@ -120,9 +120,7 @@ Tags:
             # Verify ingestion results
             assert result.collection == "ml_guide"
             assert result.files_indexed == 1
-            assert (
-                result.chunks_indexed > 0
-            )  # Should have multiple chunks from splitting
+            assert result.chunks_indexed > 0  # Should have multiple chunks from splitting
 
             # Verify collection was created
             full_collection = f"{rag_config.collection_prefix}_{result.collection}"
@@ -215,12 +213,8 @@ Tags:
             metadatas = query_results.get("metadatas", [[]])[0]
             for metadata in metadatas:
                 assert "parent_id" in metadata, "Child documents must have parent_id"
-                assert (
-                    "child_index" in metadata
-                ), "Child documents must have child_index"
-                assert (
-                    "source_file" in metadata
-                ), "Child documents must have source_file"
+                assert "child_index" in metadata, "Child documents must have child_index"
+                assert "source_file" in metadata, "Child documents must have source_file"
 
     def test_tags_extracted_and_stored(
         self, rag_config: RAGConfig, db_backend: ChromaDBBackend, temp_rag_dir: Path
@@ -269,9 +263,7 @@ Tags:
                     tags = metadata["tags"]
                     # Tags should be present and include the extracted ones
                     assert isinstance(tags, list)
-                    assert any(
-                        tag in ["data-science", "statistics", "ml"] for tag in tags
-                    )
+                    assert any(tag in ["data-science", "statistics", "ml"] for tag in tags)
 
 
 class TestRAGRetriever:
@@ -433,9 +425,9 @@ Tags:
 
             # Collect parent IDs to verify deduplication
             parent_ids = [doc.id for doc in results]
-            assert len(parent_ids) == len(
-                set(parent_ids)
-            ), "Parent documents should be deduplicated"
+            assert len(parent_ids) == len(set(parent_ids)), (
+                "Parent documents should be deduplicated"
+            )
 
 
 class TestRAGAgent:

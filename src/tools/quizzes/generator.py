@@ -67,9 +67,7 @@ class QuizGenerator:
             sample_size = min(15, max(5, doc_count // 8))  # Smaller sample than summary
 
             # Get documents (placeholder implementation)
-            document_texts = self._get_representative_documents(
-                full_collection, sample_size
-            )
+            document_texts = self._get_representative_documents(full_collection, sample_size)
 
             if not document_texts:
                 logger.warning(f"Could not retrieve documents from '{full_collection}'")
@@ -106,9 +104,7 @@ class QuizGenerator:
             # Fall back to placeholder questions
             return self._generate_placeholder_questions(collection, count)
 
-    def _get_representative_documents(
-        self, full_collection: str, sample_size: int
-    ) -> list[str]:
+    def _get_representative_documents(self, full_collection: str, sample_size: int) -> list[str]:
         """Get representative documents from collection.
 
         Args:
@@ -226,9 +222,7 @@ class QuizGenerator:
         if re.search(r"Type:\s*(Multiple Choice|True-False)", block, re.IGNORECASE):
             type_match = re.search(r"Type:\s*(\w+\s?\w*)", block, re.IGNORECASE)
             if type_match:
-                q_type_raw = (
-                    type_match.group(1).lower().replace(" ", "_").replace("-", "_")
-                )
+                q_type_raw = type_match.group(1).lower().replace(" ", "_").replace("-", "_")
                 if q_type_raw in ["multiple_choice", "true_false", "short_answer"]:
                     q_type = q_type_raw
 
@@ -278,9 +272,7 @@ class QuizGenerator:
 
         return question_data
 
-    def _generate_placeholder_questions(
-        self, collection: str, count: int
-    ) -> list[dict[str, Any]]:
+    def _generate_placeholder_questions(self, collection: str, count: int) -> list[dict[str, Any]]:
         """Generate placeholder questions as fallback.
 
         Args:
@@ -314,14 +306,10 @@ class QuizGenerator:
                 question_data["options"] = ["True", "False"]
                 question_data["answer"] = "True"
             else:  # short_answer
-                question_data["answer"] = (
-                    "Please regenerate with working LLM connection"
-                )
+                question_data["answer"] = "Please regenerate with working LLM connection"
 
             if self.config.include_explanations:
-                question_data["explanation"] = (
-                    "LLM connection needed for actual explanations"
-                )
+                question_data["explanation"] = "LLM connection needed for actual explanations"
 
             questions.append(question_data)
 

@@ -71,18 +71,14 @@ class RAGRetriever:
             (doc_id, doc)
             for doc_id, doc in all_docs
             if doc.metadata.get("collection_name") == collection
-            or not doc.metadata.get(
-                "collection_name"
-            )  # Default to matching if not tagged
+            or not doc.metadata.get("collection_name")  # Default to matching if not tagged
         ]
 
         if not collection_docs:
             return
 
         self.bm25_docs = collection_docs
-        tokenized_corpus = [
-            doc.page_content.lower().split() for _, doc in collection_docs
-        ]
+        tokenized_corpus = [doc.page_content.lower().split() for _, doc in collection_docs]
         self.bm25_index = BM25Okapi(tokenized_corpus)
 
     def _init_reranker(self):
@@ -207,9 +203,7 @@ class RAGRetriever:
         scores = self.bm25_index.get_scores(tokenized_query)
 
         # Rank documents by BM25 score
-        ranked_indices = sorted(
-            range(len(scores)), key=lambda i: scores[i], reverse=True
-        )
+        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
 
         retrieved_docs = []
         rank = 1

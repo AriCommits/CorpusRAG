@@ -119,9 +119,7 @@ class LocalFileStore:
             "page_content": doc.page_content,
             "metadata": dict(doc.metadata) if doc.metadata else {},
         }
-        file_path.write_text(
-            json.dumps(doc_data, indent=2, default=str), encoding="utf-8"
-        )
+        file_path.write_text(json.dumps(doc_data, indent=2, default=str), encoding="utf-8")
 
     def _load_document(self, doc_id: str) -> Document | None:
         """Load a document from JSON.

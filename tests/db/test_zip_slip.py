@@ -29,15 +29,10 @@ def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
 
     for member in tar.getmembers():
         # Resolve the member path
-        member_path = os.path.normpath(
-            os.path.abspath(os.path.join(target_dir, member.name))
-        )
+        member_path = os.path.normpath(os.path.abspath(os.path.join(target_dir, member.name)))
 
         # Ensure the resolved path is within target_dir
-        if (
-            not member_path.startswith(target_dir + os.sep)
-            and member_path != target_dir
-        ):
+        if not member_path.startswith(target_dir + os.sep) and member_path != target_dir:
             raise ValueError(
                 f"Attempted path traversal detected: member '{member.name}' "
                 f"would be extracted to {member_path} (outside {target_dir})"

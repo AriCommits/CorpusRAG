@@ -42,9 +42,7 @@ def test_ollama_backend():
         )
 
         flashcard_response = backend.complete(flashcard_prompt)
-        print(
-            f"✓ Flashcard generation works. Response: {flashcard_response.text[:200]}..."
-        )
+        print(f"✓ Flashcard generation works. Response: {flashcard_response.text[:200]}...")
 
         return True
 
@@ -84,9 +82,7 @@ def test_prompt_templates():
         # Test RAG prompt
         PromptTemplates.rag_response(
             query="What is this about?",
-            context_chunks=[
-                {"text": "Test content", "source": "test.txt", "score": 0.9}
-            ],
+            context_chunks=[{"text": "Test content", "source": "test.txt", "score": 0.9}],
         )
         print("✓ RAG prompt template works")
 

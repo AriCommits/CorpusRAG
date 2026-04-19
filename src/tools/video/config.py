@@ -15,9 +15,7 @@ class VideoConfig(BaseConfig):
     whisper_device: str = "cuda"  # cuda | cpu
     whisper_compute_type: str = "float16"
     whisper_language: str = "en"
-    models_dir: str = field(
-        default_factory=lambda: str(Path.home() / "models" / "whisper")
-    )
+    models_dir: str = field(default_factory=lambda: str(Path.home() / "models" / "whisper"))
 
     # Cleaning settings
     clean_model: str = "qwen3:8b"
@@ -77,9 +75,7 @@ Transcript:
             whisper_device=video_data.get("whisper_device", "cuda"),
             whisper_compute_type=video_data.get("whisper_compute_type", "float16"),
             whisper_language=video_data.get("whisper_language", "en"),
-            models_dir=video_data.get(
-                "models_dir", str(Path.home() / "models" / "whisper")
-            ),
+            models_dir=video_data.get("models_dir", str(Path.home() / "models" / "whisper")),
             clean_model=video_data.get("clean_model", "qwen3:8b"),
             clean_ollama_host=base_config.llm.endpoint,
             clean_prompt=video_data.get(

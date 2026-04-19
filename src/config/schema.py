@@ -63,9 +63,7 @@ def validate_embedding_config(config: dict[str, Any]) -> list[str]:
         if not isinstance(config["backend"], str):
             errors.append("embedding.backend must be a string")
         elif config["backend"] not in ("ollama", "sentence-transformers"):
-            errors.append(
-                "embedding.backend must be 'ollama' or 'sentence-transformers'"
-            )
+            errors.append("embedding.backend must be 'ollama' or 'sentence-transformers'")
 
     if "model" in config and not isinstance(config["model"], str):
         errors.append("embedding.model must be a string")
@@ -159,9 +157,7 @@ def validate_video_config(config: dict[str, Any]) -> list[str]:
         if not isinstance(config["whisper_compute_type"], str):
             errors.append("video.whisper_compute_type must be a string")
         elif config["whisper_compute_type"] not in ("float16", "float32", "int8"):
-            errors.append(
-                "video.whisper_compute_type must be 'float16', 'float32', or 'int8'"
-            )
+            errors.append("video.whisper_compute_type must be 'float16', 'float32', or 'int8'")
 
     if "whisper_language" in config and config["whisper_language"] is not None:
         if not isinstance(config["whisper_language"], str):
@@ -175,9 +171,7 @@ def validate_video_config(config: dict[str, Any]) -> list[str]:
     if "clean_model" in config and not isinstance(config["clean_model"], str):
         errors.append("video.clean_model must be a string")
 
-    if "clean_ollama_host" in config and not isinstance(
-        config["clean_ollama_host"], str
-    ):
+    if "clean_ollama_host" in config and not isinstance(config["clean_ollama_host"], str):
         errors.append("video.clean_ollama_host must be a string")
 
     if "clean_prompt" in config and not isinstance(config["clean_prompt"], str):
@@ -190,14 +184,10 @@ def validate_video_config(config: dict[str, Any]) -> list[str]:
         elif config["output_format"] not in ("markdown", "text", "json"):
             errors.append("video.output_format must be 'markdown', 'text', or 'json'")
 
-    if "include_timestamps" in config and not isinstance(
-        config["include_timestamps"], bool
-    ):
+    if "include_timestamps" in config and not isinstance(config["include_timestamps"], bool):
         errors.append("video.include_timestamps must be a boolean")
 
-    if "collection_prefix" in config and not isinstance(
-        config["collection_prefix"], str
-    ):
+    if "collection_prefix" in config and not isinstance(config["collection_prefix"], str):
         errors.append("video.collection_prefix must be a string")
 
     if "supported_extensions" in config:
@@ -206,9 +196,7 @@ def validate_video_config(config: dict[str, Any]) -> list[str]:
         else:
             for ext in config["supported_extensions"]:
                 if not isinstance(ext, str):
-                    errors.append(
-                        "video.supported_extensions must be a list of strings"
-                    )
+                    errors.append("video.supported_extensions must be a list of strings")
                 elif not ext.startswith("."):
                     errors.append("video.supported_extensions must start with '.'")
 
@@ -243,6 +231,5 @@ def validate_config(config_dict: dict[str, Any]) -> None:
 
     if all_errors:
         raise ConfigValidationError(
-            "Configuration validation failed:\n"
-            + "\n".join(f"  - {error}" for error in all_errors)
+            "Configuration validation failed:\n" + "\n".join(f"  - {error}" for error in all_errors)
         )

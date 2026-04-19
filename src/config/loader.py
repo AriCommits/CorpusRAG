@@ -88,9 +88,7 @@ def _scan_for_dangerous_patterns(content: str) -> None:
     """
     for pattern in DANGEROUS_PATTERNS:
         if re.search(pattern, content, re.IGNORECASE):
-            raise SecurityError(
-                f"Suspicious pattern detected in configuration: {pattern}"
-            )
+            raise SecurityError(f"Suspicious pattern detected in configuration: {pattern}")
 
 
 def _check_nesting_depth(

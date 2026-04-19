@@ -179,9 +179,7 @@ class KnowledgeBaseOrchestrator:
 
         # Get sample documents to extract metadata
         sample = col.get(limit=1)
-        metadata_keys = (
-            list(sample["metadatas"][0].keys()) if sample["metadatas"] else []
-        )
+        metadata_keys = list(sample["metadatas"][0].keys()) if sample["metadatas"] else []
 
         return {
             "collection": collection,

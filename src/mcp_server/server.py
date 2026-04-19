@@ -36,9 +36,7 @@ def create_mcp_server(config_path: str | None = None) -> FastMCP:
         Configured FastMCP server instance
     """
     # Load configuration
-    effective_path = (
-        Path(config_path) if config_path is not None else Path("configs/base.yaml")
-    )
+    effective_path = Path(config_path) if config_path is not None else Path("configs/base.yaml")
     config = load_config(effective_path)
 
     # Initialize database backend
