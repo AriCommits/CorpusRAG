@@ -9,11 +9,10 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from db import DatabaseBackend
+from utils.security import sanitize_filename
 
 from .config import RAGConfig
-from .embeddings import EmbeddingClient
-from .markdown_parser import split_markdown_semantic
-from .storage import LocalFileStore
+from .pipeline import EmbeddingClient, LocalFileStore, split_markdown_semantic
 
 
 @dataclass(frozen=True)
@@ -163,7 +162,7 @@ class RAGIngester:
                 parent_id = str(uuid4())
                 parent_metadata = dict(parent_doc.metadata) if parent_doc.metadata else {}
                 parent_metadata["source_file"] = relative_path
-                parent_metadata["source_file_name"] = file_path.name
+                parent_metadata["source_file_name"] = sanitize_filename(file_path.name)
                 parent_metadata["parent_index"] = parent_idx
                 parent_metadata["file_hash"] = file_hash
 
@@ -227,7 +226,17 @@ class RAGIngester:
         # Recursively find all supported files
         files = []
         for ext in self.SUPPORTED_EXTENSIONS:
-            files.extend(path.rglob(f"*{ext}"))
+            for f in path.rglob(f"*{ext}"):
+                # Skip symlinks to prevent path traversal
+                if f.is_symlink():
+                    continue
+                # Verify resolved path is within the source directory
+                try:
+                    f.resolve().relative_to(path.resolve())
+                except ValueError:
+                    # File resolved outside source directory, skip it
+                    continue
+                files.append(f)
 
         return sorted(files)
 

@@ -99,6 +99,12 @@ def sync(path: str, collection: str, dry_run: bool, config: str):
     multiple=True,
     help="Filter by section header (can be used multiple times)",
 )
+@click.option(
+    "--strategy",
+    type=click.Choice(["hybrid", "semantic", "keyword"]),
+    default=None,
+    help="Retrieval strategy override",
+)
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def query(
     query: str,
@@ -106,10 +112,16 @@ def query(
     top_k: int,
     tag: tuple[str, ...],
     section: tuple[str, ...],
+    strategy: str | None,
     config: str,
 ):
     """Query a RAG collection with optional metadata filtering."""
     cfg, db = load_cli_db(config, RAGConfig)
+
+    # Override strategy if provided
+    if strategy:
+        cfg.strategy = strategy
+
     agent = RAGAgent(cfg, db)
 
     # Build where filter for metadata
@@ -172,10 +184,27 @@ def query(
     multiple=True,
     help="Filter by section header (can be used multiple times)",
 )
+@click.option(
+    "--strategy",
+    type=click.Choice(["hybrid", "semantic", "keyword"]),
+    default=None,
+    help="Retrieval strategy override",
+)
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def chat(collection: str, tag: tuple[str, ...], section: tuple[str, ...], config: str):
+def chat(
+    collection: str,
+    tag: tuple[str, ...],
+    section: tuple[str, ...],
+    strategy: str | None,
+    config: str,
+):
     """Interactive chat with RAG agent with optional metadata filtering."""
     cfg, db = load_cli_db(config, RAGConfig)
+
+    # Override strategy if provided
+    if strategy:
+        cfg.strategy = strategy
+
     agent = RAGAgent(cfg, db)
 
     # Build where filter for metadata

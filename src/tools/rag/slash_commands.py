@@ -108,3 +108,66 @@ def handle_export(args: list[str]) -> SlashCommandResult:
     if fmt in ["anki", "markdown", "json", "csv"]:
         return SlashCommandResult(type="toast", toast_message=f"export:{fmt}")
     return SlashCommandResult(type="error", content=f"Unknown export format: {fmt}")
+
+
+@slash_command("strategy", "View or change the RAG retrieval strategy")
+def handle_strategy(args: list[str]) -> SlashCommandResult:
+    """Handle /strategy slash command.
+
+    Usage:
+      /strategy               - Show current strategy
+      /strategy hybrid        - Switch to hybrid (vector + BM25 + RRF + reranker)
+      /strategy semantic      - Switch to semantic (vector only)
+      /strategy keyword       - Switch to keyword (BM25 only)
+    """
+    valid_strategies = ["hybrid", "semantic", "keyword"]
+
+    if not args:
+        # Show current strategy - implementation will be in TUI handler
+        return SlashCommandResult(
+            type="text",
+            content=(
+                "Available strategies: hybrid, semantic, keyword\nUse /strategy <name> to switch."
+            ),
+        )
+
+    strategy_name = args[0].lower()
+    if strategy_name not in valid_strategies:
+        return SlashCommandResult(
+            type="error",
+            content=f"Unknown strategy: {strategy_name}\nAvailable: {', '.join(valid_strategies)}",
+        )
+
+    return SlashCommandResult(type="toast", toast_message=f"strategy:{strategy_name}")
+
+
+@slash_command("filter", "Set tag-based filters for subsequent queries")
+def handle_filter(args: list[str]) -> SlashCommandResult:
+    """Handle /filter slash command.
+
+    Usage:
+      /filter                 - Show current filters
+      /filter clear           - Clear all filters
+      /filter <tag>           - Filter by tag prefix (e.g., /filter Skill)
+      /filter <tag>/<subtag>  - Filter by hierarchical tag (e.g., /filter Skill/ML)
+    """
+    if not args:
+        # Show current filters - implementation will be in TUI handler
+        return SlashCommandResult(
+            type="text",
+            content="No active filters.\nUse /filter <tag> to filter by tag prefix.\nUse /filter clear to reset.",
+        )
+
+    if args[0].lower() == "clear":
+        return SlashCommandResult(type="toast", toast_message="filter:clear")
+
+    # Filter value - validate it
+    filter_value = " ".join(args)
+    # Basic validation: only allow alphanumeric, slashes, underscores
+    if not all(c.isalnum() or c in "/_-" for c in filter_value):
+        return SlashCommandResult(
+            type="error",
+            content=f"Invalid filter value: {filter_value}\nOnly alphanumeric, slashes, hyphens, and underscores allowed.",
+        )
+
+    return SlashCommandResult(type="toast", toast_message=f"filter:{filter_value}")

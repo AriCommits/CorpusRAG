@@ -26,6 +26,23 @@ class RetrievalConfig:
 
 
 @dataclass
+class RerankingConfig:
+    """Reranking configuration."""
+
+    enabled: bool = True
+    model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+
+@dataclass
+class VectorStoreConfig:
+    """VectorStore backend configuration."""
+
+    backend: str = "chromadb"  # chromadb | langchain
+    langchain_class: str | None = None  # e.g., "langchain_qdrant.QdrantVectorStore"
+    langchain_kwargs: dict = field(default_factory=dict)
+
+
+@dataclass
 class ParentStoreConfig:
     """Parent document store configuration."""
 
@@ -37,9 +54,12 @@ class ParentStoreConfig:
 class RAGConfig(BaseConfig):
     """RAG tool configuration."""
 
+    strategy: str = "hybrid"  # hybrid | semantic | keyword
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
+    reranking: RerankingConfig = field(default_factory=RerankingConfig)
     parent_store: ParentStoreConfig = field(default_factory=ParentStoreConfig)
+    vectorstore: VectorStoreConfig = field(default_factory=VectorStoreConfig)
     collection_prefix: str = "rag"
 
     @classmethod
@@ -57,10 +77,13 @@ class RAGConfig(BaseConfig):
 
         # Get RAG-specific config
         rag_data = data.get("rag", {})
+        strategy = rag_data.get("strategy", "hybrid")
         chunking_data = rag_data.get("chunking", {})
         retrieval_data = rag_data.get("retrieval", {})
+        reranking_data = rag_data.get("reranking", {})
         parent_store_data = rag_data.get("parent_store", {})
-        collection_prefix = rag_data.get("collection_prefix")
+        vectorstore_data = rag_data.get("vectorstore", {})
+        collection_prefix = rag_data.get("collection_prefix", "rag")
 
         # Handle parent_store path conversion
         if "path" in parent_store_data and isinstance(parent_store_data["path"], str):
@@ -71,10 +94,15 @@ class RAGConfig(BaseConfig):
             embedding=base_config.embedding,
             database=base_config.database,
             paths=base_config.paths,
+            strategy=strategy,
             chunking=(ChunkingConfig(**chunking_data) if chunking_data else ChunkingConfig()),
             retrieval=(RetrievalConfig(**retrieval_data) if retrieval_data else RetrievalConfig()),
+            reranking=(RerankingConfig(**reranking_data) if reranking_data else RerankingConfig()),
             parent_store=(
                 ParentStoreConfig(**parent_store_data) if parent_store_data else ParentStoreConfig()
             ),
-            collection_prefix=collection_prefix or "rag",
+            vectorstore=(
+                VectorStoreConfig(**vectorstore_data) if vectorstore_data else VectorStoreConfig()
+            ),
+            collection_prefix=collection_prefix,
         )
