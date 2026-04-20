@@ -1,9 +1,0 @@
-{
-  "page_content": "### **Summary of Recent Work (2024\u20132026)**  \n- **Clinical Operations & Pharmacy Support:** Balancing a rigorous graduate curriculum while working 25\u201330 hours per week as a Pharmacy Technician at Walgreens, where I manage insurance adjudication, inventory optimization, and direct patient support.  \n- **High-Acuity Clinical Volunteering:** Logged over 100 hours as an ICU Volunteer at Medical City (Denton and Frisco), gaining firsthand exposure to critical care workflows, supporting nursing staff, and facilitating communication for patient families.  \n- **Advanced Machine Learning Optimization:** Engineered a high-performance deep learning pipeline for geometric data analysis at Georgia Tech, achieving a 90% reduction in training/inference time (from 5 hours down to 30 minutes) through algorithmic efficiency.  \n- **Predictive Neural Network Modeling:** Developed a multi-layer neural network in PyTorch, utilizing systematic grid search for hyperparameter tuning to improve predictive accuracy from 85% to 95% on a 10,000-record dataset.  \n- **Biomedical Engineering Innovation:** Led a senior design team to fabricate a low-cost, silicone-molded aortic valve replacement, reducing unit costs from $10,000 to $500 while validating performance against ISO standards through hemodynamic simulations.  \n---",
-  "metadata": {
-    "Subsection": "**Summary of Recent Work (2024\u20132026)**",
-    "source_file": "LORS\\Clinical Summary Sheet.md",
-    "parent_index": 1,
-    "file_hash": "73aa75f0f0b61f2700768bf335c17e1743d771b08b50f5d40d18a3d3941efb86"
-  }
-}

@@ -4,7 +4,7 @@ from datetime import datetime
 
 from textual import on, work
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Markdown, Static
 
 from .agent import RAGAgent
@@ -39,20 +39,23 @@ class RAGApp(App):
     """Textual RAG Application."""
 
     BINDINGS = [
-        ("ctrl+l", "manage_collections", "Manage Collections"),
-        ("ctrl+s", "sync", "Sync"),
+        ("f2", "manage_collections", "Collections [F2]"),
+        ("f5", "sync", "Sync [F5]"),
+        ("f1", "show_help", "Help [F1]"),
     ]
 
     CSS = """
-    Screen {
-        layers: sidebar main;
-    }
-
     #sidebar {
         width: 30;
         background: $surface;
         border-right: tall $primary;
         height: 100%;
+    }
+
+    .sidebar-title {
+        text-style: bold;
+        margin: 1 0 0 1;
+        color: $accent;
     }
 
     #sync-status {
@@ -63,6 +66,22 @@ class RAGApp(App):
     #main-chat {
         height: 100%;
         padding: 1 2;
+    }
+
+    #chat-log {
+        height: 1fr;
+        min-height: 5;
+    }
+
+    #input-container {
+        height: auto;
+        dock: bottom;
+        padding: 0 1;
+    }
+
+    ChatMessage {
+        margin: 0 0 1 0;
+        height: auto;
     }
     """
 
@@ -77,17 +96,17 @@ class RAGApp(App):
         yield Header()
         with Horizontal():
             with Vertical(id="sidebar"):
-                yield Label("  Sync Status", variant="title")
+                yield Label("Sync Status", classes="sidebar-title")
                 yield Label("Unknown", id="sync-status")
-                yield Label("  Filters", variant="title")
+                yield Label("Filters", classes="sidebar-title")
                 yield Input(placeholder="Tags (comma separated)", id="tag-input")
                 yield Input(placeholder="Sections (comma separated)", id="section-input")
-                yield Label("  Sessions", variant="title")
+                yield Label("Sessions", classes="sidebar-title")
                 yield ListView(id="session-list")
             with Vertical(id="main-chat"):
-                yield Vertical(id="chat-log")
+                yield VerticalScroll(id="chat-log")
                 with Vertical(id="input-container"):
-                    yield Input(placeholder="Ask a question...", id="user-input")
+                    yield Input(placeholder="Ask a question... (type /help for commands)", id="user-input")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -108,10 +127,10 @@ class RAGApp(App):
     def load_session(self, session_id: str) -> None:
         """Load a session's history into the chat log."""
         self.current_session_id = session_id
-        chat_log = self.query_one("#chat-log", Vertical)
+        chat_log = self.query_one("#chat-log", VerticalScroll)
 
         # Clear existing messages
-        for child in chat_log.children:
+        for child in list(chat_log.children):
             child.remove()
 
         history = self.agent.session_manager.load_session(session_id)
@@ -145,7 +164,7 @@ class RAGApp(App):
         sections = [s.strip() for s in sections_raw.split(",") if s.strip()] if sections_raw else []
 
         # Display user message immediately
-        chat_log = self.query_one("#chat-log", Vertical)
+        chat_log = self.query_one("#chat-log", VerticalScroll)
         chat_log.mount(ChatMessage("user", message))
         chat_log.scroll_end()
 
@@ -155,7 +174,7 @@ class RAGApp(App):
     def handle_slash_result(self, result: SlashCommandResult) -> None:
         """Process the result of a slash command."""
         if result.type == "text" or result.type == "error":
-            chat_log = self.query_one("#chat-log", Vertical)
+            chat_log = self.query_one("#chat-log", VerticalScroll)
             chat_log.mount(ChatMessage("assistant", result.content or ""))
             chat_log.scroll_end()
         elif result.type == "toast":
@@ -178,10 +197,22 @@ class RAGApp(App):
             elif msg.startswith("export:"):
                 fmt = msg.split(":", 1)[1]
                 self.notify(f"Exporting to {fmt}... (Feature implementation in progress)")
+            elif msg.startswith("filter:"):
+                filter_val = msg.split(":", 1)[1]
+                tag_input = self.query_one("#tag-input", Input)
+                if filter_val == "clear":
+                    tag_input.value = ""
+                    self.notify("Filters cleared")
+                else:
+                    tag_input.value = filter_val
+                    self.notify(f"Filter set: {filter_val}")
+            elif msg.startswith("strategy:"):
+                strategy_name = msg.split(":", 1)[1]
+                self.notify(f"Strategy switched to: {strategy_name}")
             else:
                 self.notify(msg)
                 if msg == "Chat history cleared":
-                    self.agent.session_manager.clear_session(self.current_session_id)
+                    self.agent.session_manager.delete_session(self.current_session_id)
                     self.load_session(self.current_session_id)
         elif result.type == "stream":
             # For stream, treat it as a regular message
@@ -192,7 +223,7 @@ class RAGApp(App):
                 [s.strip() for s in sections_raw.split(",") if s.strip()] if sections_raw else []
             )
 
-            chat_log = self.query_one("#chat-log", Vertical)
+            chat_log = self.query_one("#chat-log", VerticalScroll)
             chat_log.mount(ChatMessage("user", result.content or ""))
             chat_log.scroll_end()
             self.generate_response(result.content or "", tags, sections)
@@ -200,14 +231,19 @@ class RAGApp(App):
             self.push_screen(result.screen)
 
     def action_manage_collections(self) -> None:
-        """Action for ctrl+l binding."""
-        from tools.rag.tui_collections import CollectionManagerScreen
+        """Open collection manager screen."""
+        from .tui_collections import CollectionManagerScreen
 
         self.push_screen(CollectionManagerScreen())
 
     def action_sync(self) -> None:
-        """Action for ctrl+s binding."""
+        """Run full sync."""
         self.run_sync(dry_run=False)
+
+    def action_show_help(self) -> None:
+        """Show help with available commands."""
+        result = self.router.dispatch(self.router.parse("/help"))
+        self.handle_slash_result(result)
 
     def update_sync_status(self, status: str) -> None:
         """Update the sync status label."""
@@ -290,9 +326,9 @@ class RAGApp(App):
         latency_info = ""
         if benchmarker.history:
             last = benchmarker.history[-1]
-            latency_info = f" ({last.total_ms:.0f}ms)"
+            latency_info = f"\n\n*({last.total_ms:.0f}ms)*"
 
-        chat_log = self.query_one("#chat-log", Vertical)
+        chat_log = self.query_one("#chat-log", VerticalScroll)
         chat_log.mount(ChatMessage("assistant", f"{response}{latency_info}"))
         chat_log.scroll_end()
 

@@ -50,7 +50,7 @@ class CollectionManagerScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(id="manager-container"):
-            yield Label("Collection Management", variant="title")
+            yield Label("Collection Management")
             yield DataTable(id="collections-table")
             with Vertical(id="actions-panel"):
                 yield Label(

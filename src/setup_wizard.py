@@ -206,13 +206,13 @@ class ChromaHostScreen(Screen):
         with Container(id="content"):
             yield Label("ChromaDB Server Configuration")
             yield Static()  # Spacer
-            yield Markdown("## Enter ChromaDB server address (or leave blank for localhost:8000)")
+            yield Markdown("## Enter ChromaDB server hostname (or leave blank for localhost)")
 
             with Vertical(id="host-input"):
                 yield Input(
-                    value="localhost:8000",
+                    value="localhost",
                     id="chroma_host_input",
-                    placeholder="localhost:8000",
+                    placeholder="localhost",
                 )
 
             yield Static()  # Spacer
@@ -224,7 +224,7 @@ class ChromaHostScreen(Screen):
             self.app.pop_screen()
         elif event.button.id == "next":
             host_input = self.query_one("#chroma_host_input", Input)
-            host = host_input.value or "localhost:8000"
+            host = host_input.value or "localhost"
             self.app.wizard_config.chroma_host = host
             self.app.push_screen("vault")
 
@@ -452,7 +452,9 @@ class SetupWizardApp:
 
             if "paths" not in config:
                 config["paths"] = {}
-            config["paths"]["vault"] = self.wizard_config.vault_path
+            # Use forward slashes to avoid YAML double-quote unicode escape issues
+            # on Windows (e.g., \U is parsed as a unicode escape in YAML)
+            config["paths"]["vault"] = self.wizard_config.vault_path.replace("\\", "/")
 
             if "telemetry" not in config:
                 config["telemetry"] = {}

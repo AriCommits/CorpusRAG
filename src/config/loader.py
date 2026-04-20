@@ -36,6 +36,7 @@ ALLOWED_CONFIG_KEYS: set[str] = {
     "quizzes",
     "orchestrations",
     "dev",
+    "telemetry",
 }
 
 # Dangerous patterns to scan for in YAML content
