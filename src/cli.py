@@ -8,11 +8,59 @@ from cli_dev import dev
 from db.collections_cli import collections_cmd
 from db.management import db
 from orchestrations.cli import orchestrate
-from tools.flashcards.cli import flashcards
-from tools.quizzes.cli import quizzes
 from tools.rag.cli import rag
-from tools.summaries.cli import summaries
 from tools.video.cli import video
+
+# Import optional generator tools with fallbacks
+try:
+    from tools.flashcards.cli import flashcards
+except ImportError:
+
+    @click.group(name="flashcards")
+    def flashcards() -> None:
+        """Flashcard generation (requires 'generators' extra)."""
+        pass
+
+    @flashcards.command()
+    def generate() -> None:
+        """Generate flashcards."""
+        click.echo("Flashcard generation requires the 'generators' extra.")
+        click.echo("Install with: pip install corpusrag[generators]")
+        raise SystemExit(1)
+
+
+try:
+    from tools.summaries.cli import summaries
+except ImportError:
+
+    @click.group(name="summaries")
+    def summaries() -> None:
+        """Summary generation (requires 'generators' extra)."""
+        pass
+
+    @summaries.command()
+    def generate_summary() -> None:
+        """Generate summary."""
+        click.echo("Summary generation requires the 'generators' extra.")
+        click.echo("Install with: pip install corpusrag[generators]")
+        raise SystemExit(1)
+
+
+try:
+    from tools.quizzes.cli import quizzes
+except ImportError:
+
+    @click.group(name="quizzes")
+    def quizzes() -> None:
+        """Quiz generation (requires 'generators' extra)."""
+        pass
+
+    @quizzes.command()
+    def generate_quiz() -> None:
+        """Generate quiz."""
+        click.echo("Quiz generation requires the 'generators' extra.")
+        click.echo("Install with: pip install corpusrag[generators]")
+        raise SystemExit(1)
 
 
 @click.group()

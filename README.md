@@ -52,16 +52,35 @@ CorpusRAG is a modular, AI-powered toolkit for personal knowledge management wit
 
 ### Installation
 
+CorpusRAG supports flexible installations for personal and public use cases:
+
 ```bash
-git clone https://github.com/yourusername/CorpusRAG.git
-cd CorpusRAG
+# Minimal installation (RAG + TUI + MCP)
+pip install corpusrag
 
-# Install the package
-pip install -e .
+# With generators (flashcards, summaries, quizzes)
+pip install corpusrag[generators]
 
-# Optional: install export support (Anki) and dev tools
-pip install -e ".[export,dev]"
+# With video transcription
+pip install corpusrag[video]
+
+# Full installation (all features)
+pip install corpusrag[full]
+
+# For development
+pip install corpusrag[full,dev]
 ```
+
+### Optional Extras
+
+| Extra | Features | Dependencies |
+|-------|----------|--------------|
+| `generators` | Flashcards, summaries, quizzes | `tiktoken` |
+| `video` | Video transcription & cleaning | `faster-whisper` |
+| `export` | Export to Anki (`.apkg`) | `genanki` |
+| `observability` | Telemetry & tracing (OpenTelemetry) | `opentelemetry-*` |
+| `full` | Everything | All optional dependencies |
+| `dev` | Development tools | `pytest`, `ruff`, `mypy` |
 
 ### First Run
 
@@ -132,7 +151,7 @@ python -m cli collections info my_collection
 ### Exporting Data
 
 ```bash
-# Individual tool exports
+# Individual tool exports (requires 'generators' extra)
 corpus flashcards --collection notes --export anki --output cards.apkg
 corpus summaries --collection notes --export markdown --output summary.md
 corpus quizzes --collection notes --format json --output quiz.json
@@ -140,6 +159,11 @@ corpus quizzes --collection notes --format json --output quiz.json
 # Python equivalents
 python -m cli flashcards --collection notes --export anki --output cards.apkg
 ```
+
+> **Note:** Flashcards, summaries, and quizzes require the `generators` extra:
+> ```bash
+> pip install corpusrag[generators]
+> ```
 
 ### Developer Commands
 
