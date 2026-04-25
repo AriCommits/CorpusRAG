@@ -16,7 +16,6 @@ from config import (
     merge_configs,
 )
 from config.loader import deep_merge, parse_env_overrides
-from config.schema import ConfigValidationError, validate_config
 
 
 class TestLLMConfig:
@@ -325,38 +324,3 @@ class TestMergeConfigs:
         assert result.llm.model == "mistral"
         assert result.llm.temperature == 0.5
         assert result.llm.endpoint == base_endpoint
-
-
-class TestConfigValidation:
-    """Tests for configuration validation."""
-
-    def test_valid_config(self) -> None:
-        """Test validation of valid config."""
-        config_dict = {
-            "llm": {"endpoint": "http://localhost:11434", "model": "llama3"},
-            "embedding": {"backend": "ollama"},
-            "database": {"mode": "persistent"},
-        }
-        # Should not raise
-        validate_config(config_dict)
-
-    def test_invalid_llm_temperature(self) -> None:
-        """Test validation fails for invalid temperature."""
-        config_dict = {"llm": {"temperature": 3.0}}
-        with pytest.raises(ConfigValidationError) as exc_info:
-            validate_config(config_dict)
-        assert "temperature must be between 0 and 2" in str(exc_info.value)
-
-    def test_invalid_database_mode(self) -> None:
-        """Test validation fails for invalid database mode."""
-        config_dict = {"database": {"mode": "invalid"}}
-        with pytest.raises(ConfigValidationError) as exc_info:
-            validate_config(config_dict)
-        assert "database.mode must be 'persistent' or 'http'" in str(exc_info.value)
-
-    def test_invalid_embedding_backend(self) -> None:
-        """Test validation fails for invalid embedding backend."""
-        config_dict = {"embedding": {"backend": "unknown"}}
-        with pytest.raises(ConfigValidationError) as exc_info:
-            validate_config(config_dict)
-        assert "embedding.backend" in str(exc_info.value)

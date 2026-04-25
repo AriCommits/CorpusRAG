@@ -68,15 +68,8 @@ where = ["src"]
 # Unified CLI (cross-platform entry point)
 corpus = "cli:main"
 
-# Setup wizard (interactive configuration)
-corpus-setup = "setup_wizard:main"
-
 # MCP Server
-corpus-mcp = "mcp_server.server:main"
-
-# Security and configuration tools (kept for direct access, but also available via corpus CLI)
-corpus-secrets = "utils.manage_secrets:main"
-corpus-api-keys = "utils.manage_keys:main"
+corpus-mcp-server = "mcp_server.server:main"
 
 [tool.ruff]
 target-version = "py311"

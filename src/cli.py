@@ -51,27 +51,6 @@ def setup(reset: bool) -> None:
         raise click.ClickException("Setup wizard failed")
 
 
-@corpus.command(name="export")
-@click.option("--collection", "-c", required=True, help="Collection name")
-@click.option("--output-dir", "-o", default="./exports", help="Output directory")
-@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def bulk_export(collection: str, output_dir: str, config: str) -> None:
-    """Bulk export all data (flashcards, summaries, quizzes) for a collection."""
-    out_path = Path(output_dir)
-    out_path.mkdir(parents=True, exist_ok=True)
-
-    click.echo(f"Bulk exporting data for collection '{collection}' to {output_dir}...")
-
-    # Placeholder for actual bulk logic
-    click.echo("Exporting flashcards (Anki)...")
-    # ... logic ...
-    click.echo("Exporting summary (Markdown)...")
-    # ... logic ...
-    click.echo("Exporting quiz (JSON)...")
-    # ... logic ...
-    click.echo("Bulk export complete.")
-
-
 @corpus.command(name="benchmark")
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--queries", "-n", default=5, help="Number of test queries")

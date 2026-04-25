@@ -62,9 +62,6 @@ pip install -e ".[export,dev]"
 ### First Run
 
 ```bash
-# Run interactive setup wizard
-corpus setup
-
 # Ingest your documents
 corpus rag ingest ./vault --collection notes
 
@@ -81,6 +78,11 @@ corpus --help
 # or, if the entry point isn't on your PATH:
 python -m cli --help
 ```
+
+### Available CLI Entry Points
+
+- **`corpus`** (main): Primary entry point for all CorpusRAG commands
+- **`corpus-mcp-server`**: MCP (Model Context Protocol) server for agentic integrations
 
 > **Note:** If `corpus` fails with `ModuleNotFoundError`, reinstall the package:
 > `pip install -e .`
@@ -131,12 +133,8 @@ corpus flashcards --collection notes --export anki --output cards.apkg
 corpus summaries --collection notes --export markdown --output summary.md
 corpus quizzes --collection notes --format json --output quiz.json
 
-# Bulk export
-corpus export --collection notes --output-dir ./my_exports
-
 # Python equivalents
 python -m cli flashcards --collection notes --export anki --output cards.apkg
-python -m cli export --collection notes --output-dir ./my_exports
 ```
 
 ### Developer Commands
