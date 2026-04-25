@@ -55,54 +55,64 @@ class QuizGenerator:
         if not self.db.collection_exists(full_collection):
             raise ValueError(f"Collection '{full_collection}' does not exist")
 
-        try:
-            # Get document count to determine sampling strategy
-            doc_count = self.db.count_documents(full_collection)
+        # Get document count to determine sampling strategy
+        doc_count = self.db.count_documents(full_collection)
 
-            if doc_count == 0:
-                logger.warning(f"No documents found in collection '{full_collection}'")
-                return self._generate_placeholder_questions(collection, count)
-
-            # Get a representative sample of documents
-            sample_size = min(15, max(5, doc_count // 8))  # Smaller sample than summary
-
-            # Get documents (placeholder implementation)
-            document_texts = self._get_representative_documents(full_collection, sample_size)
-
-            if not document_texts:
-                logger.warning(f"Could not retrieve documents from '{full_collection}'")
-                return self._generate_placeholder_questions(collection, count)
-
-            # Generate quiz using LLM
-            questions = self._generate_with_llm(
-                document_texts, difficulty=difficulty, count=count, topic=collection
+        if doc_count == 0:
+            raise ValueError(
+                f"No documents found in '{full_collection}'. "
+                f"Run: corpus rag ingest --collection {collection}"
             )
 
-            # Add metadata to each question
-            for question in questions:
-                question["collection"] = collection
+        # Get a representative sample of documents
+        sample_size = min(15, max(5, doc_count // 8))  # Smaller sample than summary
 
-            # Ensure we have the right number of questions
-            if len(questions) < count:
-                logger.warning(
-                    f"Generated {len(questions)} questions, expected {count}. "
-                    "Padding with placeholders."
-                )
-                # Pad with placeholders if needed
-                placeholder_questions = self._generate_placeholder_questions(
-                    collection, count - len(questions)
-                )
-                questions.extend(placeholder_questions)
-            elif len(questions) > count:
-                # Trim to requested count
-                questions = questions[:count]
+        # Get documents (placeholder implementation)
+        document_texts = self._get_representative_documents(full_collection, sample_size)
 
-            return questions
+        if not document_texts:
+            raise ValueError(
+                f"Could not retrieve documents from '{full_collection}'. "
+                f"Run: corpus rag ingest --collection {collection}"
+            )
 
-        except Exception as e:
-            logger.error(f"Error generating quiz: {e}")
-            # Fall back to placeholder questions
-            return self._generate_placeholder_questions(collection, count)
+        # Generate quiz using LLM
+        questions = self._generate_with_llm(
+            document_texts, difficulty=difficulty, count=count, topic=collection
+        )
+
+        # Add metadata to each question
+        for question in questions:
+            question["collection"] = collection
+
+        # Ensure we have the right number of questions
+        if len(questions) < count:
+            logger.warning(
+                f"Generated {len(questions)} questions, expected {count}. "
+                "Padding with placeholders."
+            )
+            # Pad with placeholders if needed
+            for i in range(len(questions), count):
+                q_type = self.config.question_types[(i - 1) % len(self.config.question_types)]
+                pad_question: dict[str, Any] = {
+                    "question": f"Additional Question {i + 1 - len(questions)}",
+                    "type": q_type,
+                    "collection": collection,
+                }
+                if q_type == "multiple_choice":
+                    pad_question["options"] = ["A", "B", "C", "D"]
+                    pad_question["answer"] = "A"
+                elif q_type == "true_false":
+                    pad_question["options"] = ["True", "False"]
+                    pad_question["answer"] = "True"
+                else:
+                    pad_question["answer"] = ""
+                questions.append(pad_question)
+        elif len(questions) > count:
+            # Trim to requested count
+            questions = questions[:count]
+
+        return questions
 
     def _get_representative_documents(self, full_collection: str, sample_size: int) -> list[str]:
         """Get representative documents from collection.
@@ -271,49 +281,6 @@ class QuizGenerator:
                 question_data["explanation"] = explanation
 
         return question_data
-
-    def _generate_placeholder_questions(self, collection: str, count: int) -> list[dict[str, Any]]:
-        """Generate placeholder questions as fallback.
-
-        Args:
-            collection: Collection name
-            count: Number of questions to generate
-
-        Returns:
-            List of placeholder question dictionaries
-        """
-        questions = []
-        for i in range(count):
-            # Cycle through question types
-            q_type = self.config.question_types[i % len(self.config.question_types)]
-
-            question_data: dict[str, Any] = {
-                "question": f"Placeholder Question {i + 1} - Collection: {collection}",
-                "type": q_type,
-                "collection": collection,
-            }
-
-            # Add type-specific fields
-            if q_type == "multiple_choice":
-                question_data["options"] = [
-                    "Please regenerate with working LLM",
-                    "Option B",
-                    "Option C",
-                    "Option D",
-                ]
-                question_data["answer"] = "Please regenerate with working LLM"
-            elif q_type == "true_false":
-                question_data["options"] = ["True", "False"]
-                question_data["answer"] = "True"
-            else:  # short_answer
-                question_data["answer"] = "Please regenerate with working LLM connection"
-
-            if self.config.include_explanations:
-                question_data["explanation"] = "LLM connection needed for actual explanations"
-
-            questions.append(question_data)
-
-        return questions
 
     def format_quiz(self, questions: list[dict[str, Any]]) -> str:
         """Format quiz questions according to config format.

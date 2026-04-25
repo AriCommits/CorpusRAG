@@ -44,49 +44,47 @@ class SummaryGenerator:
         if not self.db.collection_exists(full_collection):
             raise ValueError(f"Collection '{full_collection}' does not exist")
 
-        try:
-            # Get document count to determine sampling strategy
-            doc_count = self.db.count_documents(full_collection)
+        # Get document count to determine sampling strategy
+        doc_count = self.db.count_documents(full_collection)
 
-            if doc_count == 0:
-                logger.warning(f"No documents found in collection '{full_collection}'")
-                return self._generate_placeholder_summary(collection, topic)
-
-            # Get a representative sample of documents
-            # For summary, we want broader coverage than specific search
-            sample_size = min(20, max(5, doc_count // 10))  # 10% of docs, between 5-20
-
-            # Get documents by querying for general terms or using pagination
-            document_texts = self._get_representative_documents(full_collection, sample_size, topic)
-
-            if not document_texts:
-                logger.warning(f"Could not retrieve documents from '{full_collection}'")
-                return self._generate_placeholder_summary(collection, topic)
-
-            # Generate summary using LLM
-            summary_text = self._generate_with_llm(
-                document_texts, length=self.config.summary_length, topic=topic
+        if doc_count == 0:
+            raise ValueError(
+                f"No documents found in '{full_collection}'. "
+                f"Run: corpus rag ingest --collection {collection}"
             )
 
-            # Build result dict
-            result: dict[str, Any] = {
-                "summary": summary_text,
-                "collection": collection,
-            }
+        # Get a representative sample of documents
+        # For summary, we want broader coverage than specific search
+        sample_size = min(20, max(5, doc_count // 10))  # 10% of docs, between 5-20
 
-            # Generate additional components if requested
-            if self.config.include_keywords:
-                result["keywords"] = self._extract_keywords(summary_text, document_texts)
+        # Get documents by querying for general terms or using pagination
+        document_texts = self._get_representative_documents(full_collection, sample_size, topic)
 
-            if self.config.include_outline:
-                result["outline"] = self._generate_outline(summary_text)
+        if not document_texts:
+            raise ValueError(
+                f"Could not retrieve documents from '{full_collection}'. "
+                f"Run: corpus rag ingest --collection {collection}"
+            )
 
-            return result
+        # Generate summary using LLM
+        summary_text = self._generate_with_llm(
+            document_texts, length=self.config.summary_length, topic=topic
+        )
 
-        except Exception as e:
-            logger.error(f"Error generating summary: {e}")
-            # Fall back to placeholder summary
-            return self._generate_placeholder_summary(collection, topic)
+        # Build result dict
+        result: dict[str, Any] = {
+            "summary": summary_text,
+            "collection": collection,
+        }
+
+        # Generate additional components if requested
+        if self.config.include_keywords:
+            result["keywords"] = self._extract_keywords(summary_text, document_texts)
+
+        if self.config.include_outline:
+            result["outline"] = self._generate_outline(summary_text)
+
+        return result
 
     def _get_representative_documents(
         self, full_collection: str, sample_size: int, topic: str | None = None
@@ -241,41 +239,6 @@ OUTLINE:"""
                 "III. Key Concepts",
                 "IV. Conclusion",
             ]
-
-    def _generate_placeholder_summary(
-        self, collection: str, topic: str | None = None
-    ) -> dict[str, Any]:
-        """Generate placeholder summary as fallback.
-
-        Args:
-            collection: Collection name
-            topic: Optional topic
-
-        Returns:
-            Placeholder summary dictionary
-        """
-        topic_text = f" - {topic}" if topic else ""
-
-        result: dict[str, Any] = {
-            "summary": (
-                f"Summary of {collection}{topic_text}\n\n"
-                "This is a placeholder summary. Please check your LLM connection "
-                "and try again for actual content generation."
-            ),
-            "collection": collection,
-        }
-
-        if self.config.include_keywords:
-            result["keywords"] = [collection, "placeholder", "summary"]
-
-        if self.config.include_outline:
-            result["outline"] = [
-                "I. Collection Overview",
-                "II. Content Analysis Needed",
-                "III. LLM Connection Required",
-            ]
-
-        return result
 
     def format_summary(self, summary: dict[str, Any]) -> str:
         """Format summary as markdown.

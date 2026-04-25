@@ -54,46 +54,42 @@ class FlashcardGenerator:
             raise ValueError(f"Collection '{full_collection}' does not exist")
 
         # Retrieve documents from the collection
-        try:
-            # Get a sample of documents from the collection
-            # Using semantic search with a general query embedding
-            embedder = EmbeddingClient(self.config)
-            query_text = "main concepts key ideas important information"
-            query_embedding = embedder.embed_query(query_text)
+        # Get a sample of documents from the collection
+        # Using semantic search with a general query embedding
+        embedder = EmbeddingClient(self.config)
+        query_text = "main concepts key ideas important information"
+        query_embedding = embedder.embed_query(query_text)
 
-            sample_docs = self.db.query(
-                collection=full_collection,
-                query_embedding=query_embedding,
-                n_results=10,
+        sample_docs = self.db.query(
+            collection=full_collection,
+            query_embedding=query_embedding,
+            n_results=10,
+        )
+
+        if not sample_docs or not sample_docs.get("documents"):
+            raise ValueError(
+                f"No documents found in '{full_collection}'. "
+                f"Run: corpus rag ingest --collection {collection}"
             )
 
-            if not sample_docs or not sample_docs.get("documents"):
-                logger.warning(f"No documents found in collection '{full_collection}'")
-                return self._generate_placeholder_flashcards(count, difficulty, collection)
+        # Extract document texts
+        document_texts = sample_docs.get("documents", [[]])[0]
 
-            # Extract document texts
-            document_texts = sample_docs.get("documents", [[]])[0]
+        # Generate flashcards using LLM
+        flashcards = self._generate_with_llm(
+            document_texts, difficulty=difficulty, count=count, topic=collection
+        )
 
-            # Generate flashcards using LLM
-            flashcards = self._generate_with_llm(
-                document_texts, difficulty=difficulty, count=count, topic=collection
+        # Add metadata to each flashcard
+        for card in flashcards:
+            card.update(
+                {
+                    "difficulty": difficulty,
+                    "collection": collection,
+                }
             )
 
-            # Add metadata to each flashcard
-            for card in flashcards:
-                card.update(
-                    {
-                        "difficulty": difficulty,
-                        "collection": collection,
-                    }
-                )
-
-            return flashcards
-
-        except Exception as e:
-            logger.error(f"Error generating flashcards: {e}")
-            # Fall back to placeholder flashcards
-            return self._generate_placeholder_flashcards(count, difficulty, collection)
+        return flashcards
 
     def _generate_with_llm(
         self,
@@ -192,31 +188,6 @@ class FlashcardGenerator:
                         }
                     )
 
-        return flashcards
-
-    def _generate_placeholder_flashcards(
-        self, count: int, difficulty: str, collection: str
-    ) -> list[dict[str, str]]:
-        """Generate placeholder flashcards as fallback.
-
-        Args:
-            count: Number of flashcards to generate
-            difficulty: Difficulty level
-            collection: Collection name
-
-        Returns:
-            List of placeholder flashcard dictionaries
-        """
-        flashcards = []
-        for i in range(count):
-            flashcards.append(
-                {
-                    "front": f"Question {i + 1} ({difficulty}) - Collection: {collection}",
-                    "back": f"Answer {i + 1} - Please regenerate with working LLM connection",
-                    "difficulty": difficulty,
-                    "collection": collection,
-                }
-            )
         return flashcards
 
     def format_flashcards(self, flashcards: list[dict[str, str]]) -> str:
