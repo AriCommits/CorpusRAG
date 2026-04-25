@@ -22,6 +22,10 @@ class LLMConfig:
     api_key: str | None = None
     fallback_models: list[str] = field(default_factory=list)
 
+    # Rate limiting configuration
+    rate_limit_rpm: int | None = None
+    rate_limit_concurrent: int | None = None
+
     def to_backend_config(self) -> LLMBackendConfig:
         """Convert to LLM backend configuration."""
         return LLMBackendConfig.from_dict(
@@ -122,6 +126,8 @@ class BaseConfig:
                 "backend": self.llm.backend,
                 "api_key": self.llm.api_key,
                 "fallback_models": self.llm.fallback_models,
+                "rate_limit_rpm": self.llm.rate_limit_rpm,
+                "rate_limit_concurrent": self.llm.rate_limit_concurrent,
             },
             "embedding": {
                 "backend": self.embedding.backend,

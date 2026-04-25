@@ -9,6 +9,7 @@ Pluggable LLM backend abstraction supporting multiple providers:
 
 import json
 import logging
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from typing import Any
@@ -17,6 +18,7 @@ import httpx
 
 from .config import LLMBackendType, LLMConfig
 from .response import LLMResponse
+from utils.rate_limiting import OperationRateLimiter, RateLimitConfig
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,16 @@ class LLMBackend(ABC):
 
     def __init__(self, config: LLMConfig) -> None:
         self.config = config
+        self._rate_limiter: OperationRateLimiter | None = None
+
+        # Initialize rate limiter if limits are configured
+        if config.rate_limit_rpm or config.rate_limit_concurrent:
+            rate_limit_config = RateLimitConfig()
+            self._rate_limiter = OperationRateLimiter(rate_limit_config)
+            logger.debug(
+                f"Rate limiter initialized: RPM={config.rate_limit_rpm}, "
+                f"Concurrent={config.rate_limit_concurrent}"
+            )
 
     @abstractmethod
     def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
@@ -40,14 +52,58 @@ class LLMBackend(ABC):
     ) -> Iterator[str]:
         """Stream tokens from a chat model."""
 
+    def _check_rate_limit(self) -> None:
+        """Check rate limit and wait if necessary."""
+        if not self._rate_limiter or not self.config.rate_limit_rpm:
+            return
+
+        # Check RPM limit with blocking/wait behavior
+        # This is a simplified approach: check if we can proceed, if not wait
+        window_seconds = 60
+        max_requests = self.config.rate_limit_rpm
+        current_count = self._rate_limiter.get_operation_count(
+            "default", "llm", window_seconds
+        )
+
+        if current_count >= max_requests:
+            # Rate limited - calculate wait time
+            oldest_timestamp = None
+            with self._rate_limiter._lock:
+                key = ("default", "llm")
+                if self._rate_limiter._operation_history[key]:
+                    oldest_timestamp = self._rate_limiter._operation_history[key][0]
+
+            if oldest_timestamp:
+                wait_time = max(0, window_seconds - (time.time() - oldest_timestamp))
+                if wait_time > 0:
+                    logger.warning(f"Rate limited, waiting {wait_time:.1f}s...")
+                    time.sleep(wait_time)
+
+    def _start_request(self) -> None:
+        """Mark the start of a request for concurrent tracking."""
+        if not self._rate_limiter or not self.config.rate_limit_concurrent:
+            return
+        self._rate_limiter.start_operation("default", "llm")
+
+    def _end_request(self) -> None:
+        """Mark the end of a request for concurrent tracking."""
+        if not self._rate_limiter or not self.config.rate_limit_concurrent:
+            return
+        self._rate_limiter.end_operation("default", "llm")
+
     def complete(self, prompt: str, *, model: str | None = None) -> LLMResponse:
         """Get a complete response from the model (non-streaming)."""
-        tokens = list(self.stream_completion(prompt, model=model))
-        text = "".join(tokens)
-        return LLMResponse(
-            text=text,
-            model=model or self.config.model or "unknown",
-        )
+        self._check_rate_limit()
+        try:
+            self._start_request()
+            tokens = list(self.stream_completion(prompt, model=model))
+            text = "".join(tokens)
+            return LLMResponse(
+                text=text,
+                model=model or self.config.model or "unknown",
+            )
+        finally:
+            self._end_request()
 
     def chat(
         self,
@@ -56,12 +112,17 @@ class LLMBackend(ABC):
         model: str | None = None,
     ) -> LLMResponse:
         """Get a complete chat response (non-streaming)."""
-        tokens = list(self.chat_completion(messages, model=model))
-        text = "".join(tokens)
-        return LLMResponse(
-            text=text,
-            model=model or self.config.model or "unknown",
-        )
+        self._check_rate_limit()
+        try:
+            self._start_request()
+            tokens = list(self.chat_completion(messages, model=model))
+            text = "".join(tokens)
+            return LLMResponse(
+                text=text,
+                model=model or self.config.model or "unknown",
+            )
+        finally:
+            self._end_request()
 
 
 class OllamaBackend(LLMBackend):

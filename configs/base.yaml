@@ -7,6 +7,13 @@ llm:
   max_tokens: null
   api_key: null
   fallback_models: []
+  # Rate limiting configuration
+  # For local Ollama: set to null (unlimited, default)
+  # For cloud APIs (OpenAI, Anthropic, etc.):
+  #   - rate_limit_rpm: Maximum requests per minute (e.g., 60 for typical tier 1)
+  #   - rate_limit_concurrent: Maximum concurrent requests (e.g., 5)
+  rate_limit_rpm: null  # null = unlimited (default for local Ollama)
+  rate_limit_concurrent: null  # null = unlimited
 embedding:
   backend: ollama
   model: embeddinggemma

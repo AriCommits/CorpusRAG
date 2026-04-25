@@ -22,6 +22,8 @@ class LLMConfig:
     timeout_seconds: float = 120.0
     api_key: str | None = None
     fallback_models: list[str] = field(default_factory=list)
+    rate_limit_rpm: int | None = None  # Requests per minute
+    rate_limit_concurrent: int | None = None  # Max concurrent requests
 
     @classmethod
     def from_dict(cls, data: dict) -> "LLMConfig":
@@ -36,4 +38,6 @@ class LLMConfig:
             timeout_seconds=llm_data.get("timeout_seconds", 120.0),
             api_key=llm_data.get("api_key"),
             fallback_models=llm_data.get("fallback_models", []),
+            rate_limit_rpm=llm_data.get("rate_limit_rpm"),
+            rate_limit_concurrent=llm_data.get("rate_limit_concurrent"),
         )

@@ -7,11 +7,12 @@ CorpusRAG is a modular, AI-powered toolkit for personal knowledge management wit
 ## Recent Improvements
 
 ### Terminal User Interface (TUI)
-- **Slash Command Router**: Centralized command handling for `/help`, `/sync`, `/export`, `/filter`, `/strategy`, `/clear`, and `/ask`.
+- **Slash Command Router**: Centralized command handling for `/help`, `/sync`, `/export`, `/filter`, `/strategy`, `/clear`, `/ask`, and `/context`.
 - **Collection Manager**: Dedicated management screen (`ctrl+l`) to list, info, rename, merge, and delete ChromaDB collections.
 - **Sync Dashboard**: Sidebar sync status with real-time feedback on new, modified, and deleted files. Trigger manual syncs with `ctrl+s`.
 - **Tag Filtering**: Hierarchical tag-based filtering via `/filter` slash command or sidebar input.
 - **Strategy Switching**: Change retrieval strategy on the fly via `/strategy` slash command.
+- **Selective Context Inclusion**: Toggle message inclusion in active context via switches on chat messages. Excluded messages are visually dimmed and not sent to LLM. Control via `/context` slash command or UI toggles.
 
 ### Advanced RAG & Data Management
 - **Pluggable Retrieval Strategies**: Switch between `hybrid`, `semantic`, and `keyword` strategies via config, CLI flag, or TUI.
@@ -171,6 +172,10 @@ python -m cli dev lint
 | `/export <fmt>` | Export to `anki`, `markdown`, or `json` |
 | `/clear` | Clear current session history |
 | `/ask <query>` | Explicit RAG query |
+| `/context` | Show context usage and management options |
+| `/context show` | Toggle context sidebar visibility |
+| `/context clear` | Exclude all messages except the last exchange |
+| `/context include all` | Include all messages in the active context |
 
 ## Tag Taxonomy
 
@@ -529,11 +534,20 @@ llm:
   model: gemma4:26b-a4b-it-q4_K_M
   timeout_seconds: 120.0
   temperature: 0.7
+  # Rate limiting (optional, for cloud API protection)
+  rate_limit_rpm: null  # Requests per minute (null = unlimited, default for local)
+  rate_limit_concurrent: null  # Max concurrent requests (null = unlimited)
 
 embedding:
   backend: ollama
   model: embeddinggemma
 ```
+
+**Rate Limiting:** CorpusRAG supports rate limiting for cloud API protection (OpenAI, Anthropic, etc.):
+- Set to `null` (default) for unlimited requests (suitable for local Ollama)
+- Set `rate_limit_rpm` to limit requests per minute (e.g., `60` for OpenAI tier 1)
+- Set `rate_limit_concurrent` to limit simultaneous requests (e.g., `5`)
+- When limits are exceeded, requests automatically wait before retrying
 
 ### Database Configuration
 
@@ -572,6 +586,9 @@ src/
 ```
 
 ## Changelog
+
+### v0.7.0 (Upcoming)
+- **Rate Limiting**: LLM backend now supports configurable rate limiting (RPM and concurrent request limits) for cloud API protection.
 
 ### v0.6.0
 - **Hierarchical Tags**: Migrated from flat `#Tag` to `#Subject/Subtopic` taxonomy with prefix-based filtering.
