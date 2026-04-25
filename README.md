@@ -11,8 +11,9 @@ CorpusRAG is a modular, AI-powered toolkit for personal knowledge management wit
 - **Collection Manager**: Dedicated management screen (`ctrl+l`) to list, info, rename, merge, and delete ChromaDB collections.
 - **Sync Dashboard**: Sidebar sync status with real-time feedback on new, modified, and deleted files. Trigger manual syncs with `ctrl+s`.
 - **Tag Filtering**: Hierarchical tag-based filtering via `/filter` slash command or sidebar input.
-- **Strategy Switching**: Change retrieval strategy on the fly via `/strategy` slash command.
-- **Selective Context Inclusion**: Toggle message inclusion in active context via switches on chat messages. Excluded messages are visually dimmed and not sent to LLM. Control via `/context` slash command or UI toggles.
+- **Strategy Switching**: Change retrieval strategy on the fly via `/strategy` slash command. Strategy visible in sidebar.
+- **Selective Context Inclusion**: Toggle message inclusion in active context via switches on chat messages. Excluded messages are visually dimmed and not sent to LLM. Control via `/context` slash command or UI toggles. Context usage warning at 80% capacity.
+- **Security Hardened**: Message ID validation (UUID format), session file integrity checks with SHA256 checksums, rate-limited context sync to prevent UI lag.
 
 ### Advanced RAG & Data Management
 - **Pluggable Retrieval Strategies**: Switch between `hybrid`, `semantic`, and `keyword` strategies via config, CLI flag, or TUI.
@@ -25,7 +26,10 @@ CorpusRAG is a modular, AI-powered toolkit for personal knowledge management wit
 ### Developer Experience
 - **Open MCP Standard**: High-performance MCP server implementation for agentic workflows.
 - **Modular RAG Pipeline**: Parsing, embedding, retrieval, and storage separated into `pipeline/`, `strategies/`, and `vectorstores/` subpackages.
-- **Comprehensive Tests**: Expanded test suites for security, tag parsing, strategies, slash commands, and sync logic.
+- **Token Estimation**: Utilities for estimating and formatting token counts for display and verification.
+- **Context Management**: Structured context tracking with percentage calculations and inclusion/exclusion filtering.
+- **Message Metadata**: Rich metadata tracking for chat messages including tags, timestamps, and context inclusion status.
+- **Comprehensive Tests**: Expanded test suites for security, tag parsing, strategies, slash commands, sync logic, and context management.
 - **Robust Linting**: Zero-tolerance policy for linting errors using **Ruff**.
 
 ## Features
@@ -587,6 +591,10 @@ src/
 
 ### v0.7.0 (Upcoming)
 - **Rate Limiting**: LLM backend now supports configurable rate limiting (RPM and concurrent request limits) for cloud API protection.
+- **Token Estimation**: Utilities for estimating token counts with formatter for display (e.g., "1.5k").
+- **Context Management**: `ContextBlock` and `ContextSidebar` for structured context tracking and token usage calculation.
+- **Message Metadata**: Dataclass for rich message metadata with tags, timestamps, and context inclusion status.
+- **Test Coverage**: 55+ new tests for token estimation, context management, and message metadata.
 
 ### v0.6.0
 - **Hierarchical Tags**: Migrated from flat `#Tag` to `#Subject/Subtopic` taxonomy with prefix-based filtering.

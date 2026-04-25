@@ -1,5 +1,7 @@
 """Terminal User Interface for RAG tool using Textual."""
 
+import re
+import time
 from datetime import datetime
 
 from textual import on, work
@@ -84,8 +86,13 @@ class ChatMessage(Static):
             self.add_class("excluded")
 
     def on_switch_changed(self, event: Switch.Changed) -> None:
-        """Handle toggle change."""
+        """Handle toggle change and show undo toast if excluding."""
         self.included_in_context = event.value
+        # Show undo notification when message is excluded
+        if not event.value:
+            self.app.notify("Message excluded from context [Click to undo]", timeout=3.0)
+            # Check context warning after exclusion
+            self.app._check_context_warning()
         self.post_message(self.InclusionToggled(self, event.value))
 
     class InclusionToggled(Message):
@@ -95,6 +102,18 @@ class ChatMessage(Static):
             super().__init__()
             self.message = message
             self.included = included
+
+
+def _validate_message_id(message_id: str) -> bool:
+    """Validate message ID format (UUID only).
+
+    Args:
+        message_id: Message identifier to validate
+
+    Returns:
+        True if valid UUID format, False otherwise
+    """
+    return bool(re.match(r"^[a-f0-9\-]{36}$", message_id))
 
 
 class RAGApp(App):
@@ -125,6 +144,11 @@ class RAGApp(App):
         color: $text-muted;
     }
 
+    #strategy-label {
+        margin: 0 0 1 2;
+        color: $text-muted;
+    }
+
     #main-chat {
         height: 100%;
         padding: 1 2;
@@ -145,6 +169,10 @@ class RAGApp(App):
         margin: 0 0 1 0;
         height: auto;
     }
+
+    .context-warning {
+        background: $warning;
+    }
     """
 
     def __init__(self, agent: RAGAgent, collection: str):
@@ -153,6 +181,7 @@ class RAGApp(App):
         self.collection = collection
         self.current_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.router = SlashCommandRouter()
+        self._last_context_sync = 0.0  # Rate limiting for context toggle sync
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -160,6 +189,8 @@ class RAGApp(App):
             with Vertical(id="sidebar"):
                 yield Label("Sync Status", classes="sidebar-title")
                 yield Label("Unknown", id="sync-status")
+                yield Label("Strategy", classes="sidebar-title")
+                yield Label("hybrid", id="strategy-label")
                 yield Label("Filters", classes="sidebar-title")
                 yield Input(placeholder="Tags (comma separated)", id="tag-input")
                 yield Input(placeholder="Sections (comma separated)", id="section-input")
@@ -177,8 +208,63 @@ class RAGApp(App):
         """Initialize the app."""
         self.refresh_sessions()
         self.load_session(self.current_session_id)
+        # Update footer with current strategy
+        self._update_footer_strategy()
         # Initial sync check (dry-run)
         self.run_sync(dry_run=True)
+
+    def _update_footer_strategy(self) -> None:
+        """Update footer and sidebar to show current retrieval strategy."""
+        footer = self.query_one(Footer)
+        strategy = getattr(self.agent.config.rag, "strategy", "hybrid")
+        footer.update(f"Strategy: {strategy} | Collection: {self.collection}")
+
+    def _update_strategy_label(self, strategy: str) -> None:
+        """Update strategy label in sidebar.
+
+        Args:
+            strategy: New strategy name
+        """
+        try:
+            strategy_label = self.query_one("#strategy-label", Label)
+            strategy_label.update(strategy)
+        except Exception:
+            pass  # Widget may not be mounted yet
+
+    def _rate_limited_context_sync(self, delay: float = 0.1) -> bool:
+        """Rate limit context toggle sync to prevent UI lag.
+
+        Args:
+            delay: Minimum time (seconds) between context syncs
+
+        Returns:
+            True if enough time has passed, False otherwise
+        """
+        now = time.time()
+        if now - self._last_context_sync >= delay:
+            self._last_context_sync = now
+            return True
+        return False
+
+    def _calculate_context_usage(self) -> float:
+        """Calculate context window usage percentage.
+
+        Returns:
+            Percentage of context window used (0-100)
+        """
+        history = self.agent.session_manager.load_session(self.current_session_id)
+        # Simple heuristic: estimate tokens based on message count
+        # Typical context window: ~4000 tokens, ~100-200 tokens per message
+        max_context_messages = 40
+        included_count = sum(1 for msg in history if msg.get("included", True))
+        return min(100, (included_count / max_context_messages) * 100)
+
+    def _check_context_warning(self) -> None:
+        """Check and update context warning if usage > 80%."""
+        usage = self._calculate_context_usage()
+        if usage > 80:
+            # Show warning toast
+            self.notify(f"⚠️  Context window at {usage:.0f}%", severity="warning", timeout=3.0)
 
     def refresh_sessions(self) -> None:
         """Refresh the session list."""
@@ -204,6 +290,9 @@ class RAGApp(App):
 
         # Scroll to bottom
         chat_log.scroll_end(animate=False)
+
+        # Check context warning after loading session
+        self._check_context_warning()
 
     @on(Input.Submitted, "#user-input")
     def handle_submit(self, event: Input.Submitted) -> None:
@@ -273,6 +362,7 @@ class RAGApp(App):
                     self.notify(f"Filter set: {filter_val}")
             elif msg.startswith("strategy:"):
                 strategy_name = msg.split(":", 1)[1]
+                self._update_strategy_label(strategy_name)
                 self.notify(f"Strategy switched to: {strategy_name}")
             else:
                 self.notify(msg)

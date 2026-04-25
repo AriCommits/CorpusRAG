@@ -31,12 +31,12 @@ def test_save_session_with_included_field(temp_session_dir):
     session_file = Path(temp_session_dir) / "test_session.json"
     assert session_file.exists()
 
-    with open(session_file) as f:
-        saved_data = json.load(f)
+    # Load via manager to handle checksum header
+    loaded_history = manager.load_session("test_session")
 
-    assert len(saved_data) == 3
-    assert saved_data[0]["included"] is True
-    assert saved_data[2]["included"] is False
+    assert len(loaded_history) == 3
+    assert loaded_history[0]["included"] is True
+    assert loaded_history[2]["included"] is False
 
 
 def test_load_session_defaults_included_to_true(temp_session_dir):
