@@ -5,7 +5,19 @@ from datetime import datetime
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Markdown, Static
+from textual.message import Message
+from textual.reactive import reactive
+from textual.widgets import (
+    Footer,
+    Header,
+    Input,
+    Label,
+    ListItem,
+    ListView,
+    Markdown,
+    Static,
+    Switch,
+)
 
 from .agent import RAGAgent
 from .slash_commands import SlashCommandResult, SlashCommandRouter
@@ -23,16 +35,66 @@ class SessionItem(ListItem):
 
 
 class ChatMessage(Static):
-    """A widget to display a chat message."""
+    """A widget to display a chat message with optional inclusion toggle."""
 
-    def __init__(self, role: str, content: str):
+    DEFAULT_CSS = """
+    ChatMessage {
+        margin: 0 0 1 0;
+        height: auto;
+    }
+
+    ChatMessage.excluded {
+        opacity: 0.5;
+        border-left: solid $warning;
+    }
+
+    ChatMessage > Horizontal {
+        height: auto;
+    }
+
+    ChatMessage #message-content {
+        width: 1fr;
+    }
+
+    ChatMessage #include-toggle {
+        width: auto;
+        margin: 0 1 0 1;
+    }
+    """
+
+    included_in_context = reactive(True)
+
+    def __init__(self, role: str, content: str, included: bool = True):
         super().__init__()
         self.role = role
         self.content = content
+        self.included_in_context = included
 
     def compose(self) -> ComposeResult:
         prefix = "### You" if self.role == "user" else "### Assistant"
-        yield Markdown(f"{prefix}\n\n{self.content}")
+        with Horizontal():
+            yield Markdown(f"{prefix}\n\n{self.content}", id="message-content")
+            yield Switch(value=self.included_in_context, id="include-toggle")
+
+    def watch_included_in_context(self, value: bool) -> None:
+        """Update CSS class based on inclusion status."""
+        if value:
+            self.remove_class("excluded")
+        else:
+            self.add_class("excluded")
+
+    def on_switch_changed(self, event: Switch.Changed) -> None:
+        """Handle toggle change."""
+        self.included_in_context = event.value
+        self.post_message(self.InclusionToggled(self, event.value))
+
+    class InclusionToggled(Message):
+        """Posted when message inclusion is toggled."""
+
+        def __init__(self, message: "ChatMessage", included: bool) -> None:
+            super().__init__()
+            self.message = message
+            self.included = included
 
 
 class RAGApp(App):
@@ -106,7 +168,9 @@ class RAGApp(App):
             with Vertical(id="main-chat"):
                 yield VerticalScroll(id="chat-log")
                 with Vertical(id="input-container"):
-                    yield Input(placeholder="Ask a question... (type /help for commands)", id="user-input")
+                    yield Input(
+                        placeholder="Ask a question... (type /help for commands)", id="user-input"
+                    )
         yield Footer()
 
     def on_mount(self) -> None:
@@ -135,7 +199,8 @@ class RAGApp(App):
 
         history = self.agent.session_manager.load_session(session_id)
         for msg in history:
-            chat_log.mount(ChatMessage(msg["role"], msg["content"]))
+            included = msg.get("included", True)
+            chat_log.mount(ChatMessage(msg["role"], msg["content"], included=included))
 
         # Scroll to bottom
         chat_log.scroll_end(animate=False)
@@ -165,7 +230,7 @@ class RAGApp(App):
 
         # Display user message immediately
         chat_log = self.query_one("#chat-log", VerticalScroll)
-        chat_log.mount(ChatMessage("user", message))
+        chat_log.mount(ChatMessage("user", message, included=True))
         chat_log.scroll_end()
 
         # Generate assistant response asynchronously
@@ -175,7 +240,7 @@ class RAGApp(App):
         """Process the result of a slash command."""
         if result.type == "text" or result.type == "error":
             chat_log = self.query_one("#chat-log", VerticalScroll)
-            chat_log.mount(ChatMessage("assistant", result.content or ""))
+            chat_log.mount(ChatMessage("assistant", result.content or "", included=True))
             chat_log.scroll_end()
         elif result.type == "toast":
             msg = result.toast_message or ""
@@ -224,7 +289,7 @@ class RAGApp(App):
             )
 
             chat_log = self.query_one("#chat-log", VerticalScroll)
-            chat_log.mount(ChatMessage("user", result.content or ""))
+            chat_log.mount(ChatMessage("user", result.content or "", included=True))
             chat_log.scroll_end()
             self.generate_response(result.content or "", tags, sections)
         elif result.type == "screen" and result.screen:
@@ -329,7 +394,7 @@ class RAGApp(App):
             latency_info = f"\n\n*({last.total_ms:.0f}ms)*"
 
         chat_log = self.query_one("#chat-log", VerticalScroll)
-        chat_log.mount(ChatMessage("assistant", f"{response}{latency_info}"))
+        chat_log.mount(ChatMessage("assistant", f"{response}{latency_info}", included=True))
         chat_log.scroll_end()
 
         # Refresh session list in case it's a new session

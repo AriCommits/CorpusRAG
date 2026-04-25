@@ -171,3 +171,33 @@ def handle_filter(args: list[str]) -> SlashCommandResult:
         )
 
     return SlashCommandResult(type="toast", toast_message=f"filter:{filter_value}")
+
+
+@slash_command("context", "Manage message inclusion in context")
+def handle_context(args: list[str]) -> SlashCommandResult:
+    """Handle /context slash command.
+
+    Usage:
+      /context              - Show context usage stats
+      /context show         - Toggle context sidebar visibility
+      /context clear        - Exclude all messages except last exchange
+      /context include all  - Include all messages in context
+    """
+    if not args:
+        return SlashCommandResult(
+            type="text",
+            content="Context management commands:\n  /context show - Toggle sidebar\n  /context clear - Exclude all but last exchange\n  /context include all - Include all messages",
+        )
+
+    cmd = args[0].lower()
+    if cmd == "show":
+        return SlashCommandResult(type="toast", toast_message="context:show")
+    elif cmd == "clear":
+        return SlashCommandResult(type="toast", toast_message="context:clear")
+    elif cmd == "include" and len(args) > 1 and args[1].lower() == "all":
+        return SlashCommandResult(type="toast", toast_message="context:include_all")
+    else:
+        return SlashCommandResult(
+            type="error",
+            content="Unknown context command.\nUse: /context show, /context clear, or /context include all",
+        )

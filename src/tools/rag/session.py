@@ -21,7 +21,7 @@ class SessionManager:
 
         Args:
             session_id: Unique identifier for the session.
-            history: List of message dictionaries.
+            history: List of message dictionaries with optional 'included' field.
         """
         file_path = self.sessions_dir / f"{session_id}.json"
         with open(file_path, "w", encoding="utf-8") as f:
@@ -34,7 +34,7 @@ class SessionManager:
             session_id: Unique identifier for the session.
 
         Returns:
-            List of message dictionaries, or empty list if session not found.
+            List of message dictionaries with 'included' field defaulting to True, or empty list if session not found.
         """
         file_path = self.sessions_dir / f"{session_id}.json"
         if not file_path.exists():
@@ -42,7 +42,12 @@ class SessionManager:
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                history = json.load(f)
+                # Ensure backward compatibility: default 'included' to True
+                for msg in history:
+                    if "included" not in msg:
+                        msg["included"] = True
+                return history
         except (json.JSONDecodeError, IOError):
             return []
 

@@ -27,6 +27,17 @@ class RAGAgent:
         # Create LLM backend for generation
         self.llm_backend = create_backend(config.llm.to_backend_config())
 
+    def _filter_context(self, history: list[dict]) -> list[dict]:
+        """Filter out excluded messages from context.
+
+        Args:
+            history: Conversation history
+
+        Returns:
+            Filtered history with only included messages
+        """
+        return [msg for msg in history if msg.get("included", True)]
+
     def query(
         self,
         query: str,
@@ -72,17 +83,19 @@ class RAGAgent:
                     }
                 )
 
-            # Truncate conversation history to fit context window
-            # Keeping last 10 messages (5 exchanges) as a default window
-            truncated_history = None
+            # Filter conversation history to include only selected messages
+            filtered_history = None
             if conversation_history:
-                truncated_history = conversation_history[-10:]
+                filtered_history = self._filter_context(conversation_history)
+                # Truncate to fit context window
+                # Keeping last 10 messages (5 exchanges) as a default window
+                filtered_history = filtered_history[-10:]
 
             # Build prompt with context using the prompt template
             prompt = PromptTemplates.rag_response(
                 query=query,
                 context_chunks=context_chunks,
-                conversation_history=truncated_history,
+                conversation_history=filtered_history,
             )
 
             # 2. Generate
@@ -139,10 +152,10 @@ class RAGAgent:
             where=where,
         )
 
-        # Update and save history
+        # Update and save history with inclusion state
         if session_id:
-            history.append({"role": "user", "content": message})
-            history.append({"role": "assistant", "content": response})
+            history.append({"role": "user", "content": message, "included": True})
+            history.append({"role": "assistant", "content": response, "included": True})
             self.session_manager.save_session(session_id, history)
 
         return response
