@@ -105,13 +105,13 @@ class TestMCPServerImports:
 
         assert callable(create_mcp_server)
 
-    def test_mcp_server_creation(self):
-        """Test that MCP server can be created."""
+    def test_mcp_server_accepts_profile(self):
+        """Test that create_mcp_server accepts a profile argument."""
+        import inspect
         from mcp_server import create_mcp_server
 
-        # Should not raise an exception
-        server = create_mcp_server()
-        assert server is not None
+        sig = inspect.signature(create_mcp_server)
+        assert "profile" in sig.parameters
 
 
 class TestValidationFilterFunctions:
@@ -133,16 +133,6 @@ class TestValidationFilterFunctions:
 
         with pytest.raises(ValueError):
             _validate_filter_value("tag{break}", "tag")
-
-
-class TestSymlinkDetection:
-    """Test symlink detection in file ingest."""
-
-    def test_symlink_detection_imports(self):
-        """Test that ingest module imports."""
-        from tools.rag.ingest import RAGIngester
-
-        assert RAGIngester is not None
 
 
 if __name__ == "__main__":

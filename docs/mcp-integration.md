@@ -49,27 +49,89 @@ The CorpusRAG MCP server is built using **FastMCP** (FastAPI-based MCP implement
 └─────────────────────────────────────────────────────┘
 ```
 
+## Editor Configuration
+
+Configure your editor or AI agent to connect to CorpusRAG via MCP using the `corpus-mcp-server` entry point.
+
+### Claude Desktop
+
+```json
+{
+  "mcpServers": {
+    "corpusrag": {
+      "command": "corpus-mcp-server",
+      "args": ["--profile", "dev", "--transport", "stdio"]
+    }
+  }
+}
+```
+
+### Kiro CLI
+
+```json
+{
+  "mcpServers": {
+    "corpusrag": {
+      "command": "corpus-mcp-server",
+      "args": ["--profile", "dev", "--transport", "stdio"]
+    }
+  }
+}
+```
+
+### Neovim (codecompanion.nvim)
+
+```lua
+require("codecompanion").setup({
+  adapters = {
+    mcp = {
+      name = "corpusrag",
+      cmd = "corpus-mcp-server",
+      args = { "--profile", "dev", "--transport", "stdio" },
+    },
+  },
+})
+```
+
+### OpenCode
+
+```json
+{
+  "mcpServers": {
+    "corpusrag": {
+      "command": "corpus-mcp-server",
+      "args": ["--profile", "dev", "--transport", "stdio"]
+    }
+  }
+}
+```
+
 ## Starting the MCP Server
 
 ### Basic Usage
 
 ```bash
-# Start with default settings
-corpus-mcp
+# Start with stdio for editor integration (default)
+corpus-mcp-server --profile dev
+
+# Start with HTTP transport
+corpus-mcp-server --profile full --transport streamable-http --port 8000
 
 # Custom configuration and port
-corpus-mcp --config production.yaml --port 9000
+corpus-mcp-server --config production.yaml --port 9000
 
 # Bind to specific host
-corpus-mcp --host localhost --port 8080
+corpus-mcp-server --host localhost --port 8080
 ```
 
 ### Command Line Options
 
+- `--profile` - Tool profile to expose: `dev`, `learn`, or `full` (default: `full`)
+- `--transport` - Transport type: `stdio` or `streamable-http` (default: `stdio`)
 - `--config, -c` - Configuration file path (optional, defaults to `configs/base.yaml`)
-- `--host` - Host to bind to (default: `0.0.0.0`)
-- `--port` - Port to bind to (default: `8000`)
-- `--transport` - Transport type (default: `streamable-http`)
+- `--host` - Host to bind to (default: `0.0.0.0`, HTTP transport only)
+- `--port` - Port to bind to (default: `8000`, HTTP transport only)
+- `--no-auth` - Disable authentication for local development (HTTP transport only)
 
 ### Docker Deployment
 

@@ -1,117 +1,68 @@
-# CorpusRAG - Unified Docker Image
-# Multi-stage build for production-ready deployment
+# CorpusRAG Docker Image
+# Multi-stage build: base → production (default) | development | cli
 
 # =============================================================================
-# Stage 1: Base Python environment with system dependencies
+# Stage 1: Base
 # =============================================================================
 FROM python:3.11-slim AS base
 
-# Install system dependencies for document processing and video transcription
-RUN apt-get update && apt-get install -y \
-    # Core system tools
-    curl \
-    git \
-    # Document processing dependencies
-    poppler-utils \
-    # Video transcription dependencies  
-    ffmpeg \
-    # Build tools for Python packages
-    build-essential \
-    # Clean up to reduce image size
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl git poppler-utils ffmpeg build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
 RUN useradd --create-home --shell /bin/bash --uid 1000 corpus
 USER corpus
 WORKDIR /home/corpus
-
-# Set up Python environment
-ENV PYTHONPATH=/home/corpus/app
 ENV PATH="/home/corpus/.local/bin:$PATH"
 
 # =============================================================================
-# Stage 2: Development environment (for local development)
-# =============================================================================
-FROM base AS development
-
-# Copy requirements and install dependencies
-COPY --chown=corpus:corpus requirements.txt ./
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# Install development dependencies
-RUN pip install --user --no-cache-dir \
-    pytest>=8.0.0 \
-    pytest-cov>=4.1.0 \
-    ruff>=0.4.0 \
-    mypy>=1.10.0 \
-    types-PyYAML>=6.0.0
-
-# Copy source code
-COPY --chown=corpus:corpus . ./app/
-
-# Install package in development mode
-RUN pip install --user -e ./app
-
-# Default command for development
-CMD ["python", "-m", "corpus_callosum.mcp_server.server"]
-
-# =============================================================================
-# Stage 3: Production environment (optimized)
+# Stage 2: Production
 # =============================================================================
 FROM base AS production
 
-# Copy requirements and install production dependencies only
-COPY --chown=corpus:corpus requirements.txt ./
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# Copy source code
-COPY --chown=corpus:corpus src/ ./app/src/
 COPY --chown=corpus:corpus pyproject.toml ./app/
+COPY --chown=corpus:corpus src/ ./app/src/
 COPY --chown=corpus:corpus configs/ ./app/configs/
 
-# Install package
-RUN pip install --user ./app
+RUN pip install --user --no-cache-dir ./app
 
-# Create directories for data persistence
 RUN mkdir -p ./data/chroma_store ./data/vault ./data/scratch ./data/output
 
-# Health check script
-COPY --chown=corpus:corpus .docker/healthcheck.py ./
-RUN chmod +x ./healthcheck.py
+COPY --chown=corpus:corpus .docker/healthcheck.py ./healthcheck.py
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python ./healthcheck.py || exit 1
 
-# Expose MCP server port
 EXPOSE 8000
 
-# Default configuration
-ENV CC_DATABASE_PERSIST_DIRECTORY=/home/corpus/data/chroma_store
-ENV CC_PATHS_VAULT=/home/corpus/data/vault
-ENV CC_PATHS_SCRATCH_DIR=/home/corpus/data/scratch
-ENV CC_PATHS_OUTPUT_DIR=/home/corpus/data/output
+ENV CORPUSRAG_DATABASE_PERSIST_DIRECTORY=/home/corpus/data/chroma_store \
+    CORPUSRAG_PATHS_VAULT=/home/corpus/data/vault \
+    CORPUSRAG_PATHS_SCRATCH_DIR=/home/corpus/data/scratch \
+    CORPUSRAG_PATHS_OUTPUT_DIR=/home/corpus/data/output
 
-# Default command
-CMD ["corpus-mcp-server", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["corpus-mcp-server", "--profile", "full", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000", "--no-auth"]
 
 # =============================================================================
-# Stage 4: CLI tools (lightweight image for CLI usage)
+# Stage 3: Development
+# =============================================================================
+FROM base AS development
+
+COPY --chown=corpus:corpus pyproject.toml ./app/
+COPY --chown=corpus:corpus src/ ./app/src/
+COPY --chown=corpus:corpus configs/ ./app/configs/
+COPY --chown=corpus:corpus tests/ ./app/tests/
+
+RUN pip install --user --no-cache-dir -e "./app[full,dev]"
+
+CMD ["corpus-mcp-server", "--profile", "full", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000", "--no-auth"]
+
+# =============================================================================
+# Stage 4: CLI
 # =============================================================================
 FROM production AS cli
-
-# Override default command for CLI usage
 CMD ["bash"]
 
-# Add helpful aliases
-RUN echo 'alias cc-flashcards="corpus-flashcards"' >> ~/.bashrc && \
-    echo 'alias cc-summaries="corpus-summaries"' >> ~/.bashrc && \
-    echo 'alias cc-quizzes="corpus-quizzes"' >> ~/.bashrc && \
-    echo 'alias cc-rag="corpus-rag"' >> ~/.bashrc && \
-    echo 'alias cc-video="corpus-video"' >> ~/.bashrc && \
-    echo 'alias cc-orchestrate="corpus-orchestrate"' >> ~/.bashrc
-
 # =============================================================================
-# Default target is production
+# Default target
 # =============================================================================
 FROM production

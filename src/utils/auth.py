@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Authentication and authorization module for MCP server."""
 
 import json
@@ -10,8 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 
 @dataclass
@@ -227,6 +227,7 @@ class MCPAuthenticator:
             config: Authentication configuration
             config_file: Optional path to persistent storage
         """
+        from fastapi.security import HTTPBearer
         self.config = config
         self.api_key_manager = APIKeyManager(config, config_file)
         self.rate_limiter = RateLimiter(config)
@@ -235,7 +236,7 @@ class MCPAuthenticator:
     async def authenticate_request(
         self,
         request: Request,
-        credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
+        credentials: HTTPAuthorizationCredentials | None = None,
     ) -> dict[str, Any]:
         """Authenticate a request.
 
@@ -249,6 +250,8 @@ class MCPAuthenticator:
         Raises:
             HTTPException: If authentication fails
         """
+        from fastapi import HTTPException
+        from fastapi.security import HTTPAuthorizationCredentials
         if not self.config.enabled:
             return {"authenticated": False, "bypass": True}
 

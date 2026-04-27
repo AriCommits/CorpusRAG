@@ -1,37 +1,45 @@
+# CorpusRAG Docker Configuration
+# Used when running inside Docker Compose (database connects to chromadb service)
+
 llm:
-  endpoint: http://host.docker.internal:11434
-  model: llama3
   backend: ollama
+  endpoint: http://ollama:11434       # Docker service name
+  model: llama3
   timeout_seconds: 120.0
   temperature: 0.7
   max_tokens: null
   api_key: null
   fallback_models: []
+  rate_limit_rpm: null
+  rate_limit_concurrent: null
 
 embedding:
-  backend: sentence-transformers
-  model: sentence-transformers/all-MiniLM-L6-v2
+  backend: ollama
+  model: nomic-embed-text
   dimensions: null
 
 database:
   backend: chromadb
   mode: http
-  host: chromadb
+  host: chromadb                      # Docker service name
   port: 8000
-  persist_directory: /app/chroma_store
+  persist_directory: /home/corpus/data/chroma_store
 
 paths:
-  vault: /app/vault
-  scratch_dir: /app/scratch
-  output_dir: /app/output
+  vault: /home/corpus/data/vault
+  scratch_dir: /home/corpus/data/scratch
+  output_dir: /home/corpus/data/output
 
 rag:
   chunking:
-    size: 500
-    overlap: 50
+    child_chunk_size: 400
+    child_chunk_overlap: 50
   retrieval:
-    top_k_semantic: 10
-    top_k_bm25: 10
-    top_k_final: 5
-    rrf_k: 60
+    top_k_semantic: 50
+    top_k_bm25: 50
+    top_k_final: 25
+    rrf_k: 80
+  parent_store:
+    type: local_file
+    path: /home/corpus/data/parent_store
   collection_prefix: rag
