@@ -28,12 +28,23 @@ logger = logging.getLogger(__name__)
 class WizardConfig:
     """Configuration collected during wizard."""
 
+    # LLM
     llm_backend: str = "ollama"
+    llm_endpoint: str = "http://localhost:11434"
     llm_model: str = "gemma4:26b-a4b-it-q4_K_M"
+    llm_api_key: str | None = None
+    # Embedding
+    embedding_backend: str = "ollama"
     embedding_model: str = "embeddinggemma"
+    # Database
     chroma_mode: str = "persistent"
     chroma_host: str | None = None
+    chroma_port: int = 8000
+    # Paths
     vault_path: str = "./vault"
+    # RAG
+    rag_strategy: str = "hybrid"
+    # Telemetry
     telemetry_enabled: bool = False
 
 
@@ -130,6 +141,16 @@ class BackendScreen(Screen):
             select = self.query_one("#backend_select", Select)
             backend = select.value
             self.app.wizard_config.llm_backend = backend
+            # Set endpoint and embedding backend based on selection
+            if backend == "ollama":
+                self.app.wizard_config.llm_endpoint = "http://localhost:11434"
+                self.app.wizard_config.embedding_backend = "ollama"
+            elif backend == "openai":
+                self.app.wizard_config.llm_endpoint = "https://api.openai.com/v1"
+                self.app.wizard_config.embedding_backend = "openai"
+            elif backend == "anthropic":
+                self.app.wizard_config.llm_endpoint = "https://api.anthropic.com"
+                self.app.wizard_config.embedding_backend = "anthropic"
             self.app.push_screen("chroma")
 
 
@@ -356,6 +377,9 @@ Or use the unified CLI:
 - `corpus rag query "your question"` for command-line queries
 - `corpus rag ui` for the interactive TUI
 
+If you selected HTTP mode, start ChromaDB with:
+  `docker compose -f .docker/docker-compose.yml up -d`
+
 ---
 
 **Questions?** Check out the [documentation](https://github.com/arian/corpusrag#docs)
@@ -426,43 +450,76 @@ class SetupWizardApp:
             True if saved successfully
         """
         try:
-            # Load base configuration
             base_config_path = Path("configs/base.yaml")
-            if base_config_path.exists():
-                with open(base_config_path) as f:
-                    config = yaml.safe_load(f)
-            else:
-                config = {}
+            base_config_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Update with wizard selections
-            if "llm" not in config:
-                config["llm"] = {}
-            config["llm"]["backend"] = self.wizard_config.llm_backend
-            config["llm"]["model"] = self.wizard_config.llm_model
+            wc = self.wizard_config
 
-            if "embedding" not in config:
-                config["embedding"] = {}
-            config["embedding"]["model"] = self.wizard_config.embedding_model
+            config = {
+                "llm": {
+                    "backend": wc.llm_backend,
+                    "endpoint": wc.llm_endpoint,
+                    "model": wc.llm_model,
+                    "timeout_seconds": 120.0,
+                    "temperature": 0.7,
+                    "max_tokens": None,
+                    "api_key": wc.llm_api_key,
+                    "fallback_models": [],
+                    "rate_limit_rpm": None,
+                    "rate_limit_concurrent": None,
+                },
+                "embedding": {
+                    "backend": wc.embedding_backend,
+                    "model": wc.embedding_model,
+                    "dimensions": None,
+                },
+                "database": {
+                    "backend": "chromadb",
+                    "mode": wc.chroma_mode,
+                    "host": wc.chroma_host or "localhost",
+                    "port": wc.chroma_port,
+                    "persist_directory": "./chroma_store",
+                },
+                "paths": {
+                    "vault": wc.vault_path.replace("\\", "/"),
+                    "scratch_dir": "./scratch",
+                    "output_dir": "./output",
+                },
+                "rag": {
+                    "strategy": wc.rag_strategy,
+                    "chunking": {
+                        "child_chunk_size": 400,
+                        "child_chunk_overlap": 50,
+                        "adaptive": True,
+                    },
+                    "retrieval": {
+                        "top_k_semantic": 50,
+                        "top_k_bm25": 50,
+                        "top_k_final": 25,
+                        "rrf_k": 80,
+                    },
+                    "parent_store": {
+                        "type": "local_file",
+                        "path": "./parent_store",
+                    },
+                    "collection_prefix": "rag",
+                },
+                "telemetry": {
+                    "enabled": wc.telemetry_enabled,
+                },
+            }
 
-            if "database" not in config:
-                config["database"] = {}
-            config["database"]["mode"] = self.wizard_config.chroma_mode
-            if self.wizard_config.chroma_host:
-                config["database"]["host"] = self.wizard_config.chroma_host
-
-            if "paths" not in config:
-                config["paths"] = {}
-            # Use forward slashes to avoid YAML double-quote unicode escape issues
-            # on Windows (e.g., \U is parsed as a unicode escape in YAML)
-            config["paths"]["vault"] = self.wizard_config.vault_path.replace("\\", "/")
-
-            if "telemetry" not in config:
-                config["telemetry"] = {}
-            config["telemetry"]["enabled"] = self.wizard_config.telemetry_enabled
-
-            # Write configuration
             with open(base_config_path, "w") as f:
                 yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+
+            # Generate docker-compose for HTTP mode
+            if wc.chroma_mode == "http":
+                self._generate_docker_compose(wc)
+
+            # Create required directories
+            Path("./parent_store").mkdir(parents=True, exist_ok=True)
+            Path("./chroma_store").mkdir(parents=True, exist_ok=True)
+            Path(wc.vault_path).mkdir(parents=True, exist_ok=True)
 
             logger.info(f"Configuration saved to {base_config_path}")
             return True
@@ -470,6 +527,35 @@ class SetupWizardApp:
         except Exception as e:
             logger.error(f"Failed to save configuration: {e}")
             return False
+
+    def _generate_docker_compose(self, wc) -> None:
+        """Generate a minimal docker-compose.yml for ChromaDB."""
+        compose_dir = Path(".docker")
+        compose_dir.mkdir(parents=True, exist_ok=True)
+        compose_file = compose_dir / "docker-compose.yml"
+
+        if compose_file.exists():
+            logger.info(f"{compose_file} already exists, skipping generation")
+            return
+
+        port = getattr(wc, "chroma_port", 8000)
+        compose_content = {
+            "services": {
+                "chromadb": {
+                    "image": "chromadb/chroma:latest",
+                    "container_name": "corpus-chromadb",
+                    "restart": "unless-stopped",
+                    "ports": [f"{port}:8000"],
+                    "volumes": ["chroma-data:/chroma/chroma"],
+                }
+            },
+            "volumes": {"chroma-data": None},
+        }
+
+        with open(compose_file, "w") as f:
+            yaml.dump(compose_content, f, default_flow_style=False, sort_keys=False)
+
+        logger.info(f"Generated {compose_file} for ChromaDB")
 
     def mark_setup_complete(self) -> bool:
         """Create marker file to skip wizard on next run.

@@ -7,13 +7,8 @@ llm:
   max_tokens: null
   api_key: null
   fallback_models: []
-  # Rate limiting configuration
-  # For local Ollama: set to null (unlimited, default)
-  # For cloud APIs (OpenAI, Anthropic, etc.):
-  #   - rate_limit_rpm: Maximum requests per minute (e.g., 60 for typical tier 1)
-  #   - rate_limit_concurrent: Maximum concurrent requests (e.g., 5)
-  rate_limit_rpm: null  # null = unlimited (default for local Ollama)
-  rate_limit_concurrent: null  # null = unlimited
+  rate_limit_rpm: null
+  rate_limit_concurrent: null
 embedding:
   backend: ollama
   model: embeddinggemma
@@ -21,17 +16,19 @@ embedding:
 database:
   backend: chromadb
   mode: http
-  persist_directory: ./chroma_store
   host: localhost
-  port: 8000
+  port: 8001
+  persist_directory: ./chroma_store
 paths:
-  vault: C:/Users/arian/OneDrive/Documents/MedSchDocs/MedSchoolObsidian
+  vault: C:/Users/arian/Downloads/Obsidian_Notes
   scratch_dir: ./scratch
   output_dir: ./output
 rag:
+  strategy: hybrid
   chunking:
     child_chunk_size: 400
     child_chunk_overlap: 50
+    adaptive: true
   retrieval:
     top_k_semantic: 50
     top_k_bm25: 50
@@ -41,123 +38,5 @@ rag:
     type: local_file
     path: ./parent_store
   collection_prefix: rag
-video:
-  whisper_model: large-v2.en
-  whisper_device: cuda
-  whisper_compute_type: int8
-  whisper_language: en
-  models_dir: ./models/whisper
-  clean_model: gemma4:26b-a4b-it-q4_K_M
-  clean_ollama_host: http://localhost:11434
-  clean_prompt: "Clean this lecture transcript into structured markdown notes.\n-\
-    \ Remove filler words, false starts, and repetition\n- Preserve all specific facts,\
-    \ definitions, numbers, and examples exactly\n- Use ## headers to separate distinct\
-    \ topics as they appear\n- Preserve the segment markers (e.g. ## Segment 1: filename)\
-    \ exactly as they are\n- Do not summarize away any detail \xE2\u20AC\u201D only\
-    \ remove noise\n"
-  output_format: markdown
-  include_timestamps: false
-  collection_prefix: videos
-  auto_ingest: true
-  supported_extensions:
-  - .mp4
-  - .mkv
-  - .mov
-  - .avi
-  - .webm
-  - .m4v
-  - .zoom
-summaries:
-  summary_length: medium
-  llm:
-    model: gemma4:26b-a4b-it-q4_K_M
-    temperature: 0.3
-    max_tokens: 500
-  prompt_template: 'Generate a {length} summary of the following text:
-
-    {text}
-
-
-    Summary should be concise and capture the key points.
-
-    '
-flashcards:
-  difficulty: intermediate
-  count: 15
-  llm:
-    model: gemma4:26b-a4b-it-q4_K_M
-    temperature: 0.5
-  format: markdown
-  prompt_template: 'Generate {count} flashcards at {difficulty} difficulty level from
-    the following text:
-
-    {text}
-
-
-    Each flashcard should have a clear question and concise answer.
-
-    Format as JSON: [{{"front": "question", "back": "answer"}}]
-
-    '
-quizzes:
-  count: 10
-  format: markdown
-  difficulty: intermediate
-  llm:
-    model: gemma4:26b-a4b-it-q4_K_M
-    temperature: 0.4
-  question_types:
-  - multiple_choice
-  - true_false
-  - short_answer
-  prompt_template: 'Generate a quiz with {count} questions at {difficulty} difficulty
-    level.
-
-    Include a mix of question types: {question_types}.
-
-    Base the questions on the following text:
-
-    {text}
-
-
-    Format as JSON array with objects containing:
-
-    - "question": the question text
-
-    - "type": question type (multiple_choice, true_false, short_answer)
-
-    - "options": array of options (for multiple_choice only)
-
-    - "correct_answer": the correct answer
-
-    - "explanation": brief explanation of why answer is correct
-
-    '
-orchestrations:
-  default_collection: notes
-  lecture_pipeline:
-    generate_flashcards: true
-    flashcard_count: 20
-    generate_quiz: true
-    quiz_count: 15
-    generate_summary: true
-    summary_length: medium
-  study_session:
-    generate_flashcards: true
-    flashcard_count: 20
-    generate_quiz: true
-    quiz_count: 10
-dev:
-  coverage_threshold: 80
-  line_length: 88
-monitoring:
-  enabled: false
-auth: {}
-tools:
-  parallel_processing: true
-  max_workers: 4
-  enable_cache: true
-  cache_directory: ./cache
-  log_level: INFO
 telemetry:
   enabled: false

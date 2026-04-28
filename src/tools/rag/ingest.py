@@ -43,6 +43,7 @@ class RAGIngester:
         # Initialize parent document store
         self.config.parent_store.path.mkdir(parents=True, exist_ok=True)
         self.parent_store = LocalFileStore(str(self.config.parent_store.path))
+        self.use_adaptive = getattr(self.config.chunking, "adaptive", True)
 
         # Initialize child text splitter
         self.child_splitter = RecursiveCharacterTextSplitter(
@@ -174,7 +175,15 @@ class RAGIngester:
                 self.parent_store.mset([(parent_id, parent_langchain_doc)])
 
                 # Split parent into children for vector search
-                child_docs = self.child_splitter.split_text(parent_doc.page_content)
+                if self.use_adaptive:
+                    from .pipeline.adaptive_splitter import adaptive_split
+                    child_docs = adaptive_split(
+                        parent_doc.page_content,
+                        base_chunk_size=self.config.chunking.child_chunk_size,
+                        base_overlap=self.config.chunking.child_chunk_overlap,
+                    )
+                else:
+                    child_docs = self.child_splitter.split_text(parent_doc.page_content)
 
                 for child_idx, child_text in enumerate(child_docs):
                     if not child_text.strip():

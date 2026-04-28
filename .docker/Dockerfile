@@ -1,13 +1,11 @@
 # CorpusRAG Docker Image
-# Multi-stage build: base → production (default) | development | cli
+# Multi-stage: base-slim → production | base-full → development/cli
 
-# =============================================================================
-# Stage 1: Base
-# =============================================================================
-FROM python:3.11-slim AS base
+# === Base slim (no ffmpeg, no build tools) ===
+FROM python:3.11-slim AS base-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl git poppler-utils ffmpeg build-essential \
+    curl git poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --shell /bin/bash --uid 1000 corpus
@@ -15,16 +13,14 @@ USER corpus
 WORKDIR /home/corpus
 ENV PATH="/home/corpus/.local/bin:$PATH"
 
-# =============================================================================
-# Stage 2: Production
-# =============================================================================
-FROM base AS production
+# === Production (slim — server extra only, no torch) ===
+FROM base-slim AS production
 
 COPY --chown=corpus:corpus pyproject.toml ./app/
 COPY --chown=corpus:corpus src/ ./app/src/
 COPY --chown=corpus:corpus configs/ ./app/configs/
 
-RUN pip install --user --no-cache-dir ./app
+RUN pip install --user --no-cache-dir "./app[server]"
 
 RUN mkdir -p ./data/chroma_store ./data/vault ./data/scratch ./data/output
 
@@ -42,10 +38,17 @@ ENV CORPUSRAG_DATABASE_PERSIST_DIRECTORY=/home/corpus/data/chroma_store \
 
 CMD ["corpus-mcp-server", "--profile", "full", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000", "--no-auth"]
 
-# =============================================================================
-# Stage 3: Development
-# =============================================================================
-FROM base AS development
+# === Base full (with ffmpeg + build tools for video/ML) ===
+FROM base-slim AS base-full
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg build-essential \
+    && rm -rf /var/lib/apt/lists/*
+USER corpus
+
+# === Development (full deps) ===
+FROM base-full AS development
 
 COPY --chown=corpus:corpus pyproject.toml ./app/
 COPY --chown=corpus:corpus src/ ./app/src/
@@ -56,13 +59,15 @@ RUN pip install --user --no-cache-dir -e "./app[full,dev]"
 
 CMD ["corpus-mcp-server", "--profile", "full", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8000", "--no-auth"]
 
-# =============================================================================
-# Stage 4: CLI
-# =============================================================================
-FROM production AS cli
+# === CLI (full deps) ===
+FROM base-full AS cli
+
+COPY --chown=corpus:corpus pyproject.toml ./app/
+COPY --chown=corpus:corpus src/ ./app/src/
+COPY --chown=corpus:corpus configs/ ./app/configs/
+
+RUN pip install --user --no-cache-dir "./app[full]"
 CMD ["bash"]
 
-# =============================================================================
-# Default target
-# =============================================================================
+# === Default target ===
 FROM production

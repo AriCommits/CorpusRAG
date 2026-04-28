@@ -215,9 +215,9 @@ class RAGApp(App):
 
     def _update_footer_strategy(self) -> None:
         """Update footer and sidebar to show current retrieval strategy."""
-        footer = self.query_one(Footer)
-        strategy = getattr(self.agent.config.rag, "strategy", "hybrid")
-        footer.update(f"Strategy: {strategy} | Collection: {self.collection}")
+        strategy = getattr(self.agent.config, "strategy", "hybrid")
+        self.sub_title = f"Strategy: {strategy} | Collection: {self.collection}"
+        self._update_strategy_label(strategy)
 
     def _update_strategy_label(self, strategy: str) -> None:
         """Update strategy label in sidebar.

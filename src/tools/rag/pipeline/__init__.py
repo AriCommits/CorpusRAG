@@ -8,6 +8,7 @@ from .parsers import (
     split_markdown_semantic,
 )
 from .storage import LocalFileStore
+from .adaptive_splitter import adaptive_split, classify_content
 
 __all__ = [
     "EmbeddingClient",
@@ -16,4 +17,6 @@ __all__ = [
     "parse_hierarchical_tags",
     "split_markdown_semantic",
     "LocalFileStore",
+    "adaptive_split",
+    "classify_content",
 ]

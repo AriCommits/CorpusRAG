@@ -7,21 +7,24 @@ Ingest your documents, query them with context-aware retrieval, and expose every
 ## Quick Start
 
 ```bash
-# Install (minimal — RAG + CLI + MCP server)
+# 1. Install
 pip install corpusrag
 
-# Ingest your documents
+# 2. Run the setup wizard (configures LLM, database, vault path)
+corpus setup
+
+# 3. cd to .docker directory, and run docker compose up/ensure your containers are running
+cd .docker; docker compose up;
+# 4. Ingest your documents
 corpus rag ingest ./my-docs --collection notes
 
-# Query from the terminal
-corpus rag query "What is gradient descent?" --collection notes
-
-# Launch the TUI chat interface
-corpus rag ui --collection notes
-
-# Start the MCP server for your editor
-corpus-mcp-server --profile dev --transport stdio
+# 5. Start using it
+corpus rag ui --collection notes          # TUI chat interface
+corpus rag query "What is X?" -c notes    # CLI query
+corpus-mcp-server --profile dev           # MCP server for editors
 ```
+
+The setup wizard walks you through LLM backend selection (Ollama/OpenAI/Anthropic), ChromaDB configuration, and knowledge base location. Run `corpus setup --reset` to reconfigure later.
 
 ## What It Does
 
@@ -48,7 +51,14 @@ pip install corpusrag[full,dev]          # Everything + dev tools
 
 ## Configuration
 
-Copy and edit the example config:
+The recommended way to configure CorpusRAG is the setup wizard:
+
+```bash
+corpus setup           # Interactive first-time setup
+corpus setup --reset   # Reconfigure
+```
+
+For manual configuration, copy and edit the example:
 
 ```bash
 cp configs/base.example.yaml configs/base.yaml
@@ -71,6 +81,23 @@ database:
   mode: persistent                         # persistent | http
   persist_directory: ./chroma_store
 ```
+
+## Docker
+
+Run the MCP server with ChromaDB via Docker Compose:
+
+```bash
+# Minimal (ChromaDB + MCP server)
+docker compose -f .docker/docker-compose.yml up
+
+# With local Ollama
+docker compose -f .docker/docker-compose.yml --profile ollama up
+
+# Full stack (all services)
+docker compose -f .docker/docker-compose.yml --profile full up
+```
+
+The MCP server is available at `http://localhost:8000` and ChromaDB at `http://localhost:8001`. See [`.docker/`](.docker/) for configuration details.
 
 ## Project Structure
 

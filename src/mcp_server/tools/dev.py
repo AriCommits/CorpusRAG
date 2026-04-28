@@ -4,8 +4,6 @@ import hashlib
 from datetime import datetime
 from typing import Any
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 from config.base import BaseConfig
 from db.base import DatabaseBackend
 from tools.rag import RAGAgent, RAGIngester, RAGRetriever
@@ -94,11 +92,8 @@ def store_text(
         if not db.collection_exists(full_collection):
             db.create_collection(full_collection)
 
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=rag_config.chunking.child_chunk_size,
-            chunk_overlap=rag_config.chunking.child_chunk_overlap,
-        )
-        chunks = splitter.split_text(text)
+        from tools.rag.pipeline.adaptive_splitter import adaptive_split
+        chunks = adaptive_split(text, base_chunk_size=rag_config.chunking.child_chunk_size, base_overlap=rag_config.chunking.child_chunk_overlap)
 
         embeddings = EmbeddingClient(rag_config).embed_texts(chunks)
 

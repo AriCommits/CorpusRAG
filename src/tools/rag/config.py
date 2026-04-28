@@ -13,6 +13,7 @@ class ChunkingConfig:
     # Parent chunks come from MarkdownHeaderTextSplitter (full sections)
     child_chunk_size: int = 800
     child_chunk_overlap: int = 100
+    adaptive: bool = True
 
 
 @dataclass
