@@ -26,6 +26,14 @@ class RAGAgent:
         self.session_manager = SessionManager()
         # Create LLM backend for generation
         self.llm_backend = create_backend(config.llm.to_backend_config())
+        try:
+            from utils.telemetry import get_telemetry_store
+            from utils.benchmarking import benchmarker
+            tstore = get_telemetry_store()
+            if tstore and not benchmarker.telemetry_store:
+                benchmarker.telemetry_store = tstore
+        except Exception:
+            pass  # Telemetry not initialized yet, that's fine
 
     def _filter_context(self, history: list[dict]) -> list[dict]:
         """Filter out excluded messages from context.

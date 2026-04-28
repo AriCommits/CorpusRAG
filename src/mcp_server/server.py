@@ -30,8 +30,12 @@ def create_mcp_server(
     config = init_config(config_path)
     db = init_db(config)
 
+    from utils.telemetry import init_telemetry
+    telemetry_cfg = config.to_dict().get("telemetry", {})
+    store = init_telemetry(enabled=telemetry_cfg.get("enabled", False))
+
     mcp = FastMCP("CorpusRAG", json_response=True)
-    register_profile(mcp, profile, config, db)
+    register_profile(mcp, profile, config, db, store)
 
     logger.info("MCP server created with profile='%s'", profile)
     return mcp

@@ -12,8 +12,9 @@ class BenchmarkResult:
 class RAGBenchmarker:
     """Utility to measure and record RAG performance metrics."""
 
-    def __init__(self):
+    def __init__(self, telemetry_store=None):
         self.history: List[BenchmarkResult] = []
+        self.telemetry_store = telemetry_store
 
     def record(self, retrieval: float, generation: float, total: float):
         """Record a set of measurements."""
@@ -23,6 +24,11 @@ class RAGBenchmarker:
             total_ms=total * 1000,
         )
         self.history.append(result)
+        if self.telemetry_store:
+            self.telemetry_store.log(
+                "rag_query", result.total_ms, success=True,
+                metadata={"retrieval_ms": result.retrieval_ms, "generation_ms": result.generation_ms}
+            )
         return result
 
     def get_stats(self) -> Dict[str, float]:

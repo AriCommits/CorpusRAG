@@ -126,3 +126,31 @@ def collection_info(collection_name: str, db: DatabaseBackend) -> dict[str, Any]
         return {"status": "success", **stats}
     except Exception as e:
         return {"status": "error", "error": str(e)}
+
+
+
+def get_estimate(tool_name: str, store) -> dict[str, Any]:
+    """Get time estimate for a tool based on historical execution data."""
+    if not store:
+        return {"status": "error", "error": "Telemetry is disabled"}
+    try:
+        estimates = store.get_estimates(tool_name)
+        if not estimates:
+            return {"status": "success", "tool": tool_name, "estimate": None,
+                    "message": f"No historical data for '{tool_name}'"}
+        return {"status": "success", **estimates}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+def query_telemetry(sql: str, store) -> dict[str, Any]:
+    """Execute a read-only SQL query against the telemetry database."""
+    if not store:
+        return {"status": "error", "error": "Telemetry is disabled"}
+    try:
+        rows = store.query(sql)
+        return {"status": "success", "rows": rows, "count": len(rows)}
+    except ValueError as e:
+        return {"status": "error", "error": str(e)}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
