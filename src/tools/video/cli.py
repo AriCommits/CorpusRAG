@@ -24,7 +24,8 @@ def video():
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 @click.option("--course", "-c", default=None, help="Course identifier (e.g., BIOL101)")
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
-def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int):
+@click.option("--clean", is_flag=True, help="Run LLM cleaning after transcription")
+def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool):
     """Transcribe video files to text."""
     cfg = load_cli_config(config, VideoConfig)
 
@@ -50,6 +51,12 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
     output_path.write_text(combined)
 
     click.echo(f"✓ Transcribed {len(transcripts)} videos to {output_path}")
+
+    if clean:
+        click.echo("Cleaning transcript...")
+        cleaner = TranscriptCleaner(cfg)
+        cleaned_path = cleaner.clean_file(output_path)
+        click.echo(f"✓ Cleaned transcript written to {cleaned_path}")
 
 
 @video.command()

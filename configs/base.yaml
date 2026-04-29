@@ -40,3 +40,32 @@ rag:
   collection_prefix: rag
 telemetry:
   enabled: false
+video:
+  whisper_model: large-v2
+  whisper_device: cuda
+  whisper_compute_type: float16
+  whisper_language: en
+  models_dir: ./models/whisper
+  clean_model: gemma4:26b-a4b-it-q4_K_M
+  clean_prompt: |
+    Clean this lecture transcript into structured markdown notes.
+    - Remove filler words, false starts, and repetition
+    - Preserve all specific facts, definitions, numbers, and examples exactly
+    - Use ## headers to separate distinct topics as they appear
+    - Preserve the segment markers (e.g. ## Segment 1: filename) exactly as they are
+    - Do not summarize away any detail - only remove noise
+
+    Transcript:
+    {transcript}
+  output_format: markdown
+  include_timestamps: false
+  collection_prefix: videos
+  auto_ingest: true
+  supported_extensions:
+    - .mp4
+    - .mkv
+    - .mov
+    - .avi
+    - .webm
+    - .m4v
+    - .zoom

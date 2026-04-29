@@ -5,7 +5,6 @@ from pathlib import Path
 import click
 
 from cli_common import load_cli_db
-from orchestrations import LecturePipelineOrchestrator, StudySessionOrchestrator
 
 
 @click.group()
@@ -38,12 +37,11 @@ def study_session(
     config: str,
 ):
     """Create a comprehensive study session."""
-    config_data, db = load_cli_db(config)
+    from orchestrations import StudySessionOrchestrator
 
-    # Create orchestrator
+    config_data, db = load_cli_db(config)
     orchestrator = StudySessionOrchestrator(config_data, db)
 
-    # Generate study session
     click.echo(f"Creating study session for collection '{collection}'...")
     session = orchestrator.create_session(
         collection=collection,
@@ -53,7 +51,6 @@ def study_session(
         summary_length=length,
     )
 
-    # Format and output
     formatted = orchestrator.format_session(session)
 
     if output:
@@ -79,12 +76,11 @@ def lecture_pipeline(
     config: str,
 ):
     """Process a lecture video into complete study materials."""
-    config_data, db = load_cli_db(config)
+    from orchestrations import LecturePipelineOrchestrator
 
-    # Create orchestrator
+    config_data, db = load_cli_db(config)
     orchestrator = LecturePipelineOrchestrator(config_data, db)
 
-    # Process lecture
     click.echo(f"Processing lecture {lecture} for course {course}...")
     result = orchestrator.process_lecture(
         video_path=Path(video_path),
@@ -93,7 +89,6 @@ def lecture_pipeline(
         skip_clean=skip_clean,
     )
 
-    # Format and output
     formatted = orchestrator.format_lecture_materials(result)
 
     if output:

@@ -95,7 +95,7 @@ observability = [
   "opentelemetry-exporter-otlp>=1.20.0",
   "opentelemetry-instrumentation-fastapi>=0.41b0",
   "opentelemetry-instrumentation-httpx>=0.41b0",
-  "openllmetry>=0.3.0",
+  "traceloop-sdk>=0.3.0",
 ]
 
 # Export support (Anki, etc.)
@@ -198,4 +198,7 @@ known_first_party = [
 
 [tool.deptry.per_rule_ignores]
 # Ignore 'obsolete' (DEP002) warnings for CLI/infra tools
-DEP002 = ["uvicorn", "python-dotenv", "ollama", "langchain", "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp", "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-httpx", "openllmetry"]
+DEP002 = ["uvicorn", "python-dotenv", "ollama", "langchain", "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp", "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-httpx", "traceloop-sdk"]
+
+[tool.uv]
+python-preference = "managed"

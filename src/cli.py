@@ -4,66 +4,23 @@ from pathlib import Path
 
 import click
 
-from cli_dev import dev
-from db.collections_cli import collections_cmd
-from db.management import db
-from orchestrations.cli import orchestrate
-from tools.rag.cli import rag
-from tools.video.cli import video
-
-# Import optional generator tools with fallbacks
-try:
-    from tools.flashcards.cli import flashcards
-except ImportError:
-
-    @click.group(name="flashcards")
-    def flashcards() -> None:
-        """Flashcard generation (requires 'generators' extra)."""
-        pass
-
-    @flashcards.command()
-    def generate() -> None:
-        """Generate flashcards."""
-        click.echo("Flashcard generation requires the 'generators' extra.")
-        click.echo("Install with: pip install corpusrag[generators]")
-        raise SystemExit(1)
+from cli_lazy import LazyGroup
 
 
-try:
-    from tools.summaries.cli import summaries
-except ImportError:
-
-    @click.group(name="summaries")
-    def summaries() -> None:
-        """Summary generation (requires 'generators' extra)."""
-        pass
-
-    @summaries.command()
-    def generate_summary() -> None:
-        """Generate summary."""
-        click.echo("Summary generation requires the 'generators' extra.")
-        click.echo("Install with: pip install corpusrag[generators]")
-        raise SystemExit(1)
-
-
-try:
-    from tools.quizzes.cli import quizzes
-except ImportError:
-
-    @click.group(name="quizzes")
-    def quizzes() -> None:
-        """Quiz generation (requires 'generators' extra)."""
-        pass
-
-    @quizzes.command()
-    def generate_quiz() -> None:
-        """Generate quiz."""
-        click.echo("Quiz generation requires the 'generators' extra.")
-        click.echo("Install with: pip install corpusrag[generators]")
-        raise SystemExit(1)
-
-
-@click.group()
+@click.group(
+    cls=LazyGroup,
+    lazy_subcommands={
+        "rag": "tools.rag.cli:rag",
+        "video": "tools.video.cli:video",
+        "orchestrate": "orchestrations.cli:orchestrate",
+        "flashcards": "tools.flashcards.cli:flashcards",
+        "summaries": "tools.summaries.cli:summaries",
+        "quizzes": "tools.quizzes.cli:quizzes",
+        "db": "db.management:db",
+        "collections": "db.collections_cli:collections_cmd",
+        "dev": "cli_dev:dev",
+    },
+)
 @click.version_option(package_name="corpusrag")
 def corpus() -> None:
     """CorpusRAG — unified learning and knowledge management toolkit.
@@ -78,7 +35,6 @@ def setup(reset: bool) -> None:
     """Run interactive setup wizard for first-time configuration."""
     marker_file = Path(".corpus_setup_complete")
 
-    # Check if setup has already been completed
     if marker_file.exists() and not reset:
         click.echo(
             "Setup already completed. Use --reset to run wizard again or "
@@ -86,12 +42,10 @@ def setup(reset: bool) -> None:
         )
         return
 
-    # Remove marker if resetting
     if reset and marker_file.exists():
         marker_file.unlink()
         click.echo("Resetting setup...")
 
-    # Import and run setup wizard
     from setup_wizard import run_setup_wizard
 
     exit_code = run_setup_wizard()
@@ -109,8 +63,8 @@ def benchmark(collection: str, queries: int, config: str) -> None:
     from tools.rag.agent import RAGAgent
     from utils.benchmarking import benchmarker
 
-    cfg, db = load_cli_db(config)
-    agent = RAGAgent(cfg, db)
+    cfg, db_backend = load_cli_db(config)
+    agent = RAGAgent(cfg, db_backend)
 
     click.echo(f"Running {queries} benchmark queries on '{collection}'...")
     test_queries = [
@@ -131,17 +85,6 @@ def benchmark(collection: str, queries: int, config: str) -> None:
     click.echo(f"  Average Latency: {stats.get('avg_total_ms', 0):.2f}ms")
     click.echo(f"  p95 Latency:     {stats.get('p95_total_ms', 0):.2f}ms")
     click.echo(f"  Total Queries:   {int(stats.get('count', 0))}")
-
-
-corpus.add_command(rag)
-corpus.add_command(video)
-corpus.add_command(orchestrate)
-corpus.add_command(flashcards)
-corpus.add_command(summaries)
-corpus.add_command(quizzes)
-corpus.add_command(db)
-corpus.add_command(collections_cmd)
-corpus.add_command(dev)
 
 
 def main() -> None:

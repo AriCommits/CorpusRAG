@@ -47,6 +47,32 @@ class TestEstimateTokens:
         """Test that single character returns at least 1 token."""
         assert estimate_tokens("x") >= 1
 
+    def test_uses_tiktoken_when_available(self):
+        """If tiktoken is installed, result should differ from len//4."""
+        try:
+            import tiktoken
+            # tiktoken is available - result should be exact
+            text = "Hello, world! This is a test."
+            result = estimate_tokens(text)
+            # tiktoken gives a specific count, not len//4
+            enc = tiktoken.get_encoding("cl100k_base")
+            expected = len(enc.encode(text))
+            assert result == expected
+        except ImportError:
+            # tiktoken not installed, skip
+            pytest.skip("tiktoken not installed")
+
+    def test_fallback_without_tiktoken(self):
+        """Without tiktoken, should use len//4 heuristic."""
+        from unittest.mock import patch
+        from utils.tokens import _get_tokenizer
+        # Clear the lru_cache
+        _get_tokenizer.cache_clear()
+        with patch("utils.tokens._get_tokenizer", return_value=None):
+            result = estimate_tokens("Hello world test")
+            assert result == len("Hello world test") // 4
+        _get_tokenizer.cache_clear()
+
 
 class TestFormatTokens:
     """Tests for token formatting."""

@@ -1,23 +1,35 @@
 """Token estimation utilities for display and verification."""
 
-import math
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
+def _get_tokenizer():
+    """Get cached tiktoken encoder, or None if unavailable."""
+    try:
+        import tiktoken
+        return tiktoken.get_encoding("cl100k_base")
+    except (ImportError, Exception):
+        return None
 
 
 def estimate_tokens(text: str) -> int:
-    """Estimate number of tokens in text using a simple heuristic.
+    """Estimate number of tokens in text.
 
-    This uses the common approximation that 1 token ≈ 4 characters.
-    For accurate token counting, use the actual tokenizer from your LLM.
+    Uses tiktoken (cl100k_base) when available (install with: pip install corpusrag[generators]).
+    Falls back to len(text) // 4 heuristic otherwise.
 
     Args:
         text: Text to estimate tokens for
 
     Returns:
-        Estimated token count
+        Token count (exact with tiktoken, approximate without)
     """
     if not text:
         return 0
-    # Rough approximation: 1 token per 4 characters
+    enc = _get_tokenizer()
+    if enc is not None:
+        return len(enc.encode(text))
     return max(1, len(text) // 4)
 
 
@@ -32,7 +44,5 @@ def format_tokens(count: int) -> str:
     """
     if count < 1000:
         return str(count)
-
-    # Format as k (thousands)
     thousands = count / 1000.0
     return f"{thousands:.1f}k"
