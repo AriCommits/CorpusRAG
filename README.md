@@ -22,6 +22,10 @@ corpus rag ingest ./my-docs --collection notes
 corpus rag ui --collection notes          # TUI chat interface
 corpus rag query "What is X?" -c notes    # CLI query
 corpus-mcp-server --profile dev           # MCP server for editors
+
+# 6. Process video content
+corpus video ingest lecture.mp4 -c notes     # Visual OCR pipeline
+corpus video ingest-url "https://youtube.com/watch?v=..." -c notes
 ```
 
 The setup wizard walks you through LLM backend selection (Ollama/OpenAI/Anthropic), ChromaDB configuration, and knowledge base location. Run `corpus setup --reset` to reconfigure later.
@@ -37,7 +41,7 @@ The setup wizard walks you through LLM backend selection (Ollama/OpenAI/Anthropi
 | **Flashcards** | Generate study cards with Anki export |
 | **Summaries** | Multi-length summaries with Markdown export |
 | **Quizzes** | Multiple choice, true/false, short answer — export to JSON/CSV |
-| **Video** | Transcribe lectures with Whisper, clean with LLM, auto-ingest |
+| **Video** | Transcribe lectures with Whisper, extract slide/chalkboard text with vision OCR, auto-ingest |
 
 ## Installation Extras
 

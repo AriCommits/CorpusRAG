@@ -164,6 +164,129 @@ def pipeline(
     click.echo(f"\n✓ Pipeline complete! Final output: {current_file}")
 
 
+
+@video.command("ingest")
+@click.argument("video_path", type=click.Path(exists=True, path_type=Path))
+@click.option("--collection", "-c", required=True, help="Target collection")
+@click.option("--threshold", default=None, type=float, help="Scene detection sensitivity (0.0-1.0)")
+@click.option("--model", default=None, help="Ollama vision model for OCR")
+@click.option("--no-latex", is_flag=True, help="Disable pix2tex math fallback")
+@click.option("--context-window", default=None, type=int, help="Adjacent frames per chunk")
+@click.option("--keep-frames", is_flag=True, help="Keep extracted frames after ingest")
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def ingest_cmd(video_path, collection, threshold, model, no_latex, context_window, keep_frames, config):
+    """Ingest a video file using visual OCR pipeline."""
+    from tools.video.ingest import ingest_video
+
+    cfg = load_cli_config(config, VideoConfig)
+
+    click.echo(f"Ingesting {video_path.name} via visual OCR...")
+
+    with click.progressbar(length=100, label="Processing") as bar:
+        last_pct = [0]
+        def progress_cb(pct, step):
+            delta = pct - last_pct[0]
+            if delta > 0:
+                bar.update(delta)
+                last_pct[0] = pct
+
+        result = ingest_video(
+            video_path, cfg,
+            output_dir=cfg.paths.output_dir / "video_ocr",
+            progress_cb=progress_cb,
+            scene_threshold=threshold,
+            vision_model=model,
+            use_latex_fallback=not no_latex if no_latex else None,
+            context_window=context_window,
+            cleanup_frames=not keep_frames,
+        )
+
+    click.echo(f"\n\u2713 Ingest complete")
+    click.echo(f"  Frames extracted:  {result.frames_extracted}")
+    click.echo(f"  Frames skipped:    {result.frames_skipped}")
+    click.echo(f"  Chunks stored:     {result.chunks_after_dedup}")
+    click.echo(f"  Duration:          {result.duration_sec:.0f}s")
+    if result.output_path:
+        click.echo(f"  Output:            {result.output_path}")
+
+
+@video.command("ingest-url")
+@click.argument("url")
+@click.option("--collection", "-c", required=True, help="Target collection")
+@click.option("--threshold", default=None, type=float, help="Scene detection sensitivity")
+@click.option("--model", default=None, help="Ollama vision model for OCR")
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def ingest_url_cmd(url, collection, threshold, model, config):
+    """Download a video from URL and ingest via visual OCR."""
+    from tools.video.download import download_video
+    from tools.video.ingest import ingest_video
+
+    cfg = load_cli_config(config, VideoConfig)
+    dl_dir = cfg.paths.scratch_dir / "downloads"
+
+    click.echo(f"Downloading {url}...")
+    dl_result = download_video(url, dl_dir)
+    click.echo(f"\u2713 Downloaded: {dl_result.title} ({dl_result.duration_sec:.0f}s)")
+
+    click.echo(f"Ingesting via visual OCR...")
+    with click.progressbar(length=100, label="Processing") as bar:
+        last_pct = [0]
+        def progress_cb(pct, step):
+            delta = pct - last_pct[0]
+            if delta > 0:
+                bar.update(delta)
+                last_pct[0] = pct
+
+        result = ingest_video(
+            dl_result.local_path, cfg,
+            output_dir=cfg.paths.output_dir / "video_ocr",
+            progress_cb=progress_cb,
+            scene_threshold=threshold,
+            vision_model=model,
+        )
+
+    click.echo(f"\n\u2713 Ingest complete")
+    click.echo(f"  Frames extracted:  {result.frames_extracted}")
+    click.echo(f"  Chunks stored:     {result.chunks_after_dedup}")
+    if result.output_path:
+        click.echo(f"  Output:            {result.output_path}")
+
+
+@video.command("jobs")
+def list_jobs_cmd():
+    """List active video processing jobs."""
+    from tools.video.jobs import get_job_manager
+
+    mgr = get_job_manager()
+    jobs = mgr.list_jobs()
+    if not jobs:
+        click.echo("No active jobs.")
+        return
+    for j in jobs:
+        click.echo(f"  {j.job_id}  {j.status.value:8s}  {j.progress_pct:3d}%  {j.current_step}")
+
+
+@video.command("status")
+@click.argument("job_id")
+def job_status_cmd(job_id):
+    """Check status of a video processing job."""
+    from tools.video.jobs import get_job_manager
+
+    mgr = get_job_manager()
+    state = mgr.get_status(job_id)
+    if state is None:
+        click.echo(f"Job not found: {job_id}")
+        raise SystemExit(1)
+    click.echo(f"Job:      {state.job_id}")
+    click.echo(f"Status:   {state.status.value}")
+    click.echo(f"Progress: {state.progress_pct}%")
+    click.echo(f"Step:     {state.current_step}")
+    if state.error:
+        click.echo(f"Error:    {state.error}")
+    if state.result:
+        click.echo(f"Result:   {state.result}")
+
+
 def main():
     """Entry point for corpus-video CLI."""
     video()

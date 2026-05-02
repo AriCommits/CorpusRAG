@@ -50,6 +50,20 @@ Transcript:
         ]
     )
 
+    # OCR settings
+    vision_model: str = "llava"
+    scene_threshold: float = 0.3
+    min_frame_interval: float = 2.0
+    use_latex_fallback: bool = True
+    dedup_threshold: float = 0.85
+    context_window: int = 1
+    slide_ocr_prompt: str = ""
+    chalkboard_ocr_prompt: str = ""
+
+    # Job settings
+    max_concurrent_jobs: int = 2
+    job_expiry_seconds: int = 3600
+
     @classmethod
     def from_dict(cls, data: dict) -> "VideoConfig":
         """Create video config from dictionary.
@@ -88,4 +102,14 @@ Transcript:
                 "supported_extensions",
                 [".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".zoom"],
             ),
+            vision_model=video_data.get("vision_model", "llava"),
+            scene_threshold=video_data.get("scene_threshold", 0.3),
+            min_frame_interval=video_data.get("min_frame_interval", 2.0),
+            use_latex_fallback=video_data.get("use_latex_fallback", True),
+            dedup_threshold=video_data.get("dedup_threshold", 0.85),
+            context_window=video_data.get("context_window", 1),
+            slide_ocr_prompt=video_data.get("slide_ocr_prompt", ""),
+            chalkboard_ocr_prompt=video_data.get("chalkboard_ocr_prompt", ""),
+            max_concurrent_jobs=video_data.get("max_concurrent_jobs", 2),
+            job_expiry_seconds=video_data.get("job_expiry_seconds", 3600),
         )

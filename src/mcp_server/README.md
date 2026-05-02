@@ -41,6 +41,21 @@ Profiles control which tools are available. Use `--profile` to select one.
 
 All tools from both `dev` and `learn`.
 
+### Video Tools (learn/full profiles)
+
+| Tool | Description |
+|------|-------------|
+| `video_ingest_local` | Ingest a local video file via visual OCR (async) |
+| `video_ingest_url` | Download video from URL and ingest via OCR (async) |
+| `video_combined_pipeline` | Combined audio + visual pipeline (async) |
+| `video_job_status` | Check status of a video processing job |
+| `video_list_jobs` | List all video processing jobs |
+
+Video ingest tools return a `job_id` immediately. Poll with `video_job_status` to track progress.
+
+System requirements: `ffmpeg` (frame extraction), `yt-dlp` (URL downloads, optional).
+Optional: `pix2tex` for enhanced math OCR on chalkboard content.
+
 ## Transports
 
 | Transport | Flag | Use Case |
