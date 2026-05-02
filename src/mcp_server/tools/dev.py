@@ -16,7 +16,7 @@ from utils.validation import get_validator
 def rag_ingest(path: str, collection: str, config: BaseConfig, db: DatabaseBackend) -> dict[str, Any]:
     """Ingest documents from a path into a RAG collection."""
     try:
-        validated_path = validate_file_path(path, must_exist=True)
+        validated_path = validate_file_path(path, must_exist=True, allowed_roots=[str(config.paths.vault)])
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
@@ -86,6 +86,8 @@ def store_text(
 ) -> dict[str, Any]:
     """Store raw text directly into a RAG collection."""
     try:
+        if len(text) > 100_000:
+            return {"status": "error", "error": "Text too large (max 100KB)"}
         rag_config = RAGConfig.from_dict(config.to_dict())
         full_collection = f"{rag_config.collection_prefix}_{collection}"
 
@@ -98,8 +100,10 @@ def store_text(
         embeddings = EmbeddingClient(rag_config).embed_texts(chunks)
 
         base_meta = {"source_type": "agent_text", "timestamp": datetime.now().isoformat(), "collection_name": collection}
+        _ALLOWED_META = {"topic", "tags", "author", "date", "notes", "source"}
         if metadata:
-            base_meta.update(metadata)
+            safe_meta = {k: v for k, v in metadata.items() if k in _ALLOWED_META}
+            base_meta.update(safe_meta)
 
         metadatas = [dict(base_meta) for _ in chunks]
         ids = [

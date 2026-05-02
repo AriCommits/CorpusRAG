@@ -66,3 +66,20 @@ def test_video_list_jobs_empty():
     result = video_list_jobs(mgr)
     assert result["status"] == "success"
     assert result["jobs"] == []
+
+
+
+def test_video_response_no_full_paths():
+    """Verify MCP responses don't leak full filesystem paths."""
+    from mcp_server.tools.video import video_job_status
+    from tools.video.jobs import JobManager
+    mgr = JobManager(max_workers=1)
+    def work(cb):
+        return {"output_path": "just_a_name.md"}
+    job_id = mgr.submit(work)
+    import time; time.sleep(0.5)
+    result = video_job_status(job_id, mgr)
+    # Result should not contain backslashes or drive letters
+    result_str = str(result)
+    assert "C:\\" not in result_str
+    assert "/home/" not in result_str

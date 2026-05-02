@@ -31,12 +31,12 @@ def video_ingest_local(
         )
         return {
             "status": "success",
-            "source_file": result.source_file,
+            "source_file": Path(result.source_file).name,
             "frames_extracted": result.frames_extracted,
             "frames_skipped": result.frames_skipped,
             "chunks": result.chunks_after_dedup,
             "duration_sec": result.duration_sec,
-            "output_path": str(result.output_path) if result.output_path else None,
+            "output_path": result.output_path.name if result.output_path else None,
         }
 
     job_id = job_manager.submit(_run)
@@ -71,11 +71,11 @@ def video_ingest_url(
         )
         return {
             "status": "success",
-            "source_file": result.source_file,
+            "source_file": Path(result.source_file).name,
             "title": dl_result.title,
             "frames_extracted": result.frames_extracted,
             "chunks": result.chunks_after_dedup,
-            "output_path": str(result.output_path) if result.output_path else None,
+            "output_path": result.output_path.name if result.output_path else None,
         }
 
     job_id = job_manager.submit(_run)
@@ -135,7 +135,7 @@ def video_combined_pipeline(
         if "visual" in results:
             vr = results["visual"]
             output["visual_chunks"] = vr.chunks_after_dedup
-            output["output_path"] = str(vr.output_path) if vr.output_path else None
+            output["output_path"] = vr.output_path.name if vr.output_path else None
             output["tracks"].append("visual")
         if "audio" in results:
             output["audio_transcript"] = results["audio"][:500] + "..." if len(results["audio"]) > 500 else results["audio"]
@@ -143,7 +143,7 @@ def video_combined_pipeline(
             output_dir.mkdir(parents=True, exist_ok=True)
             audio_path = output_dir / f"{video_path.stem}_audio.md"
             audio_path.write_text(results["audio"], encoding="utf-8")
-            output["audio_path"] = str(audio_path)
+            output["audio_path"] = audio_path.name
 
         progress_cb(100, "Complete")
         return output

@@ -2,6 +2,8 @@
 
 import time
 
+import pytest
+
 from tools.video.jobs import JobManager, JobStatus
 
 
@@ -69,3 +71,19 @@ def test_job_state_to_dict():
     assert d["status"] == "complete"
     assert d["job_id"] == job_id
     assert "created_at" in d
+
+
+
+def test_job_queue_limit():
+    import time
+    mgr = JobManager(max_workers=1)
+    # max_queue = 1 * 5 = 5
+    def slow_work(progress_cb):
+        time.sleep(2)
+        return {}
+    # Submit 5 jobs (should work)
+    for _ in range(5):
+        mgr.submit(slow_work)
+    # 6th should fail
+    with pytest.raises(RuntimeError, match="Too many pending jobs"):
+        mgr.submit(slow_work)
