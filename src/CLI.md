@@ -110,6 +110,29 @@ Requires `pip install corpusrag[video]`.
 corpus video transcribe lecture.mp4 --collection cs101
 corpus video clean transcript.txt --output cleaned.md
 ```
+### Visual OCR Pipeline
+
+```bash
+# Ingest a local video file using visual OCR
+corpus video ingest lecture.mp4 -c cs6301
+corpus video ingest lecture.mp4 -c cs6301 --threshold 0.15 --model llava
+
+# Download and ingest from YouTube
+corpus video ingest-url "https://youtube.com/watch?v=abc" -c ocw_mit
+
+# Check job status
+corpus video jobs
+corpus video status <job_id>
+```
+
+Options:
+- `--collection, -c` — Target collection (required)
+- `--threshold` — Scene detection sensitivity (0.0-1.0, default 0.3)
+- `--model` — Ollama vision model (default: llava)
+- `--no-latex` — Disable pix2tex math fallback
+- `--context-window` — Adjacent frames per chunk (default: 1)
+- `--keep-frames` — Keep extracted frames after ingest
+
 
 ## Orchestrations
 
