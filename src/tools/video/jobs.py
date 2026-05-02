@@ -46,8 +46,13 @@ class JobManager:
         self._jobs: dict[str, JobState] = {}
         self._lock = threading.Lock()
         self._expiry = timedelta(seconds=expiry_seconds)
+        self._max_queue = max_workers * 5
 
     def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> str:
+        with self._lock:
+            active = sum(1 for j in self._jobs.values() if j.status in (JobStatus.QUEUED, JobStatus.RUNNING))
+            if active >= self._max_queue:
+                raise RuntimeError(f"Too many pending jobs ({active}/{self._max_queue}). Try again later.")
         job_id = str(uuid.uuid4())[:8]
         with self._lock:
             self._jobs[job_id] = JobState(job_id=job_id)

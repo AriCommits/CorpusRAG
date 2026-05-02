@@ -170,7 +170,7 @@ class LocalFileStore:
         resolved = (self.path / f"{sanitized}.json").resolve()
         store_path = self.path.resolve()
 
-        if not str(resolved).startswith(str(store_path)):
+        if not resolved.is_relative_to(store_path):
             raise ValueError(f"Document ID would escape store directory: {doc_id}")
 
         return sanitized

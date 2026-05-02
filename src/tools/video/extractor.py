@@ -22,12 +22,18 @@ def format_timestamp(seconds: float) -> str:
     return f"{h:02d}:{m:02d}:{s:02d}"
 
 
+def _validate_threshold(value: float) -> float:
+    val = float(value)
+    return max(0.0, min(1.0, val))
+
+
 def extract_keyframes(
     video_path: Path,
     output_dir: Path,
     scene_threshold: float = 0.3,
     min_interval_sec: float = 2.0,
 ) -> list[ExtractedFrame]:
+    scene_threshold = _validate_threshold(scene_threshold)
     output_dir.mkdir(parents=True, exist_ok=True)
     output_pattern = str(output_dir / "frame_%06d.jpg")
 

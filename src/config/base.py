@@ -124,7 +124,7 @@ class BaseConfig:
                 "temperature": self.llm.temperature,
                 "max_tokens": self.llm.max_tokens,
                 "backend": self.llm.backend,
-                "api_key": self.llm.api_key,
+                "api_key": "***" if self.llm.api_key else None,
                 "fallback_models": self.llm.fallback_models,
                 "rate_limit_rpm": self.llm.rate_limit_rpm,
                 "rate_limit_concurrent": self.llm.rate_limit_concurrent,

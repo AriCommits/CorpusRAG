@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
+from utils.security import sanitize_filename
+
 from .classifier import FrameType, classify_frame
 from .config import VideoConfig
 from .extractor import ExtractedFrame, extract_keyframes
@@ -56,7 +58,8 @@ def ingest_video(
     ctx_window = context_window if context_window is not None else config.context_window
     endpoint = config.llm.endpoint
 
-    frames_dir = config.paths.scratch_dir / "video_frames" / video_path.stem
+    safe_stem = sanitize_filename(video_path.stem) or "unnamed"
+    frames_dir = config.paths.scratch_dir / "video_frames" / safe_stem
 
     def _progress(pct: int, step: str):
         if progress_cb:

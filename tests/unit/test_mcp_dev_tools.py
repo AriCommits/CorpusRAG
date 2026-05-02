@@ -1,6 +1,7 @@
 """Unit tests for mcp_server/tools/dev.py."""
 
 from unittest.mock import MagicMock, patch
+from pathlib import Path
 
 import pytest
 import yaml
@@ -22,6 +23,9 @@ def config(tmp_path):
         "database": {
             "mode": "persistent",
             "persist_directory": str(tmp_path / "chroma"),
+        },
+        "paths": {
+            "vault": str(tmp_path),
         },
         "rag": {
             "strategy": "semantic",
@@ -111,3 +115,45 @@ class TestRagIngest:
         assert result["status"] == "success"
         assert result["files_indexed"] == 1
         assert result["chunks_indexed"] == 3
+
+
+
+class TestSecurityHardening:
+    def test_rag_ingest_rejects_path_outside_vault(self):
+        config = MagicMock()
+        config.paths.vault = Path("./vault")
+        config.to_dict.return_value = {"llm": {}, "embedding": {}, "database": {}, "paths": {"vault": "./vault"}}
+        db = MagicMock()
+        result = rag_ingest("/etc/passwd", "exfil", config, db)
+        assert result["status"] == "error"
+
+    def test_store_text_rejects_oversized(self):
+        config = MagicMock()
+        config.to_dict.return_value = {"llm": {}, "embedding": {}, "database": {}, "paths": {}}
+        db = MagicMock()
+        big_text = "x" * 200_000
+        result = store_text(big_text, "test", config, db)
+        assert result["status"] == "error"
+        assert "too large" in result["error"]
+
+    def test_store_text_filters_metadata(self):
+        config = MagicMock()
+        config.to_dict.return_value = {"llm": {}, "embedding": {}, "database": {}, "paths": {}, "rag": {}}
+        db = MagicMock()
+        db.collection_exists.return_value = True
+
+        with patch("mcp_server.tools.dev.EmbeddingClient") as mock_embed:
+            mock_embed.return_value.embed_texts.return_value = [[0.1] * 10]
+            with patch("tools.rag.pipeline.adaptive_splitter.adaptive_split", return_value=["chunk1"]):
+                result = store_text(
+                    "safe text", "test", config, db,
+                    metadata={"topic": "math", "parent_id": "evil", "file_hash": "spoofed"}
+                )
+
+        if result["status"] == "success":
+            # Verify the metadata passed to db.add_documents doesn't contain blocked keys
+            call_args = db.add_documents.call_args
+            stored_meta = call_args[0][3][0]  # metadatas[0]
+            assert "parent_id" not in stored_meta
+            assert "file_hash" not in stored_meta
+            assert stored_meta.get("topic") == "math"

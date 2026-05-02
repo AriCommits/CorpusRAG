@@ -36,6 +36,10 @@ def ocr_frame(
     endpoint: str = "http://localhost:11434",
 ) -> tuple[str, bool]:
     prompt = SLIDE_PROMPT if frame_type == FrameType.SLIDE else CHALKBOARD_PROMPT
+    MAX_FRAME_SIZE = 50 * 1024 * 1024  # 50MB
+    if frame_path.stat().st_size > MAX_FRAME_SIZE:
+        logger.warning("Frame too large, skipping: %s", frame_path)
+        return "[NO_CONTENT]", False
     image_b64 = base64.b64encode(frame_path.read_bytes()).decode()
 
     with httpx.Client(timeout=120.0) as client:
@@ -65,7 +69,7 @@ def ocr_frame_latex(frame_path: Path) -> str:
         img = Image.open(frame_path)
         latex = _latex_model(img)
         return f"$$\n{latex}\n$$"
-    except Exception:
+    except (ImportError, OSError, ValueError, RuntimeError):
         return ""
 
 

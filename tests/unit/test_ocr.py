@@ -67,3 +67,12 @@ def test_ocr_with_fallback_no_math(tmp_path):
         mock_client.return_value.post.return_value = _mock_response("Regular slide text")
         result = ocr_frame_with_fallback(frame, FrameType.SLIDE)
     assert result == "Regular slide text"
+
+
+
+def test_ocr_frame_skips_large_file(tmp_path):
+    big_frame = tmp_path / "big.jpg"
+    big_frame.write_bytes(b"x" * (51 * 1024 * 1024))  # 51MB
+    text, is_math = ocr_frame(big_frame, FrameType.SLIDE)
+    assert text == "[NO_CONTENT]"
+    assert not is_math
