@@ -65,3 +65,17 @@ def test_extract_keyframes_min_interval_filter(tmp_path):
     assert len(result) == 2
     assert result[0].source_timestamp_sec == 10.0
     assert result[1].source_timestamp_sec == 20.0
+
+
+
+def test_threshold_validation_string():
+    from tools.video.extractor import _validate_threshold
+    assert _validate_threshold("0.5") == 0.5
+
+def test_threshold_validation_clamp_high():
+    from tools.video.extractor import _validate_threshold
+    assert _validate_threshold(5.0) == 1.0
+
+def test_threshold_validation_clamp_low():
+    from tools.video.extractor import _validate_threshold
+    assert _validate_threshold(-1.0) == 0.0

@@ -70,13 +70,28 @@ class TelemetryStore:
             "sample_count": n,
         }
 
+    def _validate_sql(self, sql: str) -> str:
+        import re
+        stripped = sql.strip()
+        if not stripped.upper().startswith("SELECT"):
+            raise ValueError("Only SELECT queries are allowed")
+        if ";" in stripped:
+            raise ValueError("Multiple statements not allowed")
+        if "--" in stripped or "/*" in stripped:
+            raise ValueError("SQL comments not allowed")
+        _BLOCKED = {"ATTACH", "DETACH", "LOAD_EXTENSION", "PRAGMA", "INSERT",
+                    "UPDATE", "DELETE", "DROP", "CREATE", "ALTER", "UNION", "INTO"}
+        tokens = set(re.findall(r'\b[A-Z_]+\b', stripped.upper()))
+        blocked = tokens & _BLOCKED
+        if blocked:
+            raise ValueError(f"Blocked SQL keywords: {blocked}")
+        return stripped
+
     def query(self, sql: str, params: tuple = ()) -> list[dict]:
         if not self.enabled or not self._conn:
             return []
-        stripped = sql.strip().upper()
-        if not stripped.startswith("SELECT"):
-            raise ValueError("Only SELECT queries are allowed")
-        rows = self._conn.execute(sql, params).fetchall()
+        validated = self._validate_sql(sql)
+        rows = self._conn.execute(validated, params).fetchall()
         return [dict(r) for r in rows]
 
     def close(self):

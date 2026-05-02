@@ -129,3 +129,36 @@ class TestMCPTelemetryTools:
         result = query_telemetry("DELETE FROM tool_executions", store)
         assert result["status"] == "error"
         assert "SELECT" in result["error"]
+
+
+
+class TestSQLValidation:
+    def test_query_rejects_union(self, tmp_path):
+        store = TelemetryStore(str(tmp_path / "t.db"), enabled=True)
+        with pytest.raises(ValueError, match="Blocked SQL keywords"):
+            store.query("SELECT 1 UNION SELECT 2")
+
+    def test_query_rejects_attach(self, tmp_path):
+        store = TelemetryStore(str(tmp_path / "t.db"), enabled=True)
+        with pytest.raises(ValueError, match="Blocked SQL keywords"):
+            store.query("SELECT 1 ATTACH DATABASE '/tmp/evil.db' AS evil")
+
+    def test_query_rejects_semicolon(self, tmp_path):
+        store = TelemetryStore(str(tmp_path / "t.db"), enabled=True)
+        with pytest.raises(ValueError, match="Multiple statements"):
+            store.query("SELECT 1; DROP TABLE tool_executions")
+
+    def test_query_rejects_comments(self, tmp_path):
+        store = TelemetryStore(str(tmp_path / "t.db"), enabled=True)
+        with pytest.raises(ValueError, match="SQL comments"):
+            store.query("SELECT 1 -- drop everything")
+
+    def test_query_rejects_load_extension(self, tmp_path):
+        store = TelemetryStore(str(tmp_path / "t.db"), enabled=True)
+        with pytest.raises(ValueError, match="Blocked SQL keywords"):
+            store.query("SELECT load_extension('/evil.so')")
+
+    def test_query_allows_valid_select(self, tmp_path):
+        store = TelemetryStore(str(tmp_path / "t.db"), enabled=True)
+        result = store.query("SELECT COUNT(*) as cnt FROM tool_executions")
+        assert isinstance(result, list)

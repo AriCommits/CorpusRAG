@@ -40,3 +40,24 @@ def test_download_video_no_ytdlp(tmp_path):
     with patch("tools.video.download.subprocess.run", side_effect=FileNotFoundError):
         with pytest.raises(RuntimeError, match="yt-dlp not found"):
             download_video("https://youtube.com/watch?v=abc", tmp_path)
+
+
+
+def test_validate_url_blocks_file_scheme():
+    from tools.video.download import validate_video_url
+    with pytest.raises(ValueError, match="Unsupported URL scheme"):
+        validate_video_url("file:///etc/passwd")
+
+def test_validate_url_blocks_private_ip():
+    from tools.video.download import validate_video_url
+    with pytest.raises(ValueError, match="Internal"):
+        validate_video_url("http://169.254.169.254/latest/meta-data/")
+
+def test_validate_url_blocks_localhost():
+    from tools.video.download import validate_video_url
+    with pytest.raises(ValueError, match="Internal"):
+        validate_video_url("http://localhost:8080/secret")
+
+def test_validate_url_allows_public():
+    from tools.video.download import validate_video_url
+    assert validate_video_url("https://youtube.com/watch?v=abc") == "https://youtube.com/watch?v=abc"

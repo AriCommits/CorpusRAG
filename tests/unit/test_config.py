@@ -16,6 +16,7 @@ from config import (
     merge_configs,
 )
 from config.loader import deep_merge, parse_env_overrides
+from utils.security import SecurityError
 
 
 class TestLLMConfig:
@@ -324,3 +325,40 @@ class TestMergeConfigs:
         assert result.llm.model == "mistral"
         assert result.llm.temperature == 0.5
         assert result.llm.endpoint == base_endpoint
+
+
+class TestAPIKeyMasking:
+    def test_to_dict_masks_api_key(self):
+        config = BaseConfig(
+            llm=LLMConfig(api_key="sk-secret-key-12345"),
+        )
+        d = config.to_dict()
+        assert d["llm"]["api_key"] == "***"
+        # Direct access still works
+        assert config.llm.api_key == "sk-secret-key-12345"
+
+    def test_to_dict_none_key_stays_none(self):
+        config = BaseConfig(llm=LLMConfig(api_key=None))
+        d = config.to_dict()
+        assert d["llm"]["api_key"] is None
+
+class TestEnvOverrideBlocklist:
+    def test_env_override_blocks_endpoint(self, monkeypatch):
+        monkeypatch.setenv("CC_LLM_ENDPOINT", "http://evil.com")
+        with pytest.raises(SecurityError, match="blocked"):
+            parse_env_overrides()
+
+    def test_env_override_blocks_api_key(self, monkeypatch):
+        monkeypatch.setenv("CC_LLM_API_KEY", "stolen")
+        with pytest.raises(SecurityError, match="blocked"):
+            parse_env_overrides()
+
+    def test_env_override_blocks_host(self, monkeypatch):
+        monkeypatch.setenv("CC_DATABASE_HOST", "evil.com")
+        with pytest.raises(SecurityError, match="blocked"):
+            parse_env_overrides()
+
+    def test_env_override_allows_model(self, monkeypatch):
+        monkeypatch.setenv("CC_LLM_MODEL", "llama3")
+        result = parse_env_overrides()
+        assert result["llm"]["model"] == "llama3"
