@@ -5,6 +5,7 @@ from config.base import BaseConfig
 from db.base import DatabaseBackend
 from .tools import dev as dev_tools
 from .tools import learn as learn_tools
+from .tools import video as video_tools
 
 VALID_PROFILES = ("dev", "learn", "full")
 
@@ -154,9 +155,60 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
                       input_size=len(transcript_text), success=result.get("status") == "success")
         return result
 
+    register_video_tools(mcp, config, db, store)
+
     @mcp.prompt()
     def study_session_prompt(collection: str, topic: str) -> str:
         return f'Study "{collection}" about "{topic}".\n1. generate_summary\n2. generate_flashcards\n3. generate_quiz'
+
+
+def register_video_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
+    import time
+    from tools.video.jobs import get_job_manager
+    from tools.video.config import VideoConfig
+
+    video_config = VideoConfig.from_dict(config.to_dict())
+    job_mgr = get_job_manager(
+        max_workers=video_config.max_concurrent_jobs,
+        expiry_seconds=video_config.job_expiry_seconds,
+    )
+
+    @mcp.tool()
+    def video_ingest_local(path: str, collection: str, vision_model: str | None = None, scene_threshold: float | None = None) -> dict:
+        """Ingest a local video file using visual OCR. Returns a job_id for async tracking."""
+        start = time.perf_counter()
+        result = video_tools.video_ingest_local(path, collection, config, db, job_mgr, vision_model, scene_threshold)
+        if store:
+            store.log("video_ingest_local", (time.perf_counter() - start) * 1000, input_size=len(path), success=True)
+        return result
+
+    @mcp.tool()
+    def video_ingest_url(url: str, collection: str, vision_model: str | None = None, scene_threshold: float | None = None) -> dict:
+        """Download a video from URL and ingest using visual OCR. Returns a job_id."""
+        start = time.perf_counter()
+        result = video_tools.video_ingest_url(url, collection, config, db, job_mgr, vision_model, scene_threshold)
+        if store:
+            store.log("video_ingest_url", (time.perf_counter() - start) * 1000, input_size=len(url), success=True)
+        return result
+
+    @mcp.tool()
+    def video_combined_pipeline(path_or_url: str, collection: str, include_audio: bool = True, include_visual: bool = True) -> dict:
+        """Run combined audio transcription + visual OCR pipeline. Returns a job_id."""
+        start = time.perf_counter()
+        result = video_tools.video_combined_pipeline(path_or_url, collection, config, db, job_mgr, include_audio, include_visual)
+        if store:
+            store.log("video_combined_pipeline", (time.perf_counter() - start) * 1000, input_size=len(path_or_url), success=True)
+        return result
+
+    @mcp.tool()
+    def video_job_status(job_id: str) -> dict:
+        """Check the status of a video processing job."""
+        return video_tools.video_job_status(job_id, job_mgr)
+
+    @mcp.tool()
+    def video_list_jobs() -> dict:
+        """List all video processing jobs and their status."""
+        return video_tools.video_list_jobs(job_mgr)
 
 
 def register_profile(mcp: FastMCP, profile: str, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
