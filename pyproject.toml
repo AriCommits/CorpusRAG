@@ -185,7 +185,8 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
+markers = ["live: tests requiring running ChromaDB and Ollama"]
+addopts = "-v --tb=short -m 'not live'"
 filterwarnings = [
   "ignore::DeprecationWarning",
 ]

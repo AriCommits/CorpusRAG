@@ -283,6 +283,30 @@ def ui(collection: str, config: str):
     app = RAGApp(agent, collection)
     app.run()
 
+@rag.command()
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def doctor(config):
+    """Run health checks against configured services."""
+    from cli_common import load_cli_config
+
+    from .doctor import run_doctor
+
+    cfg = load_cli_config(config, RAGConfig)
+    results = run_doctor(cfg)
+
+    for passed, msg in results:
+        icon = "[OK]" if passed else "[FAIL]"
+        click.echo(f"  {icon} {msg}")
+
+    failures = sum(1 for p, _ in results if not p)
+    if failures:
+        click.echo(f"\n{failures} check(s) failed.")
+        raise SystemExit(1)
+    else:
+        click.echo("\nAll checks passed!")
+
+
+
 
 def main():
     """Entry point for corpus-rag CLI."""
