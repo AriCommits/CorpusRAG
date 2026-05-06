@@ -37,6 +37,7 @@ class TestCorpusGroup:
             "video",
             "orchestrate",
             "flashcards",
+            "handwriting",
             "summaries",
             "quizzes",
             "db",
@@ -72,6 +73,11 @@ class TestCorpusGroup:
     def test_flashcards_reachable(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["flashcards", "--help"])
         assert result.exit_code == 0
+
+    def test_handwriting_subgroup_reachable(self, runner: CliRunner) -> None:
+        result = runner.invoke(corpus, ["handwriting", "--help"])
+        assert result.exit_code == 0
+        assert "ingest" in result.output
 
     def test_summaries_reachable(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["summaries", "--help"])

@@ -14,6 +14,7 @@ from cli_lazy import LazyGroup
         "video": "tools.video.cli:video",
         "orchestrate": "orchestrations.cli:orchestrate",
         "flashcards": "tools.flashcards.cli:flashcards",
+        "handwriting": "tools.handwriting.cli:handwriting",
         "summaries": "tools.summaries.cli:summaries",
         "quizzes": "tools.quizzes.cli:quizzes",
         "db": "db.management:db",
