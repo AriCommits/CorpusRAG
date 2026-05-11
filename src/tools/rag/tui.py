@@ -9,6 +9,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
+from textual.screen import Screen
 from textual.widgets import (
     Footer,
     Header,
@@ -17,6 +18,7 @@ from textual.widgets import (
     ListItem,
     ListView,
     Markdown,
+    Select,
     Static,
     Switch,
 )
@@ -116,13 +118,38 @@ def _validate_message_id(message_id: str) -> bool:
     return bool(re.match(r"^[a-f0-9\-]{36}$", message_id))
 
 
+class CollectionPickerScreen(Screen):
+    """Screen to pick a collection when none specified."""
+
+    def __init__(self, collections: list[str]):
+        super().__init__()
+        self.collections = collections
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical():
+            yield Label("Select a collection to use:")
+            yield Select(
+                [(c, c) for c in self.collections],
+                id="collection-select",
+                prompt="Choose collection...",
+            )
+        yield Footer()
+
+    @on(Select.Changed, "#collection-select")
+    def on_select(self, event: Select.Changed) -> None:
+        if event.value and event.value != Select.BLANK:
+            self.dismiss(event.value)
+
+
 class RAGApp(App):
     """Textual RAG Application."""
 
     BINDINGS = [
-        ("f2", "manage_collections", "Collections [F2]"),
-        ("f5", "sync", "Sync [F5]"),
-        ("f1", "show_help", "Help [F1]"),
+        ("ctrl+o", "manage_collections", "Collections [^O]"),
+        ("ctrl+s", "sync", "Sync [^S]"),
+        ("ctrl+h", "show_help", "Help [^H]"),
+        ("ctrl+q", "quit", "Quit [^Q]"),
     ]
 
     CSS = """
@@ -175,7 +202,7 @@ class RAGApp(App):
     }
     """
 
-    def __init__(self, agent: RAGAgent, collection: str):
+    def __init__(self, agent: RAGAgent, collection: str | None):
         super().__init__()
         self.agent = agent
         self.collection = collection
@@ -205,12 +232,24 @@ class RAGApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        """Initialize the app."""
+        if self.collection is None:
+            collections = self.agent.db.list_collections()
+            if not collections:
+                self.notify("No collections found. Ingest documents first.", severity="error")
+                self.exit()
+                return
+            self.push_screen(CollectionPickerScreen(collections), self._on_collection_picked)
+        else:
+            self._init_session()
+
+    def _on_collection_picked(self, collection: str) -> None:
+        self.collection = collection
+        self._init_session()
+
+    def _init_session(self) -> None:
         self.refresh_sessions()
         self.load_session(self.current_session_id)
-        # Update footer with current strategy
         self._update_footer_strategy()
-        # Initial sync check (dry-run)
         self.run_sync(dry_run=True)
 
     def _update_footer_strategy(self) -> None:

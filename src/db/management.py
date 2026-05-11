@@ -9,11 +9,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import click
 
 from cli_common import load_cli_config
 
 from . import ChromaDBBackend
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """JSON encoder that handles numpy arrays."""
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 
 def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
@@ -116,7 +125,7 @@ class DatabaseManager:
 
                 # Write data to temporary file
                 with open(temp_path, "w", encoding="utf-8") as f:
-                    json.dump(backup_data, f, indent=2, ensure_ascii=False)
+                    json.dump(backup_data, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
 
                 # Create compressed archive
                 backup_path.parent.mkdir(parents=True, exist_ok=True)
@@ -271,7 +280,7 @@ class DatabaseManager:
         collection_name: str,
         export_path: Path,
         format: str = "json",
-        include_embeddings: bool = False,
+        include_embeddings: bool = True,
     ) -> dict[str, Any]:
         """
         Export collection data in various formats.
@@ -319,12 +328,12 @@ class DatabaseManager:
 
             if format.lower() == "json":
                 with open(export_path, "w", encoding="utf-8") as f:
-                    json.dump(export_data, f, indent=2, ensure_ascii=False)
+                    json.dump(export_data, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
 
             elif format.lower() == "jsonl":
                 with open(export_path, "w", encoding="utf-8") as f:
                     for item in export_data:
-                        f.write(json.dumps(item, ensure_ascii=False) + "\n")
+                        f.write(json.dumps(item, ensure_ascii=False, cls=NumpyEncoder) + "\n")
 
             elif format.lower() == "csv":
                 import csv
@@ -447,6 +456,9 @@ class DatabaseManager:
 def db(ctx: click.Context, config: str, log_level: str) -> None:
     """Database management commands."""
     logging.basicConfig(level=getattr(logging, log_level.upper(), logging.INFO))
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("chromadb").setLevel(logging.WARNING)
+    logging.getLogger("chromadb.telemetry").setLevel(logging.WARNING)
     ctx.ensure_object(dict)
     ctx.obj["manager"] = DatabaseManager(config)
 
@@ -512,21 +524,21 @@ def backup_all_cmd(ctx: click.Context, output_dir: Path, no_metadata: bool) -> N
     show_default=True,
     help="Export format",
 )
-@click.option("--include-embeddings", is_flag=True, help="Include embedding vectors")
+@click.option("--no-embeddings", is_flag=True, help="Exclude embedding vectors")
 @click.pass_context
 def export_cmd(
     ctx: click.Context,
     collection: str,
     output: Path,
     export_format: str,
-    include_embeddings: bool,
+    no_embeddings: bool,
 ) -> None:
     """Export a collection."""
     summary = _manager(ctx).export_collection(
         collection,
         output,
         export_format,
-        include_embeddings,
+        include_embeddings=not no_embeddings,
     )
     click.echo(f"Export completed: {summary}")
 

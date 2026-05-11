@@ -254,9 +254,9 @@ def chat(
 
 
 @rag.command()
-@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--collection", "-c", required=False, default=None, help="Collection name")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def ui(collection: str, config: str):
+def ui(collection: str | None, config: str):
     """Launch the Terminal User Interface."""
     # Check if setup has been completed
     marker_file = Path(".corpus_setup_complete")

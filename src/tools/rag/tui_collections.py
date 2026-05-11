@@ -16,8 +16,6 @@ class CollectionManagerScreen(Screen):
 
     BINDINGS = [
         ("q", "quit_screen", "Quit Screen"),
-        ("r", "rename_collection", "Rename"),
-        ("m", "merge_collections", "Merge"),
         ("d", "delete_collection", "Delete"),
         ("i", "collection_info", "Info"),
     ]
@@ -54,7 +52,7 @@ class CollectionManagerScreen(Screen):
             yield DataTable(id="collections-table")
             with Vertical(id="actions-panel"):
                 yield Label(
-                    "Press bindings to act on selected row: r=rename, m=merge, d=delete, i=info, q=quit"
+                    "Press bindings to act on selected row: d=delete, i=info, q=quit"
                 )
         yield Footer()
 
@@ -124,14 +122,6 @@ class CollectionManagerScreen(Screen):
             self.refresh_table()
         except Exception as e:
             self.notify(f"Error deleting collection: {e}", severity="error")
-
-    # Rename and merge could prompt for inputs using a modal, but for simplicity we
-    # will handle basic notifications or implement a minimal input prompt later.
-    def action_rename_collection(self) -> None:
-        self.notify("Rename feature from TUI requires an input dialog (coming soon!)")
-
-    def action_merge_collections(self) -> None:
-        self.notify("Merge feature from TUI requires an input dialog (coming soon!)")
 
 
 @slash_command("collections", "Manage database collections via TUI")

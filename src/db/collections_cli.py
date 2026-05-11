@@ -54,6 +54,13 @@ def info_collection(name: str, config: str) -> None:
         console.print("[red]Stats are only supported on ChromaDB backends.[/red]")
         return
 
+    # Check collection exists
+    collections = db.list_collections()
+    if name not in collections:
+        console.print(f"[red]Error:[/red] Collection '{name}' not found.")
+        console.print(f"Available collections: {', '.join(collections) if collections else '(none)'}")
+        return
+
     try:
         stats = db.get_collection_stats(name)
 
@@ -61,81 +68,12 @@ def info_collection(name: str, config: str) -> None:
         table.add_column("Metric", style="cyan")
         table.add_column("Value", style="magenta")
 
-        table.add_row("Document Count", str(stats["doc_count"]))
-        table.add_row("Chunk Count", str(stats["chunk_count"]))
-        table.add_row("Unique Files", str(stats["unique_files"]))
-        table.add_row("Estimated Size (bytes)", str(stats["size_estimate"]))
+        table.add_row("Document Count", str(stats.get("doc_count", "N/A")))
+        table.add_row("Chunk Count", str(stats.get("chunk_count", "N/A")))
+        table.add_row("Unique Files", str(stats.get("unique_files", "N/A")))
+        table.add_row("Estimated Size (bytes)", str(stats.get("size_estimate", "N/A")))
 
         console.print(table)
-    except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
-
-
-@collections_cmd.command(name="rename")
-@click.argument("old_name")
-@click.argument("new_name")
-@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def rename_collection(old_name: str, new_name: str, config: str) -> None:
-    """Rename a collection."""
-    cfg, db = load_cli_db(config, BaseConfig)
-
-    if not isinstance(db, ChromaDBBackend):
-        console.print("[red]Rename is only supported on ChromaDB backends.[/red]")
-        return
-
-    try:
-        col = db.get_collection(old_name)
-        col.modify(name=new_name)
-        console.print(f"[green]Successfully renamed '{old_name}' to '{new_name}'.[/green]")
-    except Exception as e:
-        console.print(f"[red]Error:[/red] {e}")
-
-
-@collections_cmd.command(name="merge")
-@click.argument("source", nargs=-1)
-@click.argument("destination")
-@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def merge_collections(source: tuple[str, ...], destination: str, config: str) -> None:
-    """Merge source collections into destination collection."""
-    cfg, db = load_cli_db(config, BaseConfig)
-
-    if not isinstance(db, ChromaDBBackend):
-        console.print("[red]Merge is only supported on ChromaDB backends.[/red]")
-        return
-
-    try:
-        try:
-            dest_col = db.get_collection(destination)
-        except Exception:
-            db.create_collection(destination)
-            dest_col = db.get_collection(destination)
-
-        total_merged = 0
-        for src in source:
-            source_col = db.get_collection(src)
-            data = source_col.get(include=["metadatas", "documents", "embeddings"])
-
-            if data["ids"]:
-                # Check for embeddings because it can be None if not computed or disabled
-                if data["embeddings"] is not None:
-                    dest_col.add(
-                        ids=data["ids"],
-                        documents=data["documents"],
-                        metadatas=data["metadatas"],
-                        embeddings=data["embeddings"],
-                    )
-                else:
-                    dest_col.add(
-                        ids=data["ids"],
-                        documents=data["documents"],
-                        metadatas=data["metadatas"],
-                    )
-                console.print(
-                    f"[green]Successfully merged {len(data['ids'])} items from '{src}' to '{destination}'.[/green]"
-                )
-                total_merged += len(data["ids"])
-            else:
-                console.print(f"Source collection '{src}' is empty.")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
 

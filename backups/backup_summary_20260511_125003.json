@@ -1,0 +1,14 @@
+{
+  "backup_timestamp": "20260511_125003",
+  "total_collections": 1,
+  "successful_backups": 0,
+  "failed_backups": 1,
+  "backup_directory": "backups",
+  "individual_summaries": [
+    {
+      "collection_name": "rag_notes",
+      "status": "failed",
+      "error": "Object of type ndarray is not JSON serializable"
+    }
+  ]
+}

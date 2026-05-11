@@ -10,13 +10,7 @@ from cli_lazy import LazyGroup
 @click.group(
     cls=LazyGroup,
     lazy_subcommands={
-        "rag": "tools.rag.cli:rag",
-        "video": "tools.video.cli:video",
-        "orchestrate": "orchestrations.cli:orchestrate",
-        "flashcards": "tools.flashcards.cli:flashcards",
-        "handwriting": "tools.handwriting.cli:handwriting",
-        "summaries": "tools.summaries.cli:summaries",
-        "quizzes": "tools.quizzes.cli:quizzes",
+        "tools": "tools.cli:tools",
         "db": "db.management:db",
         "collections": "db.collections_cli:collections_cmd",
         "dev": "cli_dev:dev",
