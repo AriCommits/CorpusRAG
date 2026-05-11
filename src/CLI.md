@@ -6,155 +6,176 @@ All commands are available via the `corpus` entry point after `pip install corpu
 corpus --help
 ```
 
-## RAG
+## Command Tree
 
-### Ingest documents
-
-```bash
-corpus rag ingest ./documents --collection notes
-corpus rag ingest ./lecture.pdf --collection cs101
+```
+corpus
+├── setup              # Interactive setup wizard
+├── doctor             # Health checks (DB, LLM, embeddings)
+├── benchmark          # Performance benchmarks
+├── tools
+│   ├── rag            # RAG pipeline
+│   │   ├── ingest     # Ingest documents
+│   │   ├── sync       # Incremental sync
+│   │   ├── query      # One-shot query
+│   │   ├── chat       # Interactive CLI chat
+│   │   └── ui         # TUI chat interface
+│   ├── video          # Video transcription + OCR
+│   ├── handwriting    # Handwriting OCR ingest
+│   ├── summaries      # Summary generation
+│   └── learning
+│       ├── flashcards # Flashcard generation
+│       └── quizzes    # Quiz generation
+├── db
+│   ├── list           # List collections
+│   ├── backup         # Backup collection(s)
+│   ├── restore        # Restore from backup
+│   ├── export         # Export collection data
+│   └── migrate        # Migrate between collections
+├── collections
+│   ├── list           # List collections
+│   ├── info           # Collection stats
+│   ├── delete         # Delete collection
+│   ├── update-path    # Update stored ingest path
+│   └── manage         # TUI collection manager
+└── dev                # Development tools
 ```
 
-### Query
+## Top-Level Commands
+
+### Setup
 
 ```bash
-corpus rag query "What is gradient descent?" --collection notes
-corpus rag query "explain backpropagation" --collection notes --strategy semantic
+corpus setup           # First-time interactive setup
+corpus setup --reset   # Re-run wizard
 ```
 
-Strategies: `hybrid` (default, best quality), `semantic` (faster), `keyword` (BM25 only).
-
-### Sync (incremental updates)
+### Doctor
 
 ```bash
-# Preview what would change
-corpus rag sync ./documents --collection notes --dry-run
-
-# Apply changes
-corpus rag sync ./documents --collection notes
+corpus doctor                    # Check DB, LLM, embedding connectivity
+corpus doctor --config alt.yaml  # Use alternate config
 ```
 
-Only new and modified files are processed. Deletions are detected automatically.
-
-### TUI chat interface
+### Benchmark
 
 ```bash
-corpus rag ui --collection notes
+corpus benchmark --collection notes --queries 10
 ```
 
-**Keyboard shortcuts:**
+## Tools
+
+### RAG
+
+```bash
+# Ingest documents
+corpus tools rag ingest ./documents --collection notes
+corpus tools rag ingest ./lecture.pdf --collection cs101
+
+# Query
+corpus tools rag query "What is gradient descent?" --collection notes
+corpus tools rag query "explain backprop" -c notes --strategy semantic
+
+# Sync (incremental updates)
+corpus tools rag sync --collection notes              # Uses stored ingest path
+corpus tools rag sync ./documents --collection notes   # Explicit path
+corpus tools rag sync ./docs -c notes --dry-run        # Preview changes
+
+# TUI chat interface
+corpus tools rag ui                    # Shows collection picker
+corpus tools rag ui --collection notes # Direct to collection
+
+# CLI chat
+corpus tools rag chat --collection notes
+```
+
+Strategies: `hybrid` (default), `semantic`, `keyword`.
+
+**TUI Keyboard Shortcuts:**
 
 | Key | Action |
 |-----|--------|
-| `ctrl+l` | Open Collection Manager |
-| `ctrl+s` | Trigger Incremental Sync |
-| `ctrl+q` | Quit |
+| `Ctrl+O` | Open Collection Manager |
+| `Ctrl+S` | Trigger Sync |
+| `Ctrl+H` | Show Help |
+| `Ctrl+Q` | Quit |
 
-**Slash commands:**
+**TUI Slash Commands:**
 
 | Command | Description |
 |---------|-------------|
 | `/help` | List all commands |
-| `/strategy <name>` | Switch to `hybrid`, `semantic`, or `keyword` |
-| `/filter <tag>` | Filter by tag (e.g., `/filter CS/ML`) |
+| `/collections` | Open collection manager |
+| `/switch <name>` | Switch active collection |
+| `/strategy <name>` | Switch retrieval strategy |
+| `/filter <tag>` | Filter by tag |
 | `/filter clear` | Clear filters |
 | `/sync` | Run sync |
 | `/sync status` | Preview changes |
-| `/export <fmt>` | Export to `anki`, `markdown`, or `json` |
+| `/export <fmt>` | Export session |
 | `/context` | Show context usage |
-| `/context clear` | Exclude old messages from context |
 | `/clear` | Clear session |
+
+### Video
+
+Requires `pip install corpusrag[video]`.
+
+```bash
+corpus tools video ingest lecture.mp4 -c cs6301
+corpus tools video ingest-url "https://youtube.com/watch?v=abc" -c ocw_mit
+corpus tools video jobs
+corpus tools video status <job_id>
+```
+
+### Handwriting
+
+```bash
+corpus tools handwriting ingest ./notes-photos -c handwritten
+```
+
+### Summaries
+
+Requires `pip install corpusrag[generators]`.
+
+```bash
+corpus tools summaries generate --collection notes --length medium
+corpus tools summaries generate -c notes --export markdown -o summary.md
+```
+
+### Learning
+
+Requires `pip install corpusrag[generators]`.
+
+```bash
+# Flashcards
+corpus tools learning flashcards generate --collection notes --count 15
+corpus tools learning flashcards generate -c notes --export anki -o cards.apkg
+
+# Quizzes
+corpus tools learning quizzes generate --collection notes --count 10
+corpus tools learning quizzes generate -c notes --format json -o quiz.json
+```
+
+## Database Management
+
+```bash
+corpus db list
+corpus db backup my_collection -o backup.tar.gz
+corpus db backup --all -o ./backups/
+corpus db restore backup.tar.gz --name new_name --overwrite
+corpus db export my_collection -o export.json              # Includes embeddings
+corpus db export my_collection -o export.json --no-embeddings
+corpus db migrate source_collection target_collection
+```
 
 ## Collections
 
 ```bash
 corpus collections list
 corpus collections info my_collection
-corpus collections rename old_name new_name
-corpus collections merge source1 source2 destination
 corpus collections delete my_collection
-```
-
-## Flashcards
-
-Requires `pip install corpusrag[generators]`.
-
-```bash
-corpus flashcards generate --collection notes --count 15
-corpus flashcards generate --collection notes --export anki --output cards.apkg
-```
-
-## Summaries
-
-Requires `pip install corpusrag[generators]`.
-
-```bash
-corpus summaries generate --collection notes --length medium
-corpus summaries generate --collection notes --export markdown --output summary.md
-```
-
-## Quizzes
-
-Requires `pip install corpusrag[generators]`.
-
-```bash
-corpus quizzes generate --collection notes --count 10
-corpus quizzes generate --collection notes --format json --output quiz.json
-```
-
-## Video Transcription
-
-Requires `pip install corpusrag[video]`.
-
-```bash
-corpus video transcribe lecture.mp4 --collection cs101
-corpus video clean transcript.txt --output cleaned.md
-```
-### Visual OCR Pipeline
-
-```bash
-# Ingest a local video file using visual OCR
-corpus video ingest lecture.mp4 -c cs6301
-corpus video ingest lecture.mp4 -c cs6301 --threshold 0.15 --model llava
-
-# Download and ingest from YouTube
-corpus video ingest-url "https://youtube.com/watch?v=abc" -c ocw_mit
-
-# Check job status
-corpus video jobs
-corpus video status <job_id>
-```
-
-Options:
-- `--collection, -c` — Target collection (required)
-- `--threshold` — Scene detection sensitivity (0.0-1.0, default 0.3)
-- `--model` — Ollama vision model (default: llava)
-- `--no-latex` — Disable pix2tex math fallback
-- `--context-window` — Adjacent frames per chunk (default: 1)
-- `--keep-frames` — Keep extracted frames after ingest
-
-
-## Orchestrations
-
-```bash
-# Full lecture pipeline: transcribe → clean → ingest → generate materials
-corpus orchestrate lecture lecture.mp4 --course CS101
-
-# Study session: summary + flashcards + quiz from existing collection
-corpus orchestrate study --collection notes --topic "neural networks"
-```
-
-## Benchmarking
-
-```bash
-corpus benchmark --collection notes --queries 10
-```
-
-## Setup Wizard
-
-```bash
-corpus setup           # First-time interactive setup
-corpus setup --reset   # Re-run wizard
+corpus collections update-path my_collection ./new/docs/path
+corpus collections manage   # TUI manager
 ```
 
 ## Dev Tools
@@ -167,17 +188,8 @@ corpus dev fmt
 
 ## Configuration
 
-All commands accept `--config <path>` to use a custom config file (default: `configs/base.yaml`).
+All commands accept `--config <path>` (default: `configs/base.yaml`).
 
 ```bash
-corpus rag query "hello" --collection notes --config configs/production.yaml
-```
-
-## Environment Variables
-
-Override any config value with `CC_` prefix:
-
-```bash
-CC_LLM_MODEL=mistral corpus rag query "hello" --collection notes
-CC_DATABASE_MODE=http corpus rag ingest ./docs --collection notes
+corpus tools rag query "hello" -c notes --config configs/production.yaml
 ```

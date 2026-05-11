@@ -1,11 +1,11 @@
 """Tests for the handwriting corrector module."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
 from src.tools.handwriting.corrector import (
+    CORRECTION_PROMPT,
     correct_ocr_output,
     estimate_correction_confidence,
-    CORRECTION_PROMPT,
 )
 
 

@@ -1,7 +1,7 @@
 """Tests for LLM backend rate limiting integration."""
 
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -26,9 +26,7 @@ class TestLLMBackendRateLimitConfig:
 
     def test_backend_with_rate_limit_concurrent(self):
         """Test that LLMConfig with concurrent limit creates limiter."""
-        config = LLMConfig(
-            endpoint="http://localhost:11434", rate_limit_concurrent=5
-        )
+        config = LLMConfig(endpoint="http://localhost:11434", rate_limit_concurrent=5)
         backend = OllamaBackend(config)
         assert backend._rate_limiter is not None
 
@@ -63,9 +61,7 @@ class TestLLMRateLimitChecking:
 
     def test_check_rate_limit_with_limiter(self):
         """Test that _check_rate_limit respects rpm limits."""
-        config = LLMConfig(
-            endpoint="http://localhost:11434", rate_limit_rpm=2
-        )
+        config = LLMConfig(endpoint="http://localhost:11434", rate_limit_rpm=2)
         backend = OllamaBackend(config)
 
         # Make 2 requests within the limit
@@ -76,9 +72,7 @@ class TestLLMRateLimitChecking:
 
     def test_start_request_tracking(self):
         """Test that start_request properly tracks concurrent operations."""
-        config = LLMConfig(
-            endpoint="http://localhost:11434", rate_limit_concurrent=5
-        )
+        config = LLMConfig(endpoint="http://localhost:11434", rate_limit_concurrent=5)
         backend = OllamaBackend(config)
 
         # Check that operation is tracked
@@ -90,9 +84,7 @@ class TestLLMRateLimitChecking:
 
     def test_end_request_tracking(self):
         """Test that end_request properly untracks concurrent operations."""
-        config = LLMConfig(
-            endpoint="http://localhost:11434", rate_limit_concurrent=5
-        )
+        config = LLMConfig(endpoint="http://localhost:11434", rate_limit_concurrent=5)
         backend = OllamaBackend(config)
 
         # Start and end operations
@@ -113,9 +105,7 @@ class TestRateLimitBlocking:
     @patch("llm.backend.time.sleep")
     def test_rate_limit_blocks_when_exceeded(self, mock_sleep):
         """Test that rate limiting blocks/waits when limit exceeded."""
-        config = LLMConfig(
-            endpoint="http://localhost:11434", rate_limit_rpm=1
-        )
+        config = LLMConfig(endpoint="http://localhost:11434", rate_limit_rpm=1)
         backend = OllamaBackend(config)
 
         # Make first request (should succeed)
@@ -127,7 +117,7 @@ class TestRateLimitBlocking:
         # Now check_rate_limit should trigger a wait
         with patch.object(backend._rate_limiter, "_operation_history") as mock_history:
             # Simulate being at the limit
-            key = ("default", "llm")
+            _ = ("default", "llm")
             mock_history.__getitem__.return_value = [time.time()]
 
             with patch.object(backend._rate_limiter, "_lock"):
@@ -184,9 +174,7 @@ class TestRateLimitBlocking:
 
     def test_end_request_called_on_exception(self):
         """Test that _end_request is called even if stream_completion raises."""
-        config = LLMConfig(
-            endpoint="http://localhost:11434", rate_limit_concurrent=5
-        )
+        config = LLMConfig(endpoint="http://localhost:11434", rate_limit_concurrent=5)
         backend = OllamaBackend(config)
 
         # Mock stream_completion to raise an error

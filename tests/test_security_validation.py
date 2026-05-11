@@ -2,8 +2,6 @@
 
 import re
 
-import pytest
-
 
 def _validate_message_id(message_id: str) -> bool:
     """Validate message ID format (UUID only).

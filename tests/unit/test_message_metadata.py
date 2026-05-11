@@ -2,8 +2,6 @@
 
 from datetime import datetime
 
-import pytest
-
 from tools.rag.message import MessageMetadata
 
 

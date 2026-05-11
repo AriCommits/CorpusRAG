@@ -60,7 +60,9 @@ def main() -> None:
     )
     parser.add_argument("--host", default="0.0.0.0", help="Host (HTTP only)")
     parser.add_argument("--port", type=int, default=8000, help="Port (HTTP only)")
-    parser.add_argument("--no-auth", action="store_true", help="Disable auth (HTTP only)")
+    parser.add_argument(
+        "--no-auth", action="store_true", help="Disable auth (HTTP only)"
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)

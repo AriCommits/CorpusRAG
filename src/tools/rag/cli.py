@@ -63,13 +63,29 @@ def ingest(path: str, collection: str, config: str):
 
 
 @rag.command()
-@click.argument("path", type=click.Path(exists=True))
+@click.argument("path", type=click.Path(exists=True), required=False, default=None)
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--dry-run", is_flag=True, help="Report changes without applying them")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def sync(path: str, collection: str, dry_run: bool, config: str):
+def sync(path: str | None, collection: str, dry_run: bool, config: str):
     """Sync a directory with a RAG collection (detect new, modified, deleted files)."""
     cfg, db = load_cli_db(config, RAGConfig)
+
+    # If no path provided, try to read from collection metadata
+    if path is None:
+        full_collection = f"{cfg.collection_prefix}_{collection}"
+        try:
+            col = db.get_collection(full_collection)
+            meta = getattr(col, "metadata", {}) or {}
+            path = meta.get("ingest_source_path")
+        except Exception:
+            pass
+        if not path:
+            raise click.UsageError(
+                "No path provided and no stored ingest path found for this collection. "
+                "Either provide a path argument or run 'corpus tools rag ingest' first."
+            )
+
     from .sync import RAGSyncer
 
     syncer = RAGSyncer(cfg, db)
@@ -85,14 +101,18 @@ def sync(path: str, collection: str, dry_run: bool, config: str):
     if dry_run:
         click.echo("[DRY RUN] Sync complete: +0 chunks, -0 chunks")
     else:
-        click.echo(f"Sync complete: +{res.chunks_added} chunks, -{res.chunks_removed} chunks")
+        click.echo(
+            f"Sync complete: +{res.chunks_added} chunks, -{res.chunks_removed} chunks"
+        )
 
 
 @rag.command()
 @click.argument("query")
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--top-k", "-k", default=None, type=int, help="Number of results")
-@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
+@click.option(
+    "--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)"
+)
 @click.option(
     "--section",
     "-s",
@@ -139,13 +159,17 @@ def query(
             if len(validated_tags) == 1:
                 tag_filter = {"tags": {"$contains": validated_tags[0]}}
             else:
-                tag_filter = {"$or": [{"tags": {"$contains": t}} for t in validated_tags]}
+                tag_filter = {
+                    "$or": [{"tags": {"$contains": t}} for t in validated_tags]
+                }
 
         section_filter = None
         if section:
             # Validate all section values for safe ChromaDB usage
             try:
-                validated_sections = [_validate_filter_value(s, f"section '{s}'") for s in section]
+                validated_sections = [
+                    _validate_filter_value(s, f"section '{s}'") for s in section
+                ]
             except ValueError as e:
                 click.echo(f"Error: {e}", err=True)
                 return
@@ -177,7 +201,9 @@ def query(
 
 @rag.command()
 @click.option("--collection", "-c", required=True, help="Collection name")
-@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
+@click.option(
+    "--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)"
+)
 @click.option(
     "--section",
     "-s",
@@ -254,7 +280,9 @@ def chat(
 
 
 @rag.command()
-@click.option("--collection", "-c", required=False, default=None, help="Collection name")
+@click.option(
+    "--collection", "-c", required=False, default=None, help="Collection name"
+)
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ui(collection: str | None, config: str):
     """Launch the Terminal User Interface."""
@@ -282,29 +310,6 @@ def ui(collection: str | None, config: str):
     agent = RAGAgent(cfg, db)
     app = RAGApp(agent, collection)
     app.run()
-
-
-@rag.command()
-@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def doctor(config):
-    """Run health checks against configured services."""
-    from cli_common import load_cli_config
-
-    from .doctor import run_doctor
-
-    cfg = load_cli_config(config, RAGConfig)
-    results = run_doctor(cfg)
-
-    for passed, msg in results:
-        icon = "[OK]" if passed else "[FAIL]"
-        click.echo(f"  {icon} {msg}")
-
-    failures = sum(1 for p, _ in results if not p)
-    if failures:
-        click.echo(f"\n{failures} check(s) failed.")
-        raise SystemExit(1)
-    else:
-        click.echo("\nAll checks passed!")
 
 
 def main():

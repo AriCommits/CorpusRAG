@@ -27,7 +27,9 @@ class HybridStrategy:
 
     name = "hybrid"
 
-    def __init__(self, vectorstore: Any, embedder: Any, parent_store: Any, config: RAGConfig):
+    def __init__(
+        self, vectorstore: Any, embedder: Any, parent_store: Any, config: RAGConfig
+    ):
         """Initialize hybrid strategy.
 
         Args:
@@ -110,7 +112,9 @@ class HybridStrategy:
             return
 
         self.bm25_docs = collection_docs
-        tokenized_corpus = [doc.page_content.lower().split() for _, doc in collection_docs]
+        tokenized_corpus = [
+            doc.page_content.lower().split() for _, doc in collection_docs
+        ]
         self.bm25_index = BM25Okapi(tokenized_corpus)
 
     def _init_reranker(self) -> None:
@@ -257,7 +261,9 @@ class HybridStrategy:
         scores = self.bm25_index.get_scores(tokenized_query)
 
         # Rank documents by BM25 score
-        ranked_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)
+        ranked_indices = sorted(
+            range(len(scores)), key=lambda i: scores[i], reverse=True
+        )
 
         retrieved_docs = []
         rank = 1

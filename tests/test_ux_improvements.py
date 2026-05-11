@@ -2,8 +2,6 @@
 
 import time
 
-import pytest
-
 
 class MockRAGApp:
     """Mock RAG app for testing rate limiting and context features."""
@@ -19,9 +17,7 @@ class MockRAGApp:
             return True
         return False
 
-    def _calculate_context_usage(
-        self, included_count: int, max_messages: int = 40
-    ) -> float:
+    def _calculate_context_usage(self, included_count: int, max_messages: int = 40) -> float:
         """Calculate context window usage percentage."""
         return min(100, (included_count / max_messages) * 100)
 

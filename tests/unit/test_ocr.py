@@ -69,7 +69,6 @@ def test_ocr_with_fallback_no_math(tmp_path):
     assert result == "Regular slide text"
 
 
-
 def test_ocr_frame_skips_large_file(tmp_path):
     big_frame = tmp_path / "big.jpg"
     big_frame.write_bytes(b"x" * (51 * 1024 * 1024))  # 51MB

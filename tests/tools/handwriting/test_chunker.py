@@ -3,16 +3,8 @@
 from pathlib import Path
 
 import pytest
-
-from src.tools.handwriting.chunker import (
-    HandwritingChildChunk,
-    build_child_chunks,
-)
-from src.tools.handwriting.postprocessor import (
-    ProcessedPage,
-    build_chromadb_metadata,
-    build_page,
-)
+from src.tools.handwriting.chunker import HandwritingChildChunk, build_child_chunks
+from src.tools.handwriting.postprocessor import ProcessedPage, build_page
 from src.tools.handwriting.walker import DiscoveredImage
 
 

@@ -1,11 +1,7 @@
 """Tests for handwriting OCR module."""
 
 import base64
-import unittest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from src.tools.handwriting.ocr import HANDWRITING_PROMPT, ocr_handwriting
 
@@ -39,9 +35,7 @@ class TestOcrHandwriting:
         expected_b64 = base64.b64encode(test_content).decode()
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "Sample transcription"}
-            }
+            mock_chat.return_value = {"message": {"content": "Sample transcription"}}
 
             ocr_handwriting(image_path)
 
@@ -79,9 +73,7 @@ class TestOcrHandwriting:
         image_path.write_bytes(b"fake image data")
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "Transcription"}
-            }
+            mock_chat.return_value = {"message": {"content": "Transcription"}}
 
             ocr_handwriting(image_path)
 
@@ -94,9 +86,7 @@ class TestOcrHandwriting:
         image_path.write_bytes(b"fake image data")
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "Transcription"}
-            }
+            mock_chat.return_value = {"message": {"content": "Transcription"}}
 
             ocr_handwriting(image_path, model="llava:13b")
 
@@ -109,9 +99,7 @@ class TestOcrHandwriting:
         image_path.write_bytes(b"fake image data")
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "Transcription"}
-            }
+            mock_chat.return_value = {"message": {"content": "Transcription"}}
 
             ocr_handwriting(image_path)
 
@@ -126,9 +114,7 @@ class TestOcrHandwriting:
         image_path.write_bytes(b"fake image data")
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "Transcription"}
-            }
+            mock_chat.return_value = {"message": {"content": "Transcription"}}
 
             ocr_handwriting(image_path)
 
@@ -148,9 +134,7 @@ class TestOcrHandwriting:
         image_path.write_bytes(b"fake image data")
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "  [BLANK_PAGE]  \n"}
-            }
+            mock_chat.return_value = {"message": {"content": "  [BLANK_PAGE]  \n"}}
 
             result = ocr_handwriting(image_path)
 
@@ -165,9 +149,7 @@ class TestOcrHandwriting:
         content = "Some text [illegible] more text"
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": content}
-            }
+            mock_chat.return_value = {"message": {"content": content}}
 
             result = ocr_handwriting(image_path)
 
@@ -182,9 +164,7 @@ class TestOcrHandwriting:
         content = "# Section\n[Diagram: a simple circuit diagram]\nText after diagram"
 
         with patch("src.tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": content}
-            }
+            mock_chat.return_value = {"message": {"content": content}}
 
             result = ocr_handwriting(image_path)
 

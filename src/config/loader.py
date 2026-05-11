@@ -89,7 +89,9 @@ def _scan_for_dangerous_patterns(content: str) -> None:
     """
     for pattern in DANGEROUS_PATTERNS:
         if re.search(pattern, content, re.IGNORECASE):
-            raise SecurityError(f"Suspicious pattern detected in configuration: {pattern}")
+            raise SecurityError(
+                f"Suspicious pattern detected in configuration: {pattern}"
+            )
 
 
 def _check_nesting_depth(
@@ -276,7 +278,9 @@ def parse_env_overrides(prefix: str = "CC_") -> dict[str, Any]:
             ("paths", "vault"),
         }
         if tuple(parts) in _BLOCKED_PATHS:
-            raise SecurityError(f"Environment override blocked for sensitive key: {key}")
+            raise SecurityError(
+                f"Environment override blocked for sensitive key: {key}"
+            )
 
         parsed_value: Any = value
 

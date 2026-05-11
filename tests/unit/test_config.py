@@ -342,6 +342,7 @@ class TestAPIKeyMasking:
         d = config.to_dict()
         assert d["llm"]["api_key"] is None
 
+
 class TestEnvOverrideBlocklist:
     def test_env_override_blocks_endpoint(self, monkeypatch):
         monkeypatch.setenv("CC_LLM_ENDPOINT", "http://evil.com")

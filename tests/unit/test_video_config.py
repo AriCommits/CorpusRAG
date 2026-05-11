@@ -14,7 +14,10 @@ def test_from_dict_defaults():
 
 def test_from_dict_custom():
     data = {
-        "llm": {}, "embedding": {}, "database": {}, "paths": {},
+        "llm": {},
+        "embedding": {},
+        "database": {},
+        "paths": {},
         "video": {
             "vision_model": "moondream",
             "scene_threshold": 0.15,
@@ -31,7 +34,10 @@ def test_from_dict_custom():
 
 def test_from_dict_preserves_existing():
     data = {
-        "llm": {}, "embedding": {}, "database": {}, "paths": {},
+        "llm": {},
+        "embedding": {},
+        "database": {},
+        "paths": {},
         "video": {"whisper_model": "large-v2", "clean_model": "gemma4"},
     }
     cfg = VideoConfig.from_dict(data)

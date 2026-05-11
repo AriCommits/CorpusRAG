@@ -18,10 +18,12 @@ class TestInitConfig:
     def test_loads_from_path(self, tmp_path):
         cfg_file = tmp_path / "test.yaml"
         cfg_file.write_text(
-            yaml.dump({
-                "llm": {"model": "test-model"},
-                "database": {"mode": "persistent", "persist_directory": str(tmp_path)},
-            })
+            yaml.dump(
+                {
+                    "llm": {"model": "test-model"},
+                    "database": {"mode": "persistent", "persist_directory": str(tmp_path)},
+                }
+            )
         )
         config = init_config(str(cfg_file))
         assert isinstance(config, BaseConfig)

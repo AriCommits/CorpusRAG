@@ -82,6 +82,28 @@ def benchmark(collection: str, queries: int, config: str) -> None:
     click.echo(f"  Total Queries:   {int(stats.get('count', 0))}")
 
 
+@corpus.command()
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def doctor(config: str) -> None:
+    """Run health checks against configured services."""
+    from cli_common import load_cli_config
+    from tools.rag.doctor import run_doctor
+
+    cfg = load_cli_config(config)
+    results = run_doctor(cfg)
+
+    for passed, msg in results:
+        icon = "[OK]" if passed else "[FAIL]"
+        click.echo(f"  {icon} {msg}")
+
+    failures = sum(1 for p, _ in results if not p)
+    if failures:
+        click.echo(f"\n{failures} check(s) failed.")
+        raise SystemExit(1)
+    else:
+        click.echo("\nAll checks passed!")
+
+
 def main() -> None:
     """Entry point for the unified corpus CLI."""
     corpus()

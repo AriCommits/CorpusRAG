@@ -96,14 +96,28 @@ class RAGConfig(BaseConfig):
             database=base_config.database,
             paths=base_config.paths,
             strategy=strategy,
-            chunking=(ChunkingConfig(**chunking_data) if chunking_data else ChunkingConfig()),
-            retrieval=(RetrievalConfig(**retrieval_data) if retrieval_data else RetrievalConfig()),
-            reranking=(RerankingConfig(**reranking_data) if reranking_data else RerankingConfig()),
+            chunking=(
+                ChunkingConfig(**chunking_data) if chunking_data else ChunkingConfig()
+            ),
+            retrieval=(
+                RetrievalConfig(**retrieval_data)
+                if retrieval_data
+                else RetrievalConfig()
+            ),
+            reranking=(
+                RerankingConfig(**reranking_data)
+                if reranking_data
+                else RerankingConfig()
+            ),
             parent_store=(
-                ParentStoreConfig(**parent_store_data) if parent_store_data else ParentStoreConfig()
+                ParentStoreConfig(**parent_store_data)
+                if parent_store_data
+                else ParentStoreConfig()
             ),
             vectorstore=(
-                VectorStoreConfig(**vectorstore_data) if vectorstore_data else VectorStoreConfig()
+                VectorStoreConfig(**vectorstore_data)
+                if vectorstore_data
+                else VectorStoreConfig()
             ),
             collection_prefix=collection_prefix,
         )

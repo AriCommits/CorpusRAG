@@ -55,7 +55,9 @@ def classify_content(text: str) -> str:
     return "default"
 
 
-def adaptive_split(text: str, base_chunk_size: int = 400, base_overlap: int = 50) -> list[str]:
+def adaptive_split(
+    text: str, base_chunk_size: int = 400, base_overlap: int = 50
+) -> list[str]:
     """Split text using content-aware parameters."""
     content_type = classify_content(text)
     params = PRESETS[content_type]

@@ -1,14 +1,11 @@
 """End-to-end tests for the handwriting ingestion pipeline orchestrator."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
+
 import pytest
 from PIL import Image, ImageDraw
-
-from src.tools.handwriting.ingest_handwriting import (
-    ingest_handwriting,
-    HandwritingIngestResult,
-)
+from src.tools.handwriting.ingest_handwriting import HandwritingIngestResult, ingest_handwriting
 
 
 class FakeAgent:
@@ -31,12 +28,14 @@ class FakeAgent:
 
     def ingest_text(self, text, collection, doc_id=None, metadata=None):
         """Record an ingest call."""
-        self.ingest_calls.append({
-            "text": text,
-            "collection": collection,
-            "doc_id": doc_id,
-            "metadata": metadata,
-        })
+        self.ingest_calls.append(
+            {
+                "text": text,
+                "collection": collection,
+                "doc_id": doc_id,
+                "metadata": metadata,
+            }
+        )
 
 
 @pytest.fixture
@@ -120,11 +119,14 @@ class TestIngestHandwritingBasic:
         agent = FakeAgent()
 
         # Mock the OCR and correction functions
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             # Setup mocks
             mock_ocr.return_value = "# Test Page\nThis is a test page."
             mock_correct.return_value = "# Test Page\nThis is a test page."
@@ -161,17 +163,21 @@ class TestIngestHandwritingBasic:
         # Read the hash of the first image to pre-populate existing hashes
         first_image = list(tmp_image_dir.glob("**/*.jpg"))[0]
         import hashlib
+
         with open(first_image, "rb") as f:
             file_hash = hashlib.sha256(f.read()).hexdigest()
         existing_hashes.add(file_hash)
 
         agent = FakeAgent({"test_collection": existing_hashes})
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Test"
             mock_correct.return_value = "# Test"
             mock_confidence.return_value = 0.95
@@ -188,17 +194,22 @@ class TestIngestHandwritingBasic:
             assert result.skipped_already_ingested >= 1
             assert result.total_images_found == 5
             # Pages ingested = total - deduped - blank
-            assert result.pages_ingested == 5 - result.skipped_already_ingested - result.skipped_blank
+            assert (
+                result.pages_ingested == 5 - result.skipped_already_ingested - result.skipped_blank
+            )
 
     def test_ingest_blank_page_detection(self, tmp_image_dir):
         """Test that blank pages are skipped."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             # Mock is_likely_blank to return True for the blank_page.jpg
             def is_blank_side_effect(path):
                 return "blank_page" in str(path)
@@ -222,14 +233,19 @@ class TestIngestHandwritingBasic:
         """Test that low-confidence pages trigger warnings file."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "garbled text here"
             # Return heavily corrected text to trigger low confidence
-            mock_correct.return_value = "completely different corrected text that bears no resemblance"
+            mock_correct.return_value = (
+                "completely different corrected text that bears no resemblance"
+            )
             mock_confidence.return_value = 0.35  # Below 0.75 threshold
             mock_is_blank.return_value = False
 
@@ -256,11 +272,14 @@ class TestIngestHandwritingBasic:
         """Test that OCR/correction failures don't abort the pipeline."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             # Make OCR fail for some images
             def ocr_side_effect(path, **kwargs):
                 if "page_001" in str(path):
@@ -288,17 +307,20 @@ class TestIngestHandwritingBasic:
         """Test that pages are grouped by folder correctly."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Test"
             mock_correct.return_value = "# Test"
             mock_confidence.return_value = 0.95
             mock_is_blank.return_value = False
 
-            result = ingest_handwriting(
+            _ = ingest_handwriting(
                 root_dir=tmp_image_dir,
                 collection="test_collection",
                 agent=agent,
@@ -312,9 +334,11 @@ class TestIngestHandwritingBasic:
             assert len(parent_docs) == 3
 
             parent_ids = {call["doc_id"] for call in parent_docs}
-            expected_prefixes = {"handwriting:test_collection:2024/notes",
-                                "handwriting:test_collection:2024/sketches",
-                                "handwriting:test_collection:archive"}
+            expected_prefixes = {
+                "handwriting:test_collection:2024/notes",
+                "handwriting:test_collection:2024/sketches",
+                "handwriting:test_collection:archive",
+            }
             assert parent_ids == expected_prefixes
 
             # Verify metadata on parent docs
@@ -327,9 +351,10 @@ class TestIngestHandwritingBasic:
         """Test ingest with autocorrect disabled."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Raw OCR Text"
             mock_is_blank.return_value = False
 
@@ -350,11 +375,14 @@ class TestIngestHandwritingBasic:
         """Test that max_depth parameter limits directory traversal."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Test"
             mock_correct.return_value = "# Test"
             mock_confidence.return_value = 0.95
@@ -376,17 +404,20 @@ class TestIngestHandwritingBasic:
         """Test that child chunks are created with parent_id metadata."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Test"
             mock_correct.return_value = "# Test"
             mock_confidence.return_value = 0.95
             mock_is_blank.return_value = False
 
-            result = ingest_handwriting(
+            _ = ingest_handwriting(
                 root_dir=tmp_image_dir,
                 collection="test_collection",
                 agent=agent,
@@ -408,12 +439,15 @@ class TestIngestHandwritingBasic:
         """Test that preprocessed files are cleaned up when cleanup_preprocessed=True."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank, \
-             patch("src.tools.handwriting.ingest_handwriting.preprocess_image") as mock_preprocess:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+            patch("src.tools.handwriting.ingest_handwriting.preprocess_image") as mock_preprocess,
+        ):
             # Create a fake preprocessed file
             fake_processed = tmp_image_dir / "fake_processed.jpg"
             fake_processed.write_text("fake")
@@ -446,24 +480,30 @@ class TestIngestHandwritingAgent:
 
         class MinimalAgent:
             """Agent without get_ingested_hashes method."""
+
             def __init__(self):
                 self.ingest_calls = []
 
             def ingest_text(self, text, collection, doc_id=None, metadata=None):
-                self.ingest_calls.append({
-                    "text": text,
-                    "collection": collection,
-                    "doc_id": doc_id,
-                    "metadata": metadata,
-                })
+                self.ingest_calls.append(
+                    {
+                        "text": text,
+                        "collection": collection,
+                        "doc_id": doc_id,
+                        "metadata": metadata,
+                    }
+                )
 
         agent = MinimalAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Test"
             mock_correct.return_value = "# Test"
             mock_confidence.return_value = 0.95
@@ -485,11 +525,14 @@ class TestIngestHandwritingAgent:
         """Test that user tags are attached to pages."""
         agent = FakeAgent()
 
-        with patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr, \
-             patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct, \
-             patch("src.tools.handwriting.ingest_handwriting.estimate_correction_confidence") as mock_confidence, \
-             patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank:
-
+        with (
+            patch("src.tools.handwriting.ingest_handwriting.ocr_handwriting") as mock_ocr,
+            patch("src.tools.handwriting.ingest_handwriting.correct_ocr_output") as mock_correct,
+            patch(
+                "src.tools.handwriting.ingest_handwriting.estimate_correction_confidence"
+            ) as mock_confidence,
+            patch("src.tools.handwriting.ingest_handwriting.is_likely_blank") as mock_is_blank,
+        ):
             mock_ocr.return_value = "# Test"
             mock_correct.return_value = "# Test"
             mock_confidence.return_value = 0.95
@@ -497,7 +540,7 @@ class TestIngestHandwritingAgent:
 
             user_tags = ["Year/2024", "Subject/Notes"]
 
-            result = ingest_handwriting(
+            _ = ingest_handwriting(
                 root_dir=tmp_image_dir,
                 collection="test_collection",
                 agent=agent,

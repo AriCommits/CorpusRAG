@@ -16,9 +16,10 @@ from typing import Any
 
 import httpx
 
+from utils.rate_limiting import OperationRateLimiter, RateLimitConfig
+
 from .config import LLMBackendType, LLMConfig
 from .response import LLMResponse
-from utils.rate_limiting import OperationRateLimiter, RateLimitConfig
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,9 @@ class LLMBackend(ABC):
             )
 
     @abstractmethod
-    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
+    def stream_completion(
+        self, prompt: str, *, model: str | None = None
+    ) -> Iterator[str]:
         """Stream tokens from the model."""
 
     @abstractmethod
@@ -61,7 +64,9 @@ class LLMBackend(ABC):
         # This is a simplified approach: check if we can proceed, if not wait
         window_seconds = 60
         max_requests = self.config.rate_limit_rpm
-        current_count = self._rate_limiter.get_operation_count("default", "llm", window_seconds)
+        current_count = self._rate_limiter.get_operation_count(
+            "default", "llm", window_seconds
+        )
 
         if current_count >= max_requests:
             # Rate limited - calculate wait time
@@ -128,7 +133,9 @@ class OllamaBackend(LLMBackend):
 
     _cached_default_model: str | None = None
 
-    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
+    def stream_completion(
+        self, prompt: str, *, model: str | None = None
+    ) -> Iterator[str]:
         model_name = model or self.config.model or self._get_default_model()
         payload = {
             "model": model_name,
@@ -228,7 +235,9 @@ class OllamaBackend(LLMBackend):
 class OpenAICompatibleBackend(LLMBackend):
     """OpenAI-compatible /v1/chat/completions backend."""
 
-    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
+    def stream_completion(
+        self, prompt: str, *, model: str | None = None
+    ) -> Iterator[str]:
         messages = [{"role": "user", "content": prompt}]
         yield from self.chat_completion(messages, model=model)
 
@@ -289,7 +298,9 @@ class OpenAICompatibleBackend(LLMBackend):
 class AnthropicCompatibleBackend(LLMBackend):
     """Anthropic-compatible /v1/messages backend."""
 
-    def stream_completion(self, prompt: str, *, model: str | None = None) -> Iterator[str]:
+    def stream_completion(
+        self, prompt: str, *, model: str | None = None
+    ) -> Iterator[str]:
         messages = [{"role": "user", "content": prompt}]
         yield from self.chat_completion(messages, model=model)
 

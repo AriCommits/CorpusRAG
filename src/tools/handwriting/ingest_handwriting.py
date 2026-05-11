@@ -4,12 +4,12 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.tools.handwriting.walker import walk_directory, filter_already_ingested
-from src.tools.handwriting.preprocessor import preprocess_image, is_likely_blank
-from src.tools.handwriting.ocr import ocr_handwriting
-from src.tools.handwriting.corrector import correct_ocr_output, estimate_correction_confidence
-from src.tools.handwriting.postprocessor import build_page
 from src.tools.handwriting.chunker import build_child_chunks
+from src.tools.handwriting.corrector import correct_ocr_output, estimate_correction_confidence
+from src.tools.handwriting.ocr import ocr_handwriting
+from src.tools.handwriting.postprocessor import build_page
+from src.tools.handwriting.preprocessor import is_likely_blank, preprocess_image
+from src.tools.handwriting.walker import filter_already_ingested, walk_directory
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,9 @@ def ingest_handwriting(
 
     images, skipped_dedup = filter_already_ingested(images, ingested_hashes)
     if skipped_dedup > 0:
-        logger.info(f"Skipping {skipped_dedup} already ingested. Processing {len(images)} new.")
+        logger.info(
+            f"Skipping {skipped_dedup} already ingested. Processing {len(images)} new."
+        )
 
     processed_pages = []
     skipped_blank = 0
@@ -128,7 +130,9 @@ def ingest_handwriting(
         try:
             if is_likely_blank(processed_path):
                 skipped_blank += 1
-                logger.debug(f"Skipping blank page (edge density): {image.relative_path}")
+                logger.debug(
+                    f"Skipping blank page (edge density): {image.relative_path}"
+                )
                 continue
         except Exception as e:
             logger.error(f"Failed to check if blank {image.relative_path}: {e}")
@@ -142,7 +146,9 @@ def ingest_handwriting(
             # Check if OCR detected blank page
             if raw_text.strip() == "[BLANK_PAGE]":
                 skipped_blank += 1
-                logger.debug(f"Skipping blank page (OCR detected): {image.relative_path}")
+                logger.debug(
+                    f"Skipping blank page (OCR detected): {image.relative_path}"
+                )
                 continue
 
             # Step 4: LLM Correction
@@ -167,7 +173,9 @@ def ingest_handwriting(
             processed_pages.append(page)
 
         except Exception as e:
-            logger.error(f"Failed OCR/correction for {image.relative_path}: {e}", exc_info=False)
+            logger.error(
+                f"Failed OCR/correction for {image.relative_path}: {e}", exc_info=False
+            )
             failed_pages_count += 1
             continue
 
@@ -205,7 +213,9 @@ def ingest_handwriting(
                 metadata=child.metadata,
             )
 
-    logger.info(f"Ingested {len(processed_pages)} pages across {len(folder_groups)} folders")
+    logger.info(
+        f"Ingested {len(processed_pages)} pages across {len(folder_groups)} folders"
+    )
 
     # Step 8: Write low-confidence warnings file if needed
     warnings_file = None

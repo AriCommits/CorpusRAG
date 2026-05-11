@@ -1,7 +1,9 @@
 """Tests for execution telemetry system."""
 
 import time
+
 import pytest
+
 from utils.telemetry import TelemetryStore, timed
 
 
@@ -99,6 +101,7 @@ class TestTimedDecorator:
 class TestMCPTelemetryTools:
     def test_get_estimate_with_data(self, store):
         from mcp_server.tools.dev import get_estimate
+
         for _ in range(5):
             store.log("rag_query", 200.0, success=True)
         result = get_estimate("rag_query", store)
@@ -108,17 +111,20 @@ class TestMCPTelemetryTools:
 
     def test_get_estimate_no_data(self, store):
         from mcp_server.tools.dev import get_estimate
+
         result = get_estimate("unknown_tool", store)
         assert result["status"] == "success"
         assert result["estimate"] is None
 
     def test_get_estimate_disabled(self):
         from mcp_server.tools.dev import get_estimate
+
         result = get_estimate("test", None)
         assert result["status"] == "error"
 
     def test_query_telemetry_select(self, store):
         from mcp_server.tools.dev import query_telemetry
+
         store.log("test", 100.0)
         result = query_telemetry("SELECT * FROM tool_executions", store)
         assert result["status"] == "success"
@@ -126,10 +132,10 @@ class TestMCPTelemetryTools:
 
     def test_query_telemetry_rejects_delete(self, store):
         from mcp_server.tools.dev import query_telemetry
+
         result = query_telemetry("DELETE FROM tool_executions", store)
         assert result["status"] == "error"
         assert "SELECT" in result["error"]
-
 
 
 class TestSQLValidation:

@@ -1,12 +1,11 @@
 """Security tests for LocalFileStore path traversal protection."""
 
 import tempfile
-from pathlib import Path
 
 import pytest
 from langchain_core.documents import Document
-
 from src.tools.rag.pipeline.storage import LocalFileStore
+
 from utils.security import sanitize_filename
 
 
@@ -128,11 +127,11 @@ class TestFilenameMetadataSanitization:
         """Special characters that are invalid in filenames are removed."""
         special_names = [
             "file:invalid.txt",  # colon
-            "file*invalid.txt",   # asterisk
-            "file?invalid.txt",   # question mark
-            "file\"quoted\".txt",  # quotes
-            "file<angle>.txt",     # angle brackets
-            "file|pipe.txt",       # pipe
+            "file*invalid.txt",  # asterisk
+            "file?invalid.txt",  # question mark
+            'file"quoted".txt',  # quotes
+            "file<angle>.txt",  # angle brackets
+            "file|pipe.txt",  # pipe
         ]
 
         for name in special_names:

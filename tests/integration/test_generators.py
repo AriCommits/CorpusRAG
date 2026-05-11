@@ -220,8 +220,10 @@ class TestFlashcardGenerator:
     """Test flashcard generator with real document data."""
 
     def test_generate_from_real_documents(
-        self, flashcard_config: FlashcardConfig, db_backend: ChromaDBBackend,
-        populated_collection: str
+        self,
+        flashcard_config: FlashcardConfig,
+        db_backend: ChromaDBBackend,
+        populated_collection: str,
     ) -> None:
         """Test generating flashcards from real ingested documents."""
         generator = FlashcardGenerator(flashcard_config, db_backend)
@@ -231,7 +233,9 @@ class TestFlashcardGenerator:
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
 
-            flashcards = generator.generate(populated_collection, difficulty="intermediate", count=3)
+            flashcards = generator.generate(
+                populated_collection, difficulty="intermediate", count=3
+            )
 
             # Verify flashcards were generated
             assert len(flashcards) > 0
@@ -278,8 +282,7 @@ class TestSummaryGenerator:
     """Test summary generator with real document data."""
 
     def test_generate_from_real_documents(
-        self, summary_config: SummaryConfig, db_backend: ChromaDBBackend,
-        populated_collection: str
+        self, summary_config: SummaryConfig, db_backend: ChromaDBBackend, populated_collection: str
     ) -> None:
         """Test generating summary from real ingested documents."""
         generator = SummaryGenerator(summary_config, db_backend)
@@ -333,8 +336,7 @@ class TestQuizGenerator:
     """Test quiz generator with real document data."""
 
     def test_generate_from_real_documents(
-        self, quiz_config: QuizConfig, db_backend: ChromaDBBackend,
-        populated_collection: str
+        self, quiz_config: QuizConfig, db_backend: ChromaDBBackend, populated_collection: str
     ) -> None:
         """Test generating quiz from real ingested documents."""
         generator = QuizGenerator(quiz_config, db_backend)

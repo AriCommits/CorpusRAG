@@ -6,8 +6,8 @@ import click
 
 from cli_common import load_cli_db
 
-from .ingest_handwriting import ingest_handwriting
 from .config import HandwritingConfig
+from .ingest_handwriting import ingest_handwriting
 
 # Import will happen inside function to support lazy loading but be patchable for tests
 RAGAgent = None

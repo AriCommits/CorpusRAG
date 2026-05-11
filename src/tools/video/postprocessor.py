@@ -49,9 +49,7 @@ def deduplicate_chunks(
 
 
 def format_chunk_markdown(chunk: ProcessedChunk) -> str:
-    return (
-        f"<!-- timestamp: {chunk.timestamp_str} | frame: {chunk.frame_index} -->\n{chunk.content}"
-    )
+    return f"<!-- timestamp: {chunk.timestamp_str} | frame: {chunk.frame_index} -->\n{chunk.content}"
 
 
 def _jaccard(a: str, b: str) -> float:

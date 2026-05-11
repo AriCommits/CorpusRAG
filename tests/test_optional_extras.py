@@ -1,8 +1,6 @@
 """Tests for optional extras functionality."""
 
-import sys
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -116,8 +114,8 @@ class TestOptionalDependencies:
         pyproject_path = Path("pyproject.toml")
         content = pyproject_path.read_text()
         assert "full =" in content, "Should define full extra"
-        assert "corpusrag[generators]" in content or '[generators]' in content
-        assert "corpusrag[video]" in content or '[video]' in content
+        assert "corpusrag[generators]" in content or "[generators]" in content
+        assert "corpusrag[video]" in content or "[video]" in content
 
     def test_faster_whisper_in_video_not_main(self) -> None:
         """Test faster-whisper moved from main deps to video extra."""

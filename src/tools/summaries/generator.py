@@ -58,7 +58,9 @@ class SummaryGenerator:
         sample_size = min(20, max(5, doc_count // 10))  # 10% of docs, between 5-20
 
         # Get documents by querying for general terms or using pagination
-        document_texts = self._get_representative_documents(full_collection, sample_size, topic)
+        document_texts = self._get_representative_documents(
+            full_collection, sample_size, topic
+        )
 
         if not document_texts:
             raise ValueError(
@@ -156,7 +158,9 @@ class SummaryGenerator:
             logger.error(f"LLM generation failed: {e}")
             return f"Error generating summary: {e}"
 
-    def _extract_keywords(self, summary_text: str, document_texts: list[str]) -> list[str]:
+    def _extract_keywords(
+        self, summary_text: str, document_texts: list[str]
+    ) -> list[str]:
         """Extract keywords from summary and documents.
 
         Args:
@@ -226,7 +230,9 @@ OUTLINE:"""
             # Split into lines and clean up
             outline_lines = [line.strip() for line in response.text.split("\n")]
             outline_lines = [
-                line for line in outline_lines if line and not line.lower().startswith("outline")
+                line
+                for line in outline_lines
+                if line and not line.lower().startswith("outline")
             ]
 
             return outline_lines[:15]  # Limit to reasonable length

@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import numpy as np
-import pytest
 from PIL import Image
 
 from tools.video.classifier import FrameType, classify_frame
@@ -14,7 +13,9 @@ def _make_image(tmp_path: Path, name: str, color: tuple, noise: bool = False) ->
     if noise:
         arr = np.array(img)
         rng = np.random.default_rng(42)
-        arr = np.clip(arr.astype(np.int16) + rng.integers(-80, 80, arr.shape), 0, 255).astype(np.uint8)
+        arr = np.clip(arr.astype(np.int16) + rng.integers(-80, 80, arr.shape), 0, 255).astype(
+            np.uint8
+        )
         img = Image.fromarray(arr)
     path = tmp_path / name
     img.save(path)

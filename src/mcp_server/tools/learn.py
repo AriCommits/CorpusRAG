@@ -5,15 +5,9 @@ from __future__ import annotations
 from config import BaseConfig
 from db import DatabaseBackend
 
-_GENERATORS_ERROR = (
-    "Flashcard generation requires 'generators' extra. Install: pip install corpusrag[generators]"
-)
-_SUMMARY_ERROR = (
-    "Summary generation requires 'generators' extra. Install: pip install corpusrag[generators]"
-)
-_QUIZ_ERROR = (
-    "Quiz generation requires 'generators' extra. Install: pip install corpusrag[generators]"
-)
+_GENERATORS_ERROR = "Flashcard generation requires 'generators' extra. Install: pip install corpusrag[generators]"
+_SUMMARY_ERROR = "Summary generation requires 'generators' extra. Install: pip install corpusrag[generators]"
+_QUIZ_ERROR = "Quiz generation requires 'generators' extra. Install: pip install corpusrag[generators]"
 
 
 def generate_flashcards(

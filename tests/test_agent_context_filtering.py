@@ -1,9 +1,7 @@
 """Tests for agent context filtering."""
 
 import pytest
-
 from src.tools.rag.agent import RAGAgent
-from src.tools.rag.config import RAGConfig
 
 
 @pytest.fixture

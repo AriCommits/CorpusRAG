@@ -5,7 +5,9 @@ from pathlib import Path
 class MarkdownSummaryExporter:
     """Export summaries to Markdown format with YAML frontmatter."""
 
-    def export(self, summary_text: str, collection: str, topic: str, output_path: Path | str):
+    def export(
+        self, summary_text: str, collection: str, topic: str, output_path: Path | str
+    ):
         """Export summary to markdown file."""
         frontmatter = f"""---
 collection: {collection}

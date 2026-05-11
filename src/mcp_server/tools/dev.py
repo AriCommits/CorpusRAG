@@ -77,7 +77,11 @@ def rag_retrieve(
             "status": "success",
             "query": query,
             "chunks": [
-                {"text": c.text, "source": c.metadata.get("source", ""), "score": c.score}
+                {
+                    "text": c.text,
+                    "source": c.metadata.get("source", ""),
+                    "score": c.score,
+                }
                 for c in chunks
             ],
         }
@@ -129,7 +133,11 @@ def store_text(
         ]
 
         db.add_documents(full_collection, chunks, embeddings, metadatas, ids)
-        return {"status": "success", "collection": collection, "chunks_created": len(chunks)}
+        return {
+            "status": "success",
+            "collection": collection,
+            "chunks_created": len(chunks),
+        }
     except Exception as e:
         return {"status": "error", "error": str(e)}
 

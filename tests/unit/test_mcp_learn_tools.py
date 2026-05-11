@@ -141,7 +141,9 @@ class TestGenerateSummary:
         sys.modules["tools.summaries"] = fake_sm_module
         try:
             learn = _load_learn_module()
-            result = learn.generate_summary("notes", "machine learning", "medium", tmp_config, mock_db)
+            result = learn.generate_summary(
+                "notes", "machine learning", "medium", tmp_config, mock_db
+            )
         finally:
             if saved is None:
                 sys.modules.pop("tools.summaries", None)
@@ -249,6 +251,4 @@ class TestNoFastapiImports:
                     )
             elif isinstance(node, ast.ImportFrom):
                 module = node.module or ""
-                assert "fastapi" not in module.lower(), (
-                    f"Found fastapi import from: {module}"
-                )
+                assert "fastapi" not in module.lower(), f"Found fastapi import from: {module}"

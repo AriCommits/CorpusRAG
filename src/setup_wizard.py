@@ -227,7 +227,9 @@ class ChromaHostScreen(Screen):
         with Container(id="content"):
             yield Label("ChromaDB Server Configuration")
             yield Static()  # Spacer
-            yield Markdown("## Enter ChromaDB server hostname (or leave blank for localhost)")
+            yield Markdown(
+                "## Enter ChromaDB server hostname (or leave blank for localhost)"
+            )
 
             with Vertical(id="host-input"):
                 yield Input(
@@ -269,7 +271,9 @@ class VaultScreen(Screen):
         with Container(id="content"):
             yield Label("Knowledge Base Location")
             yield Static()  # Spacer
-            yield Markdown("## Where is your knowledge base located? (markdown files, PDFs, etc.)")
+            yield Markdown(
+                "## Where is your knowledge base located? (markdown files, PDFs, etc.)"
+            )
 
             with Vertical(id="vault-input"):
                 yield Input(

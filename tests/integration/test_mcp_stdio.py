@@ -14,7 +14,6 @@ from mcp.server.fastmcp import FastMCP
 from config import load_config
 from db import ChromaDBBackend
 from mcp_server.profiles import register_profile
-from mcp_server.tools.common import init_config, init_db
 from mcp_server.tools.dev import store_text
 
 SRC_DIR = str(Path(__file__).parent.parent.parent / "src")
@@ -44,8 +43,20 @@ def _get_tool_names(mcp: FastMCP) -> list[str]:
 class TestStdioServerStarts:
     def test_server_starts_with_dev_profile(self, stdio_config):
         proc = subprocess.Popen(
-            [sys.executable, "-m", "mcp_server.server", "--profile", "dev", "--transport", "stdio", "--config", stdio_config],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            [
+                sys.executable,
+                "-m",
+                "mcp_server.server",
+                "--profile",
+                "dev",
+                "--transport",
+                "stdio",
+                "--config",
+                stdio_config,
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=SRC_DIR,
         )
         try:
@@ -57,8 +68,20 @@ class TestStdioServerStarts:
 
     def test_server_starts_with_learn_profile(self, stdio_config):
         proc = subprocess.Popen(
-            [sys.executable, "-m", "mcp_server.server", "--profile", "learn", "--transport", "stdio", "--config", stdio_config],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            [
+                sys.executable,
+                "-m",
+                "mcp_server.server",
+                "--profile",
+                "learn",
+                "--transport",
+                "stdio",
+                "--config",
+                stdio_config,
+            ],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=SRC_DIR,
         )
         try:

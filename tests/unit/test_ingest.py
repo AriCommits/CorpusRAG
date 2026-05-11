@@ -1,22 +1,24 @@
 """Tests for video OCR pipeline orchestrator."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from tools.video.classifier import FrameType
+from tools.video.config import VideoConfig
 from tools.video.extractor import ExtractedFrame
 from tools.video.ingest import VideoIngestResult, ingest_video
-from tools.video.config import VideoConfig
 
 
 def _make_config() -> VideoConfig:
-    return VideoConfig.from_dict({
-        "llm": {"endpoint": "http://localhost:11434"},
-        "embedding": {},
-        "database": {},
-        "paths": {"scratch_dir": "./scratch"},
-        "video": {"vision_model": "llava", "scene_threshold": 0.3},
-    })
+    return VideoConfig.from_dict(
+        {
+            "llm": {"endpoint": "http://localhost:11434"},
+            "embedding": {},
+            "database": {},
+            "paths": {"scratch_dir": "./scratch"},
+            "video": {"vision_model": "llava", "scene_threshold": 0.3},
+        }
+    )
 
 
 def _fake_frames(n: int) -> list[ExtractedFrame]:
@@ -73,6 +75,7 @@ def test_progress_callback(mock_ocr, mock_classify, mock_extract):
     mock_ocr.return_value = "content"
 
     progress_calls = []
+
     def cb(pct, step):
         progress_calls.append((pct, step))
 
@@ -112,8 +115,10 @@ def test_config_overrides(mock_ocr, mock_classify, mock_extract):
 
     cfg = _make_config()
     ingest_video(
-        Path("test.mp4"), cfg,
-        scene_threshold=0.5, vision_model="moondream",
+        Path("test.mp4"),
+        cfg,
+        scene_threshold=0.5,
+        vision_model="moondream",
     )
 
     # Verify extract was called with overridden threshold

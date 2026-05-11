@@ -22,9 +22,7 @@ def check_mcp_server() -> bool:
 
 def check_database() -> bool:
     """Check if database directory is accessible."""
-    db_path = os.getenv(
-        "CORPUSRAG_DATABASE_PERSIST_DIRECTORY", "/home/corpus/data/chroma_store"
-    )
+    db_path = os.getenv("CORPUSRAG_DATABASE_PERSIST_DIRECTORY", "/home/corpus/data/chroma_store")
     try:
         os.makedirs(db_path, exist_ok=True)
         test_file = os.path.join(db_path, ".health_check")

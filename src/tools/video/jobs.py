@@ -51,7 +51,9 @@ class JobManager:
     def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> str:
         with self._lock:
             active = sum(
-                1 for j in self._jobs.values() if j.status in (JobStatus.QUEUED, JobStatus.RUNNING)
+                1
+                for j in self._jobs.values()
+                if j.status in (JobStatus.QUEUED, JobStatus.RUNNING)
             )
             if active >= self._max_queue:
                 raise RuntimeError(

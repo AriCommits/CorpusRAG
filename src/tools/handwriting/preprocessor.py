@@ -5,8 +5,9 @@ Handles upscaling, denoise, contrast enhancement, and TIFF normalization.
 """
 
 from pathlib import Path
-from PIL import Image, ImageFilter, ImageEnhance
+
 import numpy as np
+from PIL import Image, ImageEnhance, ImageFilter
 
 
 def preprocess_image(
@@ -65,7 +66,9 @@ def preprocess_image(
 
     # For TIFF files, output as JPEG; for other formats, preserve extension
     if image_path.suffix.lower() in {".tif", ".tiff"}:
-        out_path = image_path.with_stem(image_path.stem + "_processed").with_suffix(".jpg")
+        out_path = image_path.with_stem(image_path.stem + "_processed").with_suffix(
+            ".jpg"
+        )
     else:
         out_path = image_path.with_stem(image_path.stem + "_processed")
     img.save(out_path, "JPEG", quality=92)

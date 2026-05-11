@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tools.video.extractor import ExtractedFrame, extract_keyframes, format_timestamp
+from tools.video.extractor import extract_keyframes, format_timestamp
 
 
 def test_format_timestamp_zero():
@@ -38,7 +38,7 @@ def test_extract_keyframes_no_frames(tmp_path):
 
 def test_extract_keyframes_with_frames(tmp_path):
     for i in range(3):
-        (tmp_path / f"frame_{i+1:06d}.jpg").write_bytes(b"fake")
+        (tmp_path / f"frame_{i + 1:06d}.jpg").write_bytes(b"fake")
 
     mock_ffprobe = MagicMock()
     mock_ffprobe.stdout = "10.0\n20.0\n30.0\n"
@@ -54,7 +54,7 @@ def test_extract_keyframes_with_frames(tmp_path):
 
 def test_extract_keyframes_min_interval_filter(tmp_path):
     for i in range(3):
-        (tmp_path / f"frame_{i+1:06d}.jpg").write_bytes(b"fake")
+        (tmp_path / f"frame_{i + 1:06d}.jpg").write_bytes(b"fake")
 
     mock_ffprobe = MagicMock()
     mock_ffprobe.stdout = "10.0\n10.5\n20.0\n"
@@ -67,15 +67,19 @@ def test_extract_keyframes_min_interval_filter(tmp_path):
     assert result[1].source_timestamp_sec == 20.0
 
 
-
 def test_threshold_validation_string():
     from tools.video.extractor import _validate_threshold
+
     assert _validate_threshold("0.5") == 0.5
+
 
 def test_threshold_validation_clamp_high():
     from tools.video.extractor import _validate_threshold
+
     assert _validate_threshold(5.0) == 1.0
+
 
 def test_threshold_validation_clamp_low():
     from tools.video.extractor import _validate_threshold
+
     assert _validate_threshold(-1.0) == 0.0

@@ -109,6 +109,7 @@ def video_combined_pipeline(
 ) -> dict:
     """Combined audio+visual pipeline (async)."""
     from concurrent.futures import ThreadPoolExecutor
+
     from tools.video.config import VideoConfig
     from tools.video.download import download_video, is_url
     from tools.video.ingest import ingest_video
@@ -119,7 +120,9 @@ def video_combined_pipeline(
     def _run(progress_cb):
         if is_url(path_or_url):
             progress_cb(0, "Downloading")
-            dl = download_video(path_or_url, video_config.paths.scratch_dir / "downloads")
+            dl = download_video(
+                path_or_url, video_config.paths.scratch_dir / "downloads"
+            )
             video_path = dl.local_path
             progress_cb(10, f"Downloaded: {dl.title}")
         else:
@@ -141,8 +144,8 @@ def video_combined_pipeline(
             if include_audio:
 
                 def _transcribe():
-                    from tools.video.transcribe import VideoTranscriber
                     from tools.video.clean import TranscriptCleaner
+                    from tools.video.transcribe import VideoTranscriber
 
                     transcriber = VideoTranscriber(video_config)
                     raw = transcriber.transcribe_file(video_path)
@@ -166,7 +169,9 @@ def video_combined_pipeline(
             output["tracks"].append("visual")
         if "audio" in results:
             output["audio_transcript"] = (
-                results["audio"][:500] + "..." if len(results["audio"]) > 500 else results["audio"]
+                results["audio"][:500] + "..."
+                if len(results["audio"]) > 500
+                else results["audio"]
             )
             output["tracks"].append("audio")
             output_dir.mkdir(parents=True, exist_ok=True)

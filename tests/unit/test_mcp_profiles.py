@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import types
+
 import pytest
 import yaml
 from mcp.server.fastmcp import FastMCP
@@ -20,7 +21,10 @@ def _patch_mcp_server_init():
 
 @pytest.fixture()
 def profile_config(tmp_path):
-    cfg = {"llm": {"model": "test"}, "database": {"mode": "persistent", "persist_directory": str(tmp_path / "chroma")}}
+    cfg = {
+        "llm": {"model": "test"},
+        "database": {"mode": "persistent", "persist_directory": str(tmp_path / "chroma")},
+    }
     path = tmp_path / "base.yaml"
     path.write_text(yaml.dump(cfg))
     return str(path)
@@ -35,6 +39,7 @@ class TestRegisterProfile:
         from config import load_config
         from db import ChromaDBBackend
         from mcp_server.profiles import register_profile
+
         config = load_config(profile_config)
         db = ChromaDBBackend(config.database)
         mcp = FastMCP("test")
@@ -48,6 +53,7 @@ class TestRegisterProfile:
         from config import load_config
         from db import ChromaDBBackend
         from mcp_server.profiles import register_profile
+
         config = load_config(profile_config)
         db = ChromaDBBackend(config.database)
         mcp = FastMCP("test")
@@ -60,6 +66,7 @@ class TestRegisterProfile:
         from config import load_config
         from db import ChromaDBBackend
         from mcp_server.profiles import register_profile
+
         config = load_config(profile_config)
         db = ChromaDBBackend(config.database)
         mcp = FastMCP("test")
@@ -73,6 +80,7 @@ class TestRegisterProfile:
         from config import load_config
         from db import ChromaDBBackend
         from mcp_server.profiles import register_profile
+
         config = load_config(profile_config)
         db = ChromaDBBackend(config.database)
         mcp = FastMCP("test")

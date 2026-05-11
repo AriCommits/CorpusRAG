@@ -1,6 +1,5 @@
 """Tests for storage path containment."""
 
-import pytest
 from langchain_core.documents import Document
 
 from tools.rag.pipeline.storage import LocalFileStore

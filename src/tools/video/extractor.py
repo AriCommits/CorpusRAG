@@ -56,7 +56,9 @@ def extract_keyframes(
             text=True,
         )
     except FileNotFoundError:
-        raise RuntimeError("ffmpeg not found. Install ffmpeg and ensure it is on your PATH.")
+        raise RuntimeError(
+            "ffmpeg not found. Install ffmpeg and ensure it is on your PATH."
+        )
 
     frame_paths = sorted(output_dir.glob("frame_*.jpg"))
     if not frame_paths:
@@ -71,7 +73,9 @@ def extract_keyframes(
     idx = 0
     for path, ts in zip(frame_paths, timestamps):
         if ts - last_ts >= min_interval_sec:
-            results.append(ExtractedFrame(path=path, frame_index=idx, source_timestamp_sec=ts))
+            results.append(
+                ExtractedFrame(path=path, frame_index=idx, source_timestamp_sec=ts)
+            )
             last_ts = ts
             idx += 1
         else:

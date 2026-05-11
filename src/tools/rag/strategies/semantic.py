@@ -23,7 +23,9 @@ class SemanticStrategy:
 
     name = "semantic"
 
-    def __init__(self, vectorstore: Any, embedder: Any, parent_store: Any, config: RAGConfig):
+    def __init__(
+        self, vectorstore: Any, embedder: Any, parent_store: Any, config: RAGConfig
+    ):
         """Initialize semantic strategy.
 
         Args:

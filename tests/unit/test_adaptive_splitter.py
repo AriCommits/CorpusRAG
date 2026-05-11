@@ -1,6 +1,6 @@
 """Tests for adaptive content-aware text splitter."""
-import pytest
-from tools.rag.pipeline.adaptive_splitter import classify_content, adaptive_split
+
+from tools.rag.pipeline.adaptive_splitter import adaptive_split, classify_content
 
 
 class TestClassifyContent:

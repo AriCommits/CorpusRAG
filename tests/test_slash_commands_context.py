@@ -1,7 +1,6 @@
 """Tests for /context slash command."""
 
 import pytest
-
 from src.tools.rag.slash_commands import SlashCommandRouter
 
 

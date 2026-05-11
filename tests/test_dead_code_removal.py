@@ -1,6 +1,5 @@
 """Tests to verify dead code removal was successful."""
 
-import sys
 from pathlib import Path
 
 
@@ -48,8 +47,14 @@ def test_pyproject_entry_points_cleaned() -> None:
 
 def test_config_imports_work() -> None:
     """Verify config module imports still work after schema.py deletion."""
+    from config.base import (  # noqa: F401
+        BaseConfig,
+        DatabaseConfig,
+        EmbeddingConfig,
+        LLMConfig,
+        PathsConfig,
+    )
     from config.loader import load_config, merge_configs  # noqa: F401
-    from config.base import BaseConfig, DatabaseConfig, EmbeddingConfig, LLMConfig, PathsConfig  # noqa: F401
 
     # If imports don't raise exceptions, test passes
 

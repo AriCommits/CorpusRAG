@@ -25,7 +25,9 @@ def video():
 @click.option("--course", "-c", default=None, help="Course identifier (e.g., BIOL101)")
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
 @click.option("--clean", is_flag=True, help="Run LLM cleaning after transcription")
-def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool):
+def transcribe(
+    input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool
+):
     """Transcribe video files to text."""
     cfg = load_cli_config(config, VideoConfig)
 
@@ -43,7 +45,9 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
     if output:
         output_path = Path(output)
     elif course and lecture:
-        output_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
+        output_path = (
+            cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
+        )
     else:
         output_path = cfg.paths.output_dir / "transcript.md"
 
@@ -72,7 +76,9 @@ def clean(transcript_file: str, output: str, config: str):
 
     # Clean transcript
     click.echo(f"Cleaning transcript {transcript_file}...")
-    output_path = cleaner.clean_file(Path(transcript_file), Path(output) if output else None)
+    output_path = cleaner.clean_file(
+        Path(transcript_file), Path(output) if output else None
+    )
 
     click.echo(f"✓ Cleaned transcript written to {output_path}")
 
@@ -155,7 +161,9 @@ def pipeline(
         if output:
             final_path = Path(output)
         elif course and lecture:
-            final_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_final.md"
+            final_path = (
+                cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_final.md"
+            )
         else:
             final_path = cfg.paths.output_dir / "final_transcript.md"
 
@@ -167,14 +175,28 @@ def pipeline(
 @video.command("ingest")
 @click.argument("video_path", type=click.Path(exists=True, path_type=Path))
 @click.option("--collection", "-c", required=True, help="Target collection")
-@click.option("--threshold", default=None, type=float, help="Scene detection sensitivity (0.0-1.0)")
+@click.option(
+    "--threshold",
+    default=None,
+    type=float,
+    help="Scene detection sensitivity (0.0-1.0)",
+)
 @click.option("--model", default=None, help="Ollama vision model for OCR")
 @click.option("--no-latex", is_flag=True, help="Disable pix2tex math fallback")
-@click.option("--context-window", default=None, type=int, help="Adjacent frames per chunk")
+@click.option(
+    "--context-window", default=None, type=int, help="Adjacent frames per chunk"
+)
 @click.option("--keep-frames", is_flag=True, help="Keep extracted frames after ingest")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest_cmd(
-    video_path, collection, threshold, model, no_latex, context_window, keep_frames, config
+    video_path,
+    collection,
+    threshold,
+    model,
+    no_latex,
+    context_window,
+    keep_frames,
+    config,
 ):
     """Ingest a video file using visual OCR pipeline."""
     from tools.video.ingest import ingest_video
@@ -204,7 +226,7 @@ def ingest_cmd(
             cleanup_frames=not keep_frames,
         )
 
-    click.echo(f"\n\u2713 Ingest complete")
+    click.echo("\n\u2713 Ingest complete")
     click.echo(f"  Frames extracted:  {result.frames_extracted}")
     click.echo(f"  Frames skipped:    {result.frames_skipped}")
     click.echo(f"  Chunks stored:     {result.chunks_after_dedup}")
@@ -216,7 +238,9 @@ def ingest_cmd(
 @video.command("ingest-url")
 @click.argument("url")
 @click.option("--collection", "-c", required=True, help="Target collection")
-@click.option("--threshold", default=None, type=float, help="Scene detection sensitivity")
+@click.option(
+    "--threshold", default=None, type=float, help="Scene detection sensitivity"
+)
 @click.option("--model", default=None, help="Ollama vision model for OCR")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest_url_cmd(url, collection, threshold, model, config):
@@ -231,7 +255,7 @@ def ingest_url_cmd(url, collection, threshold, model, config):
     dl_result = download_video(url, dl_dir)
     click.echo(f"\u2713 Downloaded: {dl_result.title} ({dl_result.duration_sec:.0f}s)")
 
-    click.echo(f"Ingesting via visual OCR...")
+    click.echo("Ingesting via visual OCR...")
     with click.progressbar(length=100, label="Processing") as bar:
         last_pct = [0]
 
@@ -250,7 +274,7 @@ def ingest_url_cmd(url, collection, threshold, model, config):
             vision_model=model,
         )
 
-    click.echo(f"\n\u2713 Ingest complete")
+    click.echo("\n\u2713 Ingest complete")
     click.echo(f"  Frames extracted:  {result.frames_extracted}")
     click.echo(f"  Chunks stored:     {result.chunks_after_dedup}")
     if result.output_path:
@@ -268,7 +292,9 @@ def list_jobs_cmd():
         click.echo("No active jobs.")
         return
     for j in jobs:
-        click.echo(f"  {j.job_id}  {j.status.value:8s}  {j.progress_pct:3d}%  {j.current_step}")
+        click.echo(
+            f"  {j.job_id}  {j.status.value:8s}  {j.progress_pct:3d}%  {j.current_step}"
+        )
 
 
 @video.command("status")

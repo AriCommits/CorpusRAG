@@ -8,12 +8,8 @@ Tests cover:
 - No-op path when no preprocessing needed
 """
 
-import pytest
-from pathlib import Path
 from PIL import Image, ImageDraw
-import numpy as np
-
-from src.tools.handwriting.preprocessor import preprocess_image, is_likely_blank
+from src.tools.handwriting.preprocessor import is_likely_blank, preprocess_image
 
 
 class TestPreprocessImage:

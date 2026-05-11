@@ -1,7 +1,6 @@
 """Tests for RAG retrieval strategies."""
 
 import pytest
-
 from src.tools.rag.config import RAGConfig
 from src.tools.rag.strategies import (
     HybridStrategy,
@@ -35,7 +34,11 @@ class TestStrategyRegistry:
         config = RAGConfig()
 
         strategy = get_strategy(
-            "hybrid", vectorstore=vectorstore, embedder=embedder, parent_store=parent_store, config=config
+            "hybrid",
+            vectorstore=vectorstore,
+            embedder=embedder,
+            parent_store=parent_store,
+            config=config,
         )
         assert strategy.name == "hybrid"
         assert isinstance(strategy, HybridStrategy)
@@ -50,7 +53,11 @@ class TestStrategyRegistry:
         config = RAGConfig()
 
         strategy = get_strategy(
-            "semantic", vectorstore=vectorstore, embedder=embedder, parent_store=parent_store, config=config
+            "semantic",
+            vectorstore=vectorstore,
+            embedder=embedder,
+            parent_store=parent_store,
+            config=config,
         )
         assert strategy.name == "semantic"
         assert isinstance(strategy, SemanticStrategy)
@@ -65,7 +72,11 @@ class TestStrategyRegistry:
         config = RAGConfig()
 
         strategy = get_strategy(
-            "keyword", vectorstore=vectorstore, embedder=embedder, parent_store=parent_store, config=config
+            "keyword",
+            vectorstore=vectorstore,
+            embedder=embedder,
+            parent_store=parent_store,
+            config=config,
         )
         assert strategy.name == "keyword"
         assert isinstance(strategy, KeywordStrategy)

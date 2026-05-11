@@ -3,12 +3,7 @@
 from pathlib import Path
 
 from tools.video.extractor import ExtractedFrame
-from tools.video.postprocessor import (
-    ProcessedChunk,
-    build_chunk,
-    deduplicate_chunks,
-    format_chunk_markdown,
-)
+from tools.video.postprocessor import build_chunk, deduplicate_chunks, format_chunk_markdown
 
 
 def _frame(idx: int, ts: float) -> ExtractedFrame:
@@ -41,8 +36,12 @@ def test_dedup_identical():
 
 def test_dedup_different():
     chunks = [
-        build_chunk("completely different text about topic A", _frame(0, 0), "slide", Path("t.mp4")),
-        build_chunk("another unrelated paragraph about topic B", _frame(1, 10), "slide", Path("t.mp4")),
+        build_chunk(
+            "completely different text about topic A", _frame(0, 0), "slide", Path("t.mp4")
+        ),
+        build_chunk(
+            "another unrelated paragraph about topic B", _frame(1, 10), "slide", Path("t.mp4")
+        ),
     ]
     result = deduplicate_chunks(chunks)
     assert len(result) == 2

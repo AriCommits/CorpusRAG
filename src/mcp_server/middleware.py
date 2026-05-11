@@ -19,7 +19,11 @@ def apply_http_middleware(mcp, auth_enabled: bool = True) -> None:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000", "http://localhost:8000", "http://localhost:8888"],
+        allow_origins=[
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "http://localhost:8888",
+        ],
         allow_credentials=True,
         allow_methods=["GET", "POST"],
         allow_headers=["Authorization", "X-API-Key", "Content-Type"],
@@ -40,6 +44,7 @@ def apply_http_middleware(mcp, auth_enabled: bool = True) -> None:
 
 def _apply_auth(app) -> None:
     from starlette.responses import JSONResponse
+
     from utils.auth import AuthConfig, MCPAuthenticator
 
     auth_config = AuthConfig(

@@ -68,7 +68,9 @@ class QuizGenerator:
         sample_size = min(15, max(5, doc_count // 8))  # Smaller sample than summary
 
         # Get documents (placeholder implementation)
-        document_texts = self._get_representative_documents(full_collection, sample_size)
+        document_texts = self._get_representative_documents(
+            full_collection, sample_size
+        )
 
         if not document_texts:
             raise ValueError(
@@ -93,7 +95,9 @@ class QuizGenerator:
             )
             # Pad with placeholders if needed
             for i in range(len(questions), count):
-                q_type = self.config.question_types[(i - 1) % len(self.config.question_types)]
+                q_type = self.config.question_types[
+                    (i - 1) % len(self.config.question_types)
+                ]
                 pad_question: dict[str, Any] = {
                     "question": f"Additional Question {i + 1 - len(questions)}",
                     "type": q_type,
@@ -114,7 +118,9 @@ class QuizGenerator:
 
         return questions
 
-    def _get_representative_documents(self, full_collection: str, sample_size: int) -> list[str]:
+    def _get_representative_documents(
+        self, full_collection: str, sample_size: int
+    ) -> list[str]:
         """Get representative documents from collection.
 
         Args:
@@ -232,7 +238,9 @@ class QuizGenerator:
         if re.search(r"Type:\s*(Multiple Choice|True-False)", block, re.IGNORECASE):
             type_match = re.search(r"Type:\s*(\w+\s?\w*)", block, re.IGNORECASE)
             if type_match:
-                q_type_raw = type_match.group(1).lower().replace(" ", "_").replace("-", "_")
+                q_type_raw = (
+                    type_match.group(1).lower().replace(" ", "_").replace("-", "_")
+                )
                 if q_type_raw in ["multiple_choice", "true_false", "short_answer"]:
                     q_type = q_type_raw
 

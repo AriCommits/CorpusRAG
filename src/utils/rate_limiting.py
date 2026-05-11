@@ -181,7 +181,9 @@ class OperationRateLimiter:
         Returns:
             True if allowed, False if rate limited
         """
-        return self.check_operation_limit(user_id, "query", self.config.query_calls_per_minute, 60)
+        return self.check_operation_limit(
+            user_id, "query", self.config.query_calls_per_minute, 60
+        )
 
     def check_file_size(self, size_mb: float) -> bool:
         """Check if file size is within limits.
@@ -199,7 +201,9 @@ class OperationRateLimiter:
             return False
         return True
 
-    def get_operation_count(self, user_id: str, operation_type: str, window_seconds: int) -> int:
+    def get_operation_count(
+        self, user_id: str, operation_type: str, window_seconds: int
+    ) -> int:
         """Get count of operations in specified window.
 
         Args:
@@ -238,7 +242,9 @@ class OperationRateLimiter:
             user_id: User identifier
         """
         with self._lock:
-            keys_to_remove = [key for key in self._operation_history if key[0] == user_id]
+            keys_to_remove = [
+                key for key in self._operation_history if key[0] == user_id
+            ]
             for key in keys_to_remove:
                 del self._operation_history[key]
                 if key in self._active_operations:

@@ -1,18 +1,13 @@
 """Unit tests for mcp_server/tools/dev.py."""
 
-from unittest.mock import MagicMock, patch
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 
 from config import load_config
-from mcp_server.tools.dev import (
-    collection_info,
-    list_collections,
-    rag_ingest,
-    store_text,
-)
+from mcp_server.tools.dev import collection_info, list_collections, rag_ingest, store_text
 
 
 @pytest.fixture()
@@ -107,9 +102,7 @@ class TestRagIngest:
 
         with patch("mcp_server.tools.dev.RAGIngester") as MockIngester:
             instance = MockIngester.return_value
-            instance.ingest_path.return_value = MagicMock(
-                files_indexed=1, chunks_indexed=3
-            )
+            instance.ingest_path.return_value = MagicMock(files_indexed=1, chunks_indexed=3)
             result = rag_ingest(str(tmp_path), "notes", config, mock_db)
 
         assert result["status"] == "success"
@@ -117,12 +110,16 @@ class TestRagIngest:
         assert result["chunks_indexed"] == 3
 
 
-
 class TestSecurityHardening:
     def test_rag_ingest_rejects_path_outside_vault(self):
         config = MagicMock()
         config.paths.vault = Path("./vault")
-        config.to_dict.return_value = {"llm": {}, "embedding": {}, "database": {}, "paths": {"vault": "./vault"}}
+        config.to_dict.return_value = {
+            "llm": {},
+            "embedding": {},
+            "database": {},
+            "paths": {"vault": "./vault"},
+        }
         db = MagicMock()
         result = rag_ingest("/etc/passwd", "exfil", config, db)
         assert result["status"] == "error"
@@ -138,16 +135,27 @@ class TestSecurityHardening:
 
     def test_store_text_filters_metadata(self):
         config = MagicMock()
-        config.to_dict.return_value = {"llm": {}, "embedding": {}, "database": {}, "paths": {}, "rag": {}}
+        config.to_dict.return_value = {
+            "llm": {},
+            "embedding": {},
+            "database": {},
+            "paths": {},
+            "rag": {},
+        }
         db = MagicMock()
         db.collection_exists.return_value = True
 
         with patch("mcp_server.tools.dev.EmbeddingClient") as mock_embed:
             mock_embed.return_value.embed_texts.return_value = [[0.1] * 10]
-            with patch("tools.rag.pipeline.adaptive_splitter.adaptive_split", return_value=["chunk1"]):
+            with patch(
+                "tools.rag.pipeline.adaptive_splitter.adaptive_split", return_value=["chunk1"]
+            ):
                 result = store_text(
-                    "safe text", "test", config, db,
-                    metadata={"topic": "math", "parent_id": "evil", "file_hash": "spoofed"}
+                    "safe text",
+                    "test",
+                    config,
+                    db,
+                    metadata={"topic": "math", "parent_id": "evil", "file_hash": "spoofed"},
                 )
 
         if result["status"] == "success":

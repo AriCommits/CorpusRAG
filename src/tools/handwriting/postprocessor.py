@@ -2,7 +2,6 @@
 
 import hashlib
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from src.tools.handwriting.walker import DiscoveredImage
 

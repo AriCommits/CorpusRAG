@@ -1,8 +1,10 @@
 """Tests for MCP server creation and profile loading."""
 
 import asyncio
+
 import pytest
 import yaml
+
 from mcp_server import create_mcp_server
 
 

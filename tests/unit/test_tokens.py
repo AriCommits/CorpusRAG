@@ -51,6 +51,7 @@ class TestEstimateTokens:
         """If tiktoken is installed, result should differ from len//4."""
         try:
             import tiktoken
+
             # tiktoken is available - result should be exact
             text = "Hello, world! This is a test."
             result = estimate_tokens(text)
@@ -65,7 +66,9 @@ class TestEstimateTokens:
     def test_fallback_without_tiktoken(self):
         """Without tiktoken, should use len//4 heuristic."""
         from unittest.mock import patch
+
         from utils.tokens import _get_tokenizer
+
         # Clear the lru_cache
         _get_tokenizer.cache_clear()
         with patch("utils.tokens._get_tokenizer", return_value=None):

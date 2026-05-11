@@ -1,8 +1,10 @@
 """Profile-based tool registration for MCP server."""
 
 from mcp.server.fastmcp import FastMCP
+
 from config.base import BaseConfig
 from db.base import DatabaseBackend
+
 from .tools import dev as dev_tools
 from .tools import learn as learn_tools
 from .tools import video as video_tools
@@ -10,7 +12,9 @@ from .tools import video as video_tools
 VALID_PROFILES = ("dev", "learn", "full")
 
 
-def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
+def register_dev_tools(
+    mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None
+) -> None:
     import time
 
     @mcp.tool()
@@ -100,7 +104,11 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
     def dev_list_collections_resource() -> str:
         result = dev_tools.list_collections(db)
         collections = result.get("collections", [])
-        return "\n".join(f"- {c}" for c in collections) if collections else "No collections."
+        return (
+            "\n".join(f"- {c}" for c in collections)
+            if collections
+            else "No collections."
+        )
 
     @mcp.tool()
     def get_estimate(tool_name: str) -> dict:
@@ -125,14 +133,20 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         return dev_tools.query_telemetry(sql, store)
 
 
-def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
+def register_learn_tools(
+    mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None
+) -> None:
     import time
 
     @mcp.tool()
-    def generate_flashcards(collection: str, count: int = 10, difficulty: str = "medium") -> dict:
+    def generate_flashcards(
+        collection: str, count: int = 10, difficulty: str = "medium"
+    ) -> dict:
         """Generate flashcards from a collection."""
         start = time.perf_counter()
-        result = learn_tools.generate_flashcards(collection, count, difficulty, config, db)
+        result = learn_tools.generate_flashcards(
+            collection, count, difficulty, config, db
+        )
         if store:
             store.log(
                 "generate_flashcards",
@@ -143,7 +157,9 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         return result
 
     @mcp.tool()
-    def generate_summary(collection: str, topic: str | None = None, length: str = "medium") -> dict:
+    def generate_summary(
+        collection: str, topic: str | None = None, length: str = "medium"
+    ) -> dict:
         """Generate a summary from a collection."""
         start = time.perf_counter()
         result = learn_tools.generate_summary(collection, topic, length, config, db)
@@ -162,7 +178,9 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
     ) -> dict:
         """Generate a quiz from a collection."""
         start = time.perf_counter()
-        result = learn_tools.generate_quiz(collection, count, question_types, config, db)
+        result = learn_tools.generate_quiz(
+            collection, count, question_types, config, db
+        )
         if store:
             store.log(
                 "generate_quiz",
@@ -207,10 +225,13 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         return f'Study "{collection}" about "{topic}".\n1. generate_summary\n2. generate_flashcards\n3. generate_quiz'
 
 
-def register_video_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
+def register_video_tools(
+    mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None
+) -> None:
     import time
-    from tools.video.jobs import get_job_manager
+
     from tools.video.config import VideoConfig
+    from tools.video.jobs import get_job_manager
 
     video_config = VideoConfig.from_dict(config.to_dict())
     job_mgr = get_job_manager(
@@ -262,7 +283,10 @@ def register_video_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
 
     @mcp.tool()
     def video_combined_pipeline(
-        path_or_url: str, collection: str, include_audio: bool = True, include_visual: bool = True
+        path_or_url: str,
+        collection: str,
+        include_audio: bool = True,
+        include_visual: bool = True,
     ) -> dict:
         """Run combined audio transcription + visual OCR pipeline. Returns a job_id."""
         start = time.perf_counter()

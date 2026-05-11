@@ -1,7 +1,6 @@
 """Tests for Docker image slimming — verify server extra exists and excludes heavy deps."""
 
 import sys
-import pytest
 
 
 class TestServerExtra:
@@ -25,7 +24,9 @@ class TestServerExtra:
         with open("pyproject.toml", "rb") as f:
             data = tomllib.load(f)
         server_deps = data["project"]["optional-dependencies"]["server"]
-        dep_names = [d.split(">=")[0].split("<")[0].split("[")[0].strip().lower() for d in server_deps]
+        dep_names = [
+            d.split(">=")[0].split("<")[0].split("[")[0].strip().lower() for d in server_deps
+        ]
         assert "torch" not in dep_names
         assert "sentence-transformers" not in dep_names
         assert "faster-whisper" not in dep_names

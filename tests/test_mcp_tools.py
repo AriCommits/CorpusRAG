@@ -108,6 +108,7 @@ class TestMCPServerImports:
     def test_mcp_server_accepts_profile(self):
         """Test that create_mcp_server accepts a profile argument."""
         import inspect
+
         from mcp_server import create_mcp_server
 
         sig = inspect.signature(create_mcp_server)

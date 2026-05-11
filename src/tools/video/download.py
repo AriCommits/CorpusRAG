@@ -73,7 +73,7 @@ def download_video(url: str, output_dir: Path) -> DownloadResult:
             filepath = info.get("_filename") or info.get("filename", "")
             resolved = Path(filepath).resolve()
             if not resolved.is_relative_to(output_dir.resolve()):
-                raise RuntimeError(f"Downloaded file outside output directory")
+                raise RuntimeError("Downloaded file outside output directory")
             return DownloadResult(
                 local_path=Path(filepath),
                 title=info.get("title", "Unknown"),

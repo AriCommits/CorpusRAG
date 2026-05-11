@@ -1,6 +1,5 @@
 """Tests for TUI context management components."""
 
-import pytest
 
 from tools.rag.context import ContextBlock, ContextSidebar
 

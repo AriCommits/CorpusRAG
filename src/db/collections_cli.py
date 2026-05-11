@@ -58,7 +58,9 @@ def info_collection(name: str, config: str) -> None:
     collections = db.list_collections()
     if name not in collections:
         console.print(f"[red]Error:[/red] Collection '{name}' not found.")
-        console.print(f"Available collections: {', '.join(collections) if collections else '(none)'}")
+        console.print(
+            f"Available collections: {', '.join(collections) if collections else '(none)'}"
+        )
         return
 
     try:
@@ -106,3 +108,31 @@ def manage_collections(config: str) -> None:
 
     app = CollectionManagerApp()
     app.run()
+
+
+@collections_cmd.command(name="update-path")
+@click.argument("name")
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def update_path(name: str, path: str, config: str) -> None:
+    """Update the stored ingest source path for a collection."""
+    from pathlib import Path as P
+
+    cfg, db = load_cli_db(config, BaseConfig)
+
+    if not isinstance(db, ChromaDBBackend):
+        console.print("[red]Only supported on ChromaDB backends.[/red]")
+        return
+
+    collections = db.list_collections()
+    if name not in collections:
+        console.print(f"[red]Error:[/red] Collection '{name}' not found.")
+        return
+
+    try:
+        col = db.get_collection(name)
+        resolved = str(P(path).resolve())
+        col.modify(metadata={"ingest_source_path": resolved})
+        console.print(f"[green]Updated ingest path for '{name}' to: {resolved}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")

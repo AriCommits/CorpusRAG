@@ -1,8 +1,9 @@
 """Tests for setup wizard config generation."""
 
-import yaml
-import pytest
 from pathlib import Path
+
+import pytest
+import yaml
 
 
 @pytest.fixture()
@@ -10,6 +11,7 @@ def wizard(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "configs").mkdir()
     from setup_wizard import SetupWizardApp
+
     w = SetupWizardApp()
     w.wizard_config.vault_path = str(tmp_path / "vault")
     return w

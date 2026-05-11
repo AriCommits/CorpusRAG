@@ -9,8 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import click
+import numpy as np
 
 from cli_common import load_cli_config
 
@@ -19,6 +19,7 @@ from . import ChromaDBBackend
 
 class NumpyEncoder(json.JSONEncoder):
     """JSON encoder that handles numpy arrays."""
+
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -43,10 +44,15 @@ def _extract_tar_safely(tar: tarfile.TarFile, target_dir: str) -> None:
 
     for member in tar.getmembers():
         # Resolve the member path
-        member_path = os.path.normpath(os.path.abspath(os.path.join(target_dir, member.name)))
+        member_path = os.path.normpath(
+            os.path.abspath(os.path.join(target_dir, member.name))
+        )
 
         # Ensure the resolved path is within target_dir
-        if not member_path.startswith(target_dir + os.sep) and member_path != target_dir:
+        if (
+            not member_path.startswith(target_dir + os.sep)
+            and member_path != target_dir
+        ):
             raise ValueError(
                 f"Attempted path traversal detected: member '{member.name}' "
                 f"would be extracted to {member_path} (outside {target_dir})"
@@ -115,9 +121,15 @@ class DatabaseManager:
                 # Include collection metadata if available
                 try:
                     collection_info = collection._client.get_collection(collection_name)
-                    backup_data["collection_metadata"] = getattr(collection_info, "metadata", {})
+                    backup_data["collection_metadata"] = getattr(
+                        collection_info, "metadata", {}
+                    )
                 except Exception as e:
                     self.logger.warning(f"Could not get collection metadata: {e}")
+
+            # Add embedding model from collection metadata
+            col_meta = backup_data.get("collection_metadata", {})
+            backup_data["embedding_model"] = col_meta.get("embedding_model", "unknown")
 
             # Create backup file
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -125,7 +137,9 @@ class DatabaseManager:
 
                 # Write data to temporary file
                 with open(temp_path, "w", encoding="utf-8") as f:
-                    json.dump(backup_data, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
+                    json.dump(
+                        backup_data, f, indent=2, ensure_ascii=False, cls=NumpyEncoder
+                    )
 
                 # Create compressed archive
                 backup_path.parent.mkdir(parents=True, exist_ok=True)
@@ -187,7 +201,9 @@ class DatabaseManager:
                         f"Collection '{collection_name}' already exists. Use --overwrite to replace."
                     )
                 else:
-                    self.logger.warning(f"Overwriting existing collection: {collection_name}")
+                    self.logger.warning(
+                        f"Overwriting existing collection: {collection_name}"
+                    )
                     self.db.delete_collection(collection_name)
 
             # Create collection
@@ -246,7 +262,9 @@ class DatabaseManager:
         for collection_name in collections:
             try:
                 backup_path = backup_dir / f"{collection_name}_{timestamp}.tar.gz"
-                summary = self.backup_collection(collection_name, backup_path, include_metadata)
+                summary = self.backup_collection(
+                    collection_name, backup_path, include_metadata
+                )
                 summaries.append(summary)
             except Exception as e:
                 self.logger.error(f"Failed to backup collection {collection_name}: {e}")
@@ -327,13 +345,36 @@ class DatabaseManager:
             export_path.parent.mkdir(parents=True, exist_ok=True)
 
             if format.lower() == "json":
+                # Get collection metadata for embedding model info
+                try:
+                    col_obj = self.db.get_collection(collection_name)
+                    col_meta = getattr(col_obj, "metadata", {}) or {}
+                except Exception:
+                    col_meta = {}
+                export_wrapper = {
+                    "collection_name": collection_name,
+                    "embedding_model": col_meta.get("embedding_model", "unknown"),
+                    "export_timestamp": datetime.now().isoformat(),
+                    "total_documents": len(export_data),
+                    "include_embeddings": include_embeddings,
+                    "data": export_data,
+                }
                 with open(export_path, "w", encoding="utf-8") as f:
-                    json.dump(export_data, f, indent=2, ensure_ascii=False, cls=NumpyEncoder)
+                    json.dump(
+                        export_wrapper,
+                        f,
+                        indent=2,
+                        ensure_ascii=False,
+                        cls=NumpyEncoder,
+                    )
 
             elif format.lower() == "jsonl":
                 with open(export_path, "w", encoding="utf-8") as f:
                     for item in export_data:
-                        f.write(json.dumps(item, ensure_ascii=False, cls=NumpyEncoder) + "\n")
+                        f.write(
+                            json.dumps(item, ensure_ascii=False, cls=NumpyEncoder)
+                            + "\n"
+                        )
 
             elif format.lower() == "csv":
                 import csv
@@ -439,7 +480,9 @@ class DatabaseManager:
             return summary
 
         except Exception as e:
-            self.logger.error(f"Failed to migrate {source_collection} to {target_collection}: {e}")
+            self.logger.error(
+                f"Failed to migrate {source_collection} to {target_collection}: {e}"
+            )
             raise
 
 
@@ -478,18 +521,40 @@ def list_collections_cmd(ctx: click.Context) -> None:
 
 
 @db.command("backup")
-@click.argument("collection")
+@click.argument("collection", required=False, default=None)
 @click.option("--output", "-o", required=True, type=click.Path(path_type=Path))
+@click.option(
+    "--all",
+    "backup_all",
+    is_flag=True,
+    help="Backup all collections (output is directory)",
+)
 @click.option("--no-metadata", is_flag=True, help="Exclude metadata")
 @click.pass_context
-def backup_cmd(ctx: click.Context, collection: str, output: Path, no_metadata: bool) -> None:
-    """Backup one collection."""
-    summary = _manager(ctx).backup_collection(
-        collection,
-        output,
-        include_metadata=not no_metadata,
-    )
-    click.echo(f"Backup completed: {summary}")
+def backup_cmd(
+    ctx: click.Context,
+    collection: str | None,
+    output: Path,
+    backup_all: bool,
+    no_metadata: bool,
+) -> None:
+    """Backup collections. Use --all to backup everything."""
+    if backup_all:
+        summary = _manager(ctx).backup_all_collections(
+            output, include_metadata=not no_metadata
+        )
+        click.echo(f"Full backup completed: {summary}")
+    else:
+        if not collection:
+            raise click.UsageError(
+                "COLLECTION argument is required unless --all is specified."
+            )
+        summary = _manager(ctx).backup_collection(
+            collection,
+            output,
+            include_metadata=not no_metadata,
+        )
+        click.echo(f"Backup completed: {summary}")
 
 
 @db.command("restore")
@@ -497,20 +562,12 @@ def backup_cmd(ctx: click.Context, collection: str, output: Path, no_metadata: b
 @click.option("--name", help="New collection name")
 @click.option("--overwrite", is_flag=True, help="Overwrite existing collection")
 @click.pass_context
-def restore_cmd(ctx: click.Context, backup_file: Path, name: str | None, overwrite: bool) -> None:
+def restore_cmd(
+    ctx: click.Context, backup_file: Path, name: str | None, overwrite: bool
+) -> None:
     """Restore a collection from backup."""
     summary = _manager(ctx).restore_collection(backup_file, name, overwrite)
     click.echo(f"Restore completed: {summary}")
-
-
-@db.command("backup-all")
-@click.option("--output-dir", "-o", required=True, type=click.Path(path_type=Path))
-@click.option("--no-metadata", is_flag=True, help="Exclude metadata")
-@click.pass_context
-def backup_all_cmd(ctx: click.Context, output_dir: Path, no_metadata: bool) -> None:
-    """Backup all collections."""
-    summary = _manager(ctx).backup_all_collections(output_dir, include_metadata=not no_metadata)
-    click.echo(f"Full backup completed: {summary}")
 
 
 @db.command("export")
@@ -546,7 +603,9 @@ def export_cmd(
 @db.command("migrate")
 @click.argument("source")
 @click.argument("target")
-@click.option("--batch-size", default=1000, show_default=True, type=int, help="Batch size")
+@click.option(
+    "--batch-size", default=1000, show_default=True, type=int, help="Batch size"
+)
 @click.pass_context
 def migrate_cmd(ctx: click.Context, source: str, target: str, batch_size: int) -> None:
     """Migrate data between collections."""

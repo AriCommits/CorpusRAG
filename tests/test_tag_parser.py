@@ -1,6 +1,5 @@
 """Tests for hierarchical tag parsing."""
 
-import pytest
 
 from src.tools.rag.pipeline.parsers import (
     ParsedTag,
@@ -96,7 +95,12 @@ class TestBuildTagMetadata:
         """Metadata dict has correct structure."""
         tags = [
             ParsedTag(full="Skill/ML", parts=["Skill", "ML"], prefix="Skill", leaf="ML"),
-            ParsedTag(full="Skill/Statistics", parts=["Skill", "Statistics"], prefix="Skill", leaf="Statistics"),
+            ParsedTag(
+                full="Skill/Statistics",
+                parts=["Skill", "Statistics"],
+                prefix="Skill",
+                leaf="Statistics",
+            ),
         ]
         metadata = build_tag_metadata(tags)
 
@@ -120,8 +124,15 @@ class TestBuildTagMetadata:
         """Metadata values are correct."""
         tags = [
             ParsedTag(full="Skill/ML", parts=["Skill", "ML"], prefix="Skill", leaf="ML"),
-            ParsedTag(full="Skill/Statistics", parts=["Skill", "Statistics"], prefix="Skill", leaf="Statistics"),
-            ParsedTag(full="CS/Algorithms", parts=["CS", "Algorithms"], prefix="CS", leaf="Algorithms"),
+            ParsedTag(
+                full="Skill/Statistics",
+                parts=["Skill", "Statistics"],
+                prefix="Skill",
+                leaf="Statistics",
+            ),
+            ParsedTag(
+                full="CS/Algorithms", parts=["CS", "Algorithms"], prefix="CS", leaf="Algorithms"
+            ),
         ]
         metadata = build_tag_metadata(tags)
 

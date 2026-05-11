@@ -27,8 +27,8 @@ class RAGAgent:
         # Create LLM backend for generation
         self.llm_backend = create_backend(config.llm.to_backend_config())
         try:
-            from utils.telemetry import get_telemetry_store
             from utils.benchmarking import benchmarker
+            from utils.telemetry import get_telemetry_store
 
             tstore = get_telemetry_store()
             if tstore and not benchmarker.telemetry_store:

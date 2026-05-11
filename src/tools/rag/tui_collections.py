@@ -78,7 +78,7 @@ class CollectionManagerScreen(Screen):
             self.notify(f"Error loading collections: {e}", severity="error")
 
     def action_quit_screen(self) -> None:
-        self.app.pop_screen()
+        self.app.exit()
 
     def get_selected_collection(self) -> str | None:
         table = self.query_one(DataTable)
@@ -97,7 +97,9 @@ class CollectionManagerScreen(Screen):
             return
 
         if not isinstance(self.db, ChromaDBBackend):
-            self.notify("Stats are only supported on ChromaDB backends", severity="warning")
+            self.notify(
+                "Stats are only supported on ChromaDB backends", severity="warning"
+            )
             return
 
         try:
