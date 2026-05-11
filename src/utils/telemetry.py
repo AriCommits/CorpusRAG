@@ -39,15 +39,29 @@ class TelemetryStore:
         """)
         self._conn.commit()
 
-    def log(self, tool_name: str, duration_ms: float, input_size: int = 0,
-            output_summary: str = "", metadata: dict | None = None, success: bool = True) -> None:
+    def log(
+        self,
+        tool_name: str,
+        duration_ms: float,
+        input_size: int = 0,
+        output_summary: str = "",
+        metadata: dict | None = None,
+        success: bool = True,
+    ) -> None:
         if not self.enabled or not self._conn:
             return
         with self._lock:
             self._conn.execute(
                 "INSERT INTO tool_executions (tool_name, started_at, duration_ms, input_size_bytes, output_summary, metadata_json, success) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (tool_name, datetime.now(timezone.utc).isoformat(), duration_ms, input_size,
-                 output_summary, json.dumps(metadata or {}), int(success))
+                (
+                    tool_name,
+                    datetime.now(timezone.utc).isoformat(),
+                    duration_ms,
+                    input_size,
+                    output_summary,
+                    json.dumps(metadata or {}),
+                    int(success),
+                ),
             )
             self._conn.commit()
 
@@ -56,7 +70,7 @@ class TelemetryStore:
             return {}
         rows = self._conn.execute(
             "SELECT duration_ms FROM tool_executions WHERE tool_name = ? AND success = 1 ORDER BY id DESC LIMIT ?",
-            (tool_name, limit)
+            (tool_name, limit),
         ).fetchall()
         if not rows:
             return {}
@@ -72,6 +86,7 @@ class TelemetryStore:
 
     def _validate_sql(self, sql: str) -> str:
         import re
+
         stripped = sql.strip()
         if not stripped.upper().startswith("SELECT"):
             raise ValueError("Only SELECT queries are allowed")
@@ -79,9 +94,21 @@ class TelemetryStore:
             raise ValueError("Multiple statements not allowed")
         if "--" in stripped or "/*" in stripped:
             raise ValueError("SQL comments not allowed")
-        _BLOCKED = {"ATTACH", "DETACH", "LOAD_EXTENSION", "PRAGMA", "INSERT",
-                    "UPDATE", "DELETE", "DROP", "CREATE", "ALTER", "UNION", "INTO"}
-        tokens = set(re.findall(r'\b[A-Z_]+\b', stripped.upper()))
+        _BLOCKED = {
+            "ATTACH",
+            "DETACH",
+            "LOAD_EXTENSION",
+            "PRAGMA",
+            "INSERT",
+            "UPDATE",
+            "DELETE",
+            "DROP",
+            "CREATE",
+            "ALTER",
+            "UNION",
+            "INTO",
+        }
+        tokens = set(re.findall(r"\b[A-Z_]+\b", stripped.upper()))
         blocked = tokens & _BLOCKED
         if blocked:
             raise ValueError(f"Blocked SQL keywords: {blocked}")
@@ -102,6 +129,7 @@ class TelemetryStore:
 
 def timed(store: TelemetryStore, tool_name: str):
     """Decorator that measures and logs execution time."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -115,14 +143,18 @@ def timed(store: TelemetryStore, tool_name: str):
                 duration = (time.perf_counter() - start) * 1000
                 store.log(tool_name, duration, success=False, output_summary=str(e))
                 raise
+
         return wrapper
+
     return decorator
 
 
 _global_store: TelemetryStore | None = None
 
 
-def init_telemetry(db_path: str = ".corpusrag/telemetry.db", enabled: bool = True) -> TelemetryStore:
+def init_telemetry(
+    db_path: str = ".corpusrag/telemetry.db", enabled: bool = True
+) -> TelemetryStore:
     global _global_store
     _global_store = TelemetryStore(db_path, enabled)
     return _global_store

@@ -8,6 +8,7 @@ def _get_tokenizer():
     """Get cached tiktoken encoder, or None if unavailable."""
     try:
         import tiktoken
+
         return tiktoken.get_encoding("cl100k_base")
     except (ImportError, Exception):
         return None

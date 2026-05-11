@@ -23,6 +23,7 @@ def is_url(path_or_url: str) -> bool:
 
 def validate_video_url(url: str) -> str:
     from urllib.parse import urlparse
+
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
@@ -43,15 +44,20 @@ def download_video(url: str, output_dir: Path) -> DownloadResult:
         result = subprocess.run(
             [
                 "yt-dlp",
-                "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-                "--merge-output-format", "mp4",
-                "-o", str(output_dir / "%(title)s.%(ext)s"),
+                "-f",
+                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                "--merge-output-format",
+                "mp4",
+                "-o",
+                str(output_dir / "%(title)s.%(ext)s"),
                 "--print-json",
                 "--no-simulate",
                 "--restrict-filenames",
                 url,
             ],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         )
     except FileNotFoundError:
         raise RuntimeError(

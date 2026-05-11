@@ -9,6 +9,7 @@ def _check_available() -> bool:
     """
     try:
         import tiktoken  # noqa: F401
+
         return True
     except ImportError:
         return False

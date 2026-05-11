@@ -41,7 +41,14 @@ def apply_http_middleware(mcp, auth_enabled: bool = True) -> None:
 def _apply_auth(app) -> None:
     from starlette.responses import JSONResponse
     from utils.auth import AuthConfig, MCPAuthenticator
-    auth_config = AuthConfig(enabled=True, api_keys={}, rate_limit_enabled=True, requests_per_minute=100, requests_per_hour=1000)
+
+    auth_config = AuthConfig(
+        enabled=True,
+        api_keys={},
+        rate_limit_enabled=True,
+        requests_per_minute=100,
+        requests_per_hour=1000,
+    )
     auth_file = Path.home() / ".corpusrag" / "api_keys.json"
     authenticator = MCPAuthenticator(auth_config, auth_file)
     if not authenticator.api_key_manager.api_keys:
@@ -52,7 +59,9 @@ def _apply_auth(app) -> None:
     async def auth_middleware(request, call_next):
         if request.url.path.startswith("/health"):
             return await call_next(request)
-        api_key = request.headers.get("x-api-key") or request.headers.get("authorization", "").removeprefix("Bearer ")
+        api_key = request.headers.get("x-api-key") or request.headers.get(
+            "authorization", ""
+        ).removeprefix("Bearer ")
         if not authenticator.api_key_manager.validate_api_key(api_key):
             return JSONResponse({"error": "Unauthorized"}, status_code=401)
         return await call_next(request)

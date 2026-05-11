@@ -177,6 +177,7 @@ class RAGIngester:
                 # Split parent into children for vector search
                 if self.use_adaptive:
                     from .pipeline.adaptive_splitter import adaptive_split
+
                     child_docs = adaptive_split(
                         parent_doc.page_content,
                         base_chunk_size=self.config.chunking.child_chunk_size,

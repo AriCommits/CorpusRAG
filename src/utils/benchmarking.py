@@ -26,8 +26,13 @@ class RAGBenchmarker:
         self.history.append(result)
         if self.telemetry_store:
             self.telemetry_store.log(
-                "rag_query", result.total_ms, success=True,
-                metadata={"retrieval_ms": result.retrieval_ms, "generation_ms": result.generation_ms}
+                "rag_query",
+                result.total_ms,
+                success=True,
+                metadata={
+                    "retrieval_ms": result.retrieval_ms,
+                    "generation_ms": result.generation_ms,
+                },
             )
         return result
 

@@ -68,16 +68,17 @@ def ingest_video(
     # Step 1: Extract keyframes (0-20%)
     _progress(0, "Extracting keyframes")
     logger.info("Extracting keyframes from %s (threshold=%.2f)", video_path.name, threshold)
-    frames = extract_keyframes(
-        video_path, frames_dir, threshold, config.min_frame_interval
-    )
+    frames = extract_keyframes(video_path, frames_dir, threshold, config.min_frame_interval)
     logger.info("Extracted %d frames", len(frames))
     _progress(20, f"Extracted {len(frames)} frames")
 
     if not frames:
         return VideoIngestResult(
-            source_file=str(video_path), frames_extracted=0,
-            frames_skipped=0, chunks_after_dedup=0, duration_sec=0,
+            source_file=str(video_path),
+            frames_extracted=0,
+            frames_skipped=0,
+            chunks_after_dedup=0,
+            duration_sec=0,
         )
 
     # Step 2: Classify frames (20-30%)
@@ -99,7 +100,10 @@ def ingest_video(
     total = len(classified)
     for i, (frame, ft) in enumerate(classified):
         text = ocr_frame_with_fallback(
-            frame.path, ft, model=model, endpoint=endpoint,
+            frame.path,
+            ft,
+            model=model,
+            endpoint=endpoint,
             use_latex_fallback=latex,
         )
         if text != "[NO_CONTENT]":
@@ -107,7 +111,7 @@ def ingest_video(
         else:
             skipped += 1
         pct = 30 + int(50 * (i + 1) / max(total, 1))
-        _progress(pct, f"OCR {i+1}/{total}")
+        _progress(pct, f"OCR {i + 1}/{total}")
 
     logger.info("OCR complete: %d chunks", len(raw_chunks))
 
@@ -129,9 +133,7 @@ def ingest_video(
         context = "\n\n".join(format_chunk_markdown(c) for c in chunks[start:end])
         sections.append(context)
 
-    full_markdown = "\n\n---\n\n".join(
-        format_chunk_markdown(c) for c in chunks
-    )
+    full_markdown = "\n\n---\n\n".join(format_chunk_markdown(c) for c in chunks)
 
     # Write output file if output_dir provided
     output_path = None

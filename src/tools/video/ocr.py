@@ -64,8 +64,10 @@ def ocr_frame_latex(frame_path: Path) -> str:
     try:
         if _latex_model is None:
             from pix2tex.cli import LatexOCR
+
             _latex_model = LatexOCR()
         from PIL import Image
+
         img = Image.open(frame_path)
         latex = _latex_model(img)
         return f"$$\n{latex}\n$$"

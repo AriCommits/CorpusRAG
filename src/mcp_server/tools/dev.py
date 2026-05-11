@@ -13,10 +13,14 @@ from utils.security import validate_file_path
 from utils.validation import get_validator
 
 
-def rag_ingest(path: str, collection: str, config: BaseConfig, db: DatabaseBackend) -> dict[str, Any]:
+def rag_ingest(
+    path: str, collection: str, config: BaseConfig, db: DatabaseBackend
+) -> dict[str, Any]:
     """Ingest documents from a path into a RAG collection."""
     try:
-        validated_path = validate_file_path(path, must_exist=True, allowed_roots=[str(config.paths.vault)])
+        validated_path = validate_file_path(
+            path, must_exist=True, allowed_roots=[str(config.paths.vault)]
+        )
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
@@ -34,7 +38,9 @@ def rag_ingest(path: str, collection: str, config: BaseConfig, db: DatabaseBacke
         return {"status": "error", "error": str(e)}
 
 
-def rag_query(collection: str, query: str, top_k: int, config: BaseConfig, db: DatabaseBackend) -> dict[str, Any]:
+def rag_query(
+    collection: str, query: str, top_k: int, config: BaseConfig, db: DatabaseBackend
+) -> dict[str, Any]:
     """Query a RAG collection and generate a response."""
     validator = get_validator()
     try:
@@ -52,7 +58,9 @@ def rag_query(collection: str, query: str, top_k: int, config: BaseConfig, db: D
         return {"status": "error", "error": str(e)}
 
 
-def rag_retrieve(collection: str, query: str, top_k: int, config: BaseConfig, db: DatabaseBackend) -> dict[str, Any]:
+def rag_retrieve(
+    collection: str, query: str, top_k: int, config: BaseConfig, db: DatabaseBackend
+) -> dict[str, Any]:
     """Retrieve relevant chunks from a RAG collection without generating a response."""
     validator = get_validator()
     try:
@@ -95,11 +103,20 @@ def store_text(
             db.create_collection(full_collection)
 
         from tools.rag.pipeline.adaptive_splitter import adaptive_split
-        chunks = adaptive_split(text, base_chunk_size=rag_config.chunking.child_chunk_size, base_overlap=rag_config.chunking.child_chunk_overlap)
+
+        chunks = adaptive_split(
+            text,
+            base_chunk_size=rag_config.chunking.child_chunk_size,
+            base_overlap=rag_config.chunking.child_chunk_overlap,
+        )
 
         embeddings = EmbeddingClient(rag_config).embed_texts(chunks)
 
-        base_meta = {"source_type": "agent_text", "timestamp": datetime.now().isoformat(), "collection_name": collection}
+        base_meta = {
+            "source_type": "agent_text",
+            "timestamp": datetime.now().isoformat(),
+            "collection_name": collection,
+        }
         _ALLOWED_META = {"topic", "tags", "author", "date", "notes", "source"}
         if metadata:
             safe_meta = {k: v for k, v in metadata.items() if k in _ALLOWED_META}
@@ -132,7 +149,6 @@ def collection_info(collection_name: str, db: DatabaseBackend) -> dict[str, Any]
         return {"status": "error", "error": str(e)}
 
 
-
 def get_estimate(tool_name: str, store) -> dict[str, Any]:
     """Get time estimate for a tool based on historical execution data."""
     if not store:
@@ -140,8 +156,12 @@ def get_estimate(tool_name: str, store) -> dict[str, Any]:
     try:
         estimates = store.get_estimates(tool_name)
         if not estimates:
-            return {"status": "success", "tool": tool_name, "estimate": None,
-                    "message": f"No historical data for '{tool_name}'"}
+            return {
+                "status": "success",
+                "tool": tool_name,
+                "estimate": None,
+                "message": f"No historical data for '{tool_name}'",
+            }
         return {"status": "success", **estimates}
     except Exception as e:
         return {"status": "error", "error": str(e)}

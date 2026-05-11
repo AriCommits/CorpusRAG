@@ -9,6 +9,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 @dataclass(frozen=True)
 class ChunkParams:
     """Parameters for a specific content type."""
+
     chunk_size: int
     chunk_overlap: int
     separators: list[str]
@@ -46,7 +47,7 @@ def classify_content(text: str) -> str:
         return "short"
 
     words = text.split()
-    sentences = re.split(r'[.!?]+', text)
+    sentences = re.split(r"[.!?]+", text)
     avg_sentence_len = len(words) / max(len(sentences), 1)
     if avg_sentence_len > 20 and len(non_empty) < len(words) / 10:
         return "prose"

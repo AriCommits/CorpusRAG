@@ -41,10 +41,7 @@ def walk_directory(
     """
     root = Path(root)
     pattern = "**/*" if recursive else "*"
-    all_files = [
-        p for p in root.glob(pattern)
-        if p.is_file() and p.suffix.lower() in extensions
-    ]
+    all_files = [p for p in root.glob(pattern) if p.is_file() and p.suffix.lower() in extensions]
 
     # Filter by max_depth if specified
     if recursive and max_depth is not None:

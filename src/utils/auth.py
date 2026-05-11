@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 
-
 @dataclass
 class AuthConfig:
     """Authentication configuration."""
@@ -228,6 +227,7 @@ class MCPAuthenticator:
             config_file: Optional path to persistent storage
         """
         from fastapi.security import HTTPBearer
+
         self.config = config
         self.api_key_manager = APIKeyManager(config, config_file)
         self.rate_limiter = RateLimiter(config)
@@ -252,6 +252,7 @@ class MCPAuthenticator:
         """
         from fastapi import HTTPException
         from fastapi.security import HTTPAuthorizationCredentials
+
         if not self.config.enabled:
             return {"authenticated": False, "bypass": True}
 

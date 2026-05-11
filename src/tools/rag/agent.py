@@ -29,6 +29,7 @@ class RAGAgent:
         try:
             from utils.telemetry import get_telemetry_store
             from utils.benchmarking import benchmarker
+
             tstore = get_telemetry_store()
             if tstore and not benchmarker.telemetry_store:
                 benchmarker.telemetry_store = tstore

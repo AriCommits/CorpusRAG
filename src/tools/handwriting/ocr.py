@@ -48,10 +48,12 @@ def ocr_handwriting(
 
     response = ollama.chat(
         model=model,
-        messages=[{
-            "role": "user",
-            "content": HANDWRITING_PROMPT,
-            "images": [image_b64],
-        }]
+        messages=[
+            {
+                "role": "user",
+                "content": HANDWRITING_PROMPT,
+                "images": [image_b64],
+            }
+        ],
     )
     return response["message"]["content"].strip()
