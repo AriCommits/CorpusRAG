@@ -38,14 +38,24 @@ def run_doctor(config) -> list[tuple[bool, str]]:
             if llm_model in model_names:
                 results.append((True, f"LLM model available: {config.llm.model}"))
             else:
-                results.append((False, f"LLM model NOT found: {config.llm.model} (available: {', '.join(models)})"))
+                results.append(
+                    (
+                        False,
+                        f"LLM model NOT found: {config.llm.model} (available: {', '.join(models)})",
+                    )
+                )
 
             # Embedding model
             embed_model = config.embedding.model.split(":")[0]
             if embed_model in model_names:
                 results.append((True, f"Embedding model available: {config.embedding.model}"))
             else:
-                results.append((False, f"Embedding model NOT found: {config.embedding.model} (available: {', '.join(models)})"))
+                results.append(
+                    (
+                        False,
+                        f"Embedding model NOT found: {config.embedding.model} (available: {', '.join(models)})",
+                    )
+                )
 
             # Test embedding
             try:

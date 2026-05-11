@@ -19,8 +19,12 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         start = time.perf_counter()
         result = dev_tools.rag_ingest(path, collection, config, db)
         if store:
-            store.log("rag_ingest", (time.perf_counter() - start) * 1000,
-                      input_size=len(path), success=result.get("status") == "success")
+            store.log(
+                "rag_ingest",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(path),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -29,8 +33,12 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         start = time.perf_counter()
         result = dev_tools.rag_query(collection, query, top_k, config, db)
         if store:
-            store.log("rag_query", (time.perf_counter() - start) * 1000,
-                      input_size=len(query), success=result.get("status") == "success")
+            store.log(
+                "rag_query",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(query),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -39,8 +47,12 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         start = time.perf_counter()
         result = dev_tools.rag_retrieve(collection, query, top_k, config, db)
         if store:
-            store.log("rag_retrieve", (time.perf_counter() - start) * 1000,
-                      input_size=len(query), success=result.get("status") == "success")
+            store.log(
+                "rag_retrieve",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(query),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -49,8 +61,12 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         start = time.perf_counter()
         result = dev_tools.store_text(text, collection, config, db, metadata)
         if store:
-            store.log("store_text", (time.perf_counter() - start) * 1000,
-                      input_size=len(text), success=result.get("status") == "success")
+            store.log(
+                "store_text",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(text),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -59,8 +75,11 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         start = time.perf_counter()
         result = dev_tools.list_collections(db)
         if store:
-            store.log("list_collections", (time.perf_counter() - start) * 1000,
-                      success=result.get("status") == "success")
+            store.log(
+                "list_collections",
+                (time.perf_counter() - start) * 1000,
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -69,8 +88,12 @@ def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, st
         start = time.perf_counter()
         result = dev_tools.collection_info(collection_name, db)
         if store:
-            store.log("collection_info", (time.perf_counter() - start) * 1000,
-                      input_size=len(collection_name), success=result.get("status") == "success")
+            store.log(
+                "collection_info",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(collection_name),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.resource("collections://list")
@@ -111,8 +134,12 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         start = time.perf_counter()
         result = learn_tools.generate_flashcards(collection, count, difficulty, config, db)
         if store:
-            store.log("generate_flashcards", (time.perf_counter() - start) * 1000,
-                      input_size=len(collection), success=result.get("status") == "success")
+            store.log(
+                "generate_flashcards",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(collection),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -121,18 +148,28 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         start = time.perf_counter()
         result = learn_tools.generate_summary(collection, topic, length, config, db)
         if store:
-            store.log("generate_summary", (time.perf_counter() - start) * 1000,
-                      input_size=len(collection), success=result.get("status") == "success")
+            store.log(
+                "generate_summary",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(collection),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
-    def generate_quiz(collection: str, count: int = 10, question_types: list[str] | None = None) -> dict:
+    def generate_quiz(
+        collection: str, count: int = 10, question_types: list[str] | None = None
+    ) -> dict:
         """Generate a quiz from a collection."""
         start = time.perf_counter()
         result = learn_tools.generate_quiz(collection, count, question_types, config, db)
         if store:
-            store.log("generate_quiz", (time.perf_counter() - start) * 1000,
-                      input_size=len(collection), success=result.get("status") == "success")
+            store.log(
+                "generate_quiz",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(collection),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -141,8 +178,12 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         start = time.perf_counter()
         result = learn_tools.transcribe_video(video_path, collection, model, config, db)
         if store:
-            store.log("transcribe_video", (time.perf_counter() - start) * 1000,
-                      input_size=len(video_path), success=result.get("status") == "success")
+            store.log(
+                "transcribe_video",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(video_path),
+                success=result.get("status") == "success",
+            )
         return result
 
     @mcp.tool()
@@ -151,8 +192,12 @@ def register_learn_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         start = time.perf_counter()
         result = learn_tools.clean_transcript(transcript_text, model, config)
         if store:
-            store.log("clean_transcript", (time.perf_counter() - start) * 1000,
-                      input_size=len(transcript_text), success=result.get("status") == "success")
+            store.log(
+                "clean_transcript",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(transcript_text),
+                success=result.get("status") == "success",
+            )
         return result
 
     register_video_tools(mcp, config, db, store)
@@ -174,30 +219,63 @@ def register_video_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
     )
 
     @mcp.tool()
-    def video_ingest_local(path: str, collection: str, vision_model: str | None = None, scene_threshold: float | None = None) -> dict:
+    def video_ingest_local(
+        path: str,
+        collection: str,
+        vision_model: str | None = None,
+        scene_threshold: float | None = None,
+    ) -> dict:
         """Ingest a local video file using visual OCR. Returns a job_id for async tracking."""
         start = time.perf_counter()
-        result = video_tools.video_ingest_local(path, collection, config, db, job_mgr, vision_model, scene_threshold)
+        result = video_tools.video_ingest_local(
+            path, collection, config, db, job_mgr, vision_model, scene_threshold
+        )
         if store:
-            store.log("video_ingest_local", (time.perf_counter() - start) * 1000, input_size=len(path), success=True)
+            store.log(
+                "video_ingest_local",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(path),
+                success=True,
+            )
         return result
 
     @mcp.tool()
-    def video_ingest_url(url: str, collection: str, vision_model: str | None = None, scene_threshold: float | None = None) -> dict:
+    def video_ingest_url(
+        url: str,
+        collection: str,
+        vision_model: str | None = None,
+        scene_threshold: float | None = None,
+    ) -> dict:
         """Download a video from URL and ingest using visual OCR. Returns a job_id."""
         start = time.perf_counter()
-        result = video_tools.video_ingest_url(url, collection, config, db, job_mgr, vision_model, scene_threshold)
+        result = video_tools.video_ingest_url(
+            url, collection, config, db, job_mgr, vision_model, scene_threshold
+        )
         if store:
-            store.log("video_ingest_url", (time.perf_counter() - start) * 1000, input_size=len(url), success=True)
+            store.log(
+                "video_ingest_url",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(url),
+                success=True,
+            )
         return result
 
     @mcp.tool()
-    def video_combined_pipeline(path_or_url: str, collection: str, include_audio: bool = True, include_visual: bool = True) -> dict:
+    def video_combined_pipeline(
+        path_or_url: str, collection: str, include_audio: bool = True, include_visual: bool = True
+    ) -> dict:
         """Run combined audio transcription + visual OCR pipeline. Returns a job_id."""
         start = time.perf_counter()
-        result = video_tools.video_combined_pipeline(path_or_url, collection, config, db, job_mgr, include_audio, include_visual)
+        result = video_tools.video_combined_pipeline(
+            path_or_url, collection, config, db, job_mgr, include_audio, include_visual
+        )
         if store:
-            store.log("video_combined_pipeline", (time.perf_counter() - start) * 1000, input_size=len(path_or_url), success=True)
+            store.log(
+                "video_combined_pipeline",
+                (time.perf_counter() - start) * 1000,
+                input_size=len(path_or_url),
+                success=True,
+            )
         return result
 
     @mcp.tool()
@@ -211,7 +289,9 @@ def register_video_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
         return video_tools.video_list_jobs(job_mgr)
 
 
-def register_profile(mcp: FastMCP, profile: str, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
+def register_profile(
+    mcp: FastMCP, profile: str, config: BaseConfig, db: DatabaseBackend, store=None
+) -> None:
     if profile not in VALID_PROFILES:
         raise ValueError(f"Unknown profile '{profile}'. Valid: {VALID_PROFILES}")
     if profile in ("dev", "full"):

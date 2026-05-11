@@ -116,6 +116,7 @@ def ingest_cmd(
     global RAGAgent
     if RAGAgent is None:
         from tools.rag.agent import RAGAgent as _RAGAgent
+
         RAGAgent = _RAGAgent
 
     cfg, db = load_cli_db(config, HandwritingConfig)

@@ -40,18 +40,23 @@ def extract_keyframes(
     try:
         subprocess.run(
             [
-                "ffmpeg", "-i", str(video_path),
-                "-vf", f"select=gt(scene\\,{scene_threshold}),setpts=N/FRAME_RATE/TB",
-                "-vsync", "vfr",
-                "-frame_pts", "1",
+                "ffmpeg",
+                "-i",
+                str(video_path),
+                "-vf",
+                f"select=gt(scene\\,{scene_threshold}),setpts=N/FRAME_RATE/TB",
+                "-vsync",
+                "vfr",
+                "-frame_pts",
+                "1",
                 output_pattern,
             ],
-            check=True, capture_output=True, text=True,
+            check=True,
+            capture_output=True,
+            text=True,
         )
     except FileNotFoundError:
-        raise RuntimeError(
-            "ffmpeg not found. Install ffmpeg and ensure it is on your PATH."
-        )
+        raise RuntimeError("ffmpeg not found. Install ffmpeg and ensure it is on your PATH.")
 
     frame_paths = sorted(output_dir.glob("frame_*.jpg"))
     if not frame_paths:
@@ -79,13 +84,19 @@ def _get_timestamps(video_path: Path, n_frames: int) -> list[float]:
     try:
         result = subprocess.run(
             [
-                "ffprobe", "-v", "quiet",
-                "-select_streams", "v",
-                "-show_entries", "frame=pts_time",
-                "-of", "csv=p=0",
+                "ffprobe",
+                "-v",
+                "quiet",
+                "-select_streams",
+                "v",
+                "-show_entries",
+                "frame=pts_time",
+                "-of",
+                "csv=p=0",
                 str(video_path),
             ],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         times = []
         for line in result.stdout.strip().splitlines():

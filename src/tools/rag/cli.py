@@ -283,6 +283,7 @@ def ui(collection: str, config: str):
     app = RAGApp(agent, collection)
     app.run()
 
+
 @rag.command()
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def doctor(config):
@@ -304,8 +305,6 @@ def doctor(config):
         raise SystemExit(1)
     else:
         click.echo("\nAll checks passed!")
-
-
 
 
 def main():

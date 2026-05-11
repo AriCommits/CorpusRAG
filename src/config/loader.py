@@ -268,15 +268,15 @@ def parse_env_overrides(prefix: str = "CC_") -> dict[str, Any]:
 
         # Block security-sensitive key paths from env override
         _BLOCKED_PATHS = {
-            ("llm", "endpoint"), ("llm", "api", "key"),
-            ("database", "host"), ("database", "port"),
+            ("llm", "endpoint"),
+            ("llm", "api", "key"),
+            ("database", "host"),
+            ("database", "port"),
             ("database", "persist", "directory"),
             ("paths", "vault"),
         }
         if tuple(parts) in _BLOCKED_PATHS:
-            raise SecurityError(
-                f"Environment override blocked for sensitive key: {key}"
-            )
+            raise SecurityError(f"Environment override blocked for sensitive key: {key}")
 
         parsed_value: Any = value
 

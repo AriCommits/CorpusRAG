@@ -46,7 +46,6 @@ class ChromaDBBackend(DatabaseBackend):
             meta = metadata or {}
             if "hnsw:space" not in meta:
                 meta["hnsw:space"] = "cosine"
-
             self.client.create_collection(name=name, metadata=meta)
         except Exception as e:
             if "already exists" in str(e).lower():

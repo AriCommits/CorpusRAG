@@ -31,6 +31,7 @@ def create_mcp_server(
     db = init_db(config)
 
     from utils.telemetry import init_telemetry
+
     telemetry_cfg = config.to_dict().get("telemetry", {})
     store = init_telemetry(enabled=telemetry_cfg.get("enabled", False))
 
@@ -59,9 +60,7 @@ def main() -> None:
     )
     parser.add_argument("--host", default="0.0.0.0", help="Host (HTTP only)")
     parser.add_argument("--port", type=int, default=8000, help="Port (HTTP only)")
-    parser.add_argument(
-        "--no-auth", action="store_true", help="Disable auth (HTTP only)"
-    )
+    parser.add_argument("--no-auth", action="store_true", help="Disable auth (HTTP only)")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -74,7 +73,9 @@ def main() -> None:
         apply_http_middleware(mcp, auth_enabled=not args.no_auth)
         logger.info(
             "Starting CorpusRAG MCP (HTTP) on %s:%d [profile=%s]",
-            args.host, args.port, args.profile,
+            args.host,
+            args.port,
+            args.profile,
         )
         mcp.run(transport="streamable-http", host=args.host, port=args.port)
     else:

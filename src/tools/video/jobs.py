@@ -50,9 +50,13 @@ class JobManager:
 
     def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> str:
         with self._lock:
-            active = sum(1 for j in self._jobs.values() if j.status in (JobStatus.QUEUED, JobStatus.RUNNING))
+            active = sum(
+                1 for j in self._jobs.values() if j.status in (JobStatus.QUEUED, JobStatus.RUNNING)
+            )
             if active >= self._max_queue:
-                raise RuntimeError(f"Too many pending jobs ({active}/{self._max_queue}). Try again later.")
+                raise RuntimeError(
+                    f"Too many pending jobs ({active}/{self._max_queue}). Try again later."
+                )
         job_id = str(uuid.uuid4())[:8]
         with self._lock:
             self._jobs[job_id] = JobState(job_id=job_id)
@@ -97,7 +101,8 @@ class JobManager:
         now = datetime.now()
         with self._lock:
             expired = [
-                jid for jid, state in self._jobs.items()
+                jid
+                for jid, state in self._jobs.items()
                 if state.status in (JobStatus.COMPLETE, JobStatus.FAILED)
                 and now - state.updated_at > self._expiry
             ]

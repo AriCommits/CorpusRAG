@@ -9,8 +9,13 @@ from db import DatabaseBackend
 
 
 def video_ingest_local(
-    path: str, collection: str, config: BaseConfig, db: DatabaseBackend,
-    job_manager, vision_model: str | None = None, scene_threshold: float | None = None,
+    path: str,
+    collection: str,
+    config: BaseConfig,
+    db: DatabaseBackend,
+    job_manager,
+    vision_model: str | None = None,
+    scene_threshold: float | None = None,
 ) -> dict:
     """Ingest a local video file via visual OCR pipeline (async)."""
     from tools.video.config import VideoConfig
@@ -25,9 +30,12 @@ def video_ingest_local(
 
     def _run(progress_cb):
         result = ingest_video(
-            video_path, video_config, output_dir=output_dir,
+            video_path,
+            video_config,
+            output_dir=output_dir,
             progress_cb=progress_cb,
-            vision_model=vision_model, scene_threshold=scene_threshold,
+            vision_model=vision_model,
+            scene_threshold=scene_threshold,
         )
         return {
             "status": "success",
@@ -44,8 +52,13 @@ def video_ingest_local(
 
 
 def video_ingest_url(
-    url: str, collection: str, config: BaseConfig, db: DatabaseBackend,
-    job_manager, vision_model: str | None = None, scene_threshold: float | None = None,
+    url: str,
+    collection: str,
+    config: BaseConfig,
+    db: DatabaseBackend,
+    job_manager,
+    vision_model: str | None = None,
+    scene_threshold: float | None = None,
 ) -> dict:
     """Download video from URL then run visual OCR pipeline (async)."""
     from tools.video.config import VideoConfig
@@ -65,9 +78,12 @@ def video_ingest_url(
             progress_cb(10 + int(pct * 0.9), step)
 
         result = ingest_video(
-            dl_result.local_path, video_config, output_dir=output_dir,
+            dl_result.local_path,
+            video_config,
+            output_dir=output_dir,
             progress_cb=scaled_cb,
-            vision_model=vision_model, scene_threshold=scene_threshold,
+            vision_model=vision_model,
+            scene_threshold=scene_threshold,
         )
         return {
             "status": "success",
@@ -83,8 +99,13 @@ def video_ingest_url(
 
 
 def video_combined_pipeline(
-    path_or_url: str, collection: str, config: BaseConfig, db: DatabaseBackend,
-    job_manager, include_audio: bool = True, include_visual: bool = True,
+    path_or_url: str,
+    collection: str,
+    config: BaseConfig,
+    db: DatabaseBackend,
+    job_manager,
+    include_audio: bool = True,
+    include_visual: bool = True,
 ) -> dict:
     """Combined audio+visual pipeline (async)."""
     from concurrent.futures import ThreadPoolExecutor
@@ -112,16 +133,22 @@ def video_combined_pipeline(
             futures = {}
             if include_visual:
                 futures["visual"] = pool.submit(
-                    ingest_video, video_path, video_config, output_dir,
+                    ingest_video,
+                    video_path,
+                    video_config,
+                    output_dir,
                 )
             if include_audio:
+
                 def _transcribe():
                     from tools.video.transcribe import VideoTranscriber
                     from tools.video.clean import TranscriptCleaner
+
                     transcriber = VideoTranscriber(video_config)
                     raw = transcriber.transcribe_file(video_path)
                     cleaner = TranscriptCleaner(video_config)
                     return cleaner.clean(raw)
+
                 futures["audio"] = pool.submit(_transcribe)
 
             progress_cb(50, "Processing audio and visual")
@@ -138,7 +165,9 @@ def video_combined_pipeline(
             output["output_path"] = vr.output_path.name if vr.output_path else None
             output["tracks"].append("visual")
         if "audio" in results:
-            output["audio_transcript"] = results["audio"][:500] + "..." if len(results["audio"]) > 500 else results["audio"]
+            output["audio_transcript"] = (
+                results["audio"][:500] + "..." if len(results["audio"]) > 500 else results["audio"]
+            )
             output["tracks"].append("audio")
             output_dir.mkdir(parents=True, exist_ok=True)
             audio_path = output_dir / f"{video_path.stem}_audio.md"

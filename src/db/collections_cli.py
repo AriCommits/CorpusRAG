@@ -33,9 +33,9 @@ def list_collections(config: str) -> None:
     table.add_column("Estimated Size", justify="right", style="green")
 
     for c in cols:
-        stats = db.get_collection_stats(c.name)
+        stats = db.get_collection_stats(c)
         table.add_row(
-            c.name,
+            c,
             str(stats.get("doc_count", "N/A")),
             str(stats.get("size_estimate", "N/A")) + " bytes",
         )

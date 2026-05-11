@@ -164,7 +164,6 @@ def pipeline(
     click.echo(f"\n✓ Pipeline complete! Final output: {current_file}")
 
 
-
 @video.command("ingest")
 @click.argument("video_path", type=click.Path(exists=True, path_type=Path))
 @click.option("--collection", "-c", required=True, help="Target collection")
@@ -174,7 +173,9 @@ def pipeline(
 @click.option("--context-window", default=None, type=int, help="Adjacent frames per chunk")
 @click.option("--keep-frames", is_flag=True, help="Keep extracted frames after ingest")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def ingest_cmd(video_path, collection, threshold, model, no_latex, context_window, keep_frames, config):
+def ingest_cmd(
+    video_path, collection, threshold, model, no_latex, context_window, keep_frames, config
+):
     """Ingest a video file using visual OCR pipeline."""
     from tools.video.ingest import ingest_video
 
@@ -184,6 +185,7 @@ def ingest_cmd(video_path, collection, threshold, model, no_latex, context_windo
 
     with click.progressbar(length=100, label="Processing") as bar:
         last_pct = [0]
+
         def progress_cb(pct, step):
             delta = pct - last_pct[0]
             if delta > 0:
@@ -191,7 +193,8 @@ def ingest_cmd(video_path, collection, threshold, model, no_latex, context_windo
                 last_pct[0] = pct
 
         result = ingest_video(
-            video_path, cfg,
+            video_path,
+            cfg,
             output_dir=cfg.paths.output_dir / "video_ocr",
             progress_cb=progress_cb,
             scene_threshold=threshold,
@@ -231,6 +234,7 @@ def ingest_url_cmd(url, collection, threshold, model, config):
     click.echo(f"Ingesting via visual OCR...")
     with click.progressbar(length=100, label="Processing") as bar:
         last_pct = [0]
+
         def progress_cb(pct, step):
             delta = pct - last_pct[0]
             if delta > 0:
@@ -238,7 +242,8 @@ def ingest_url_cmd(url, collection, threshold, model, config):
                 last_pct[0] = pct
 
         result = ingest_video(
-            dl_result.local_path, cfg,
+            dl_result.local_path,
+            cfg,
             output_dir=cfg.paths.output_dir / "video_ocr",
             progress_cb=progress_cb,
             scene_threshold=threshold,

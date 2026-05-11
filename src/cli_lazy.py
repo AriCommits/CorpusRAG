@@ -29,6 +29,7 @@ class LazyGroup(click.Group):
             module = importlib.import_module(module_path)
             return getattr(module, attr_name)
         except ImportError:
+
             @click.group(name=cmd_name)
             def stub_group(**kwargs):
                 pass

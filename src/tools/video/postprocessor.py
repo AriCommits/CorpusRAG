@@ -50,8 +50,7 @@ def deduplicate_chunks(
 
 def format_chunk_markdown(chunk: ProcessedChunk) -> str:
     return (
-        f"<!-- timestamp: {chunk.timestamp_str} | frame: {chunk.frame_index} -->\n"
-        f"{chunk.content}"
+        f"<!-- timestamp: {chunk.timestamp_str} | frame: {chunk.frame_index} -->\n{chunk.content}"
     )
 
 

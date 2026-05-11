@@ -112,7 +112,7 @@ def ingest_handwriting(
     low_confidence_pages = []  # Track for warnings file
 
     for i, image in enumerate(images):
-        logger.info(f"[{i+1}/{len(images)}] Processing {image.relative_path}")
+        logger.info(f"[{i + 1}/{len(images)}] Processing {image.relative_path}")
 
         # Step 2: Preprocess image
         try:
@@ -167,10 +167,7 @@ def ingest_handwriting(
             processed_pages.append(page)
 
         except Exception as e:
-            logger.error(
-                f"Failed OCR/correction for {image.relative_path}: {e}",
-                exc_info=False
-            )
+            logger.error(f"Failed OCR/correction for {image.relative_path}: {e}", exc_info=False)
             failed_pages_count += 1
             continue
 
@@ -196,7 +193,7 @@ def ingest_handwriting(
                 "source_type": "handwriting",
                 "folder_key": folder_key,
                 "page_count": len(pages),
-            }
+            },
         )
 
         # Ingest child chunks
@@ -217,7 +214,9 @@ def ingest_handwriting(
         try:
             with open(warnings_file, "w") as f:
                 f.write("# Handwriting Ingestion Low-Confidence Pages\n\n")
-                f.write(f"Found {low_confidence_count} pages with correction confidence < {low_confidence_threshold}\n\n")
+                f.write(
+                    f"Found {low_confidence_count} pages with correction confidence < {low_confidence_threshold}\n\n"
+                )
                 for relative_path, confidence in low_confidence_pages:
                     f.write(f"- {relative_path} (confidence: {confidence:.2f})\n")
             logger.info(f"Wrote low-confidence warnings to {warnings_file}")

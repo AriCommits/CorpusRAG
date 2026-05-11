@@ -61,9 +61,7 @@ class LLMBackend(ABC):
         # This is a simplified approach: check if we can proceed, if not wait
         window_seconds = 60
         max_requests = self.config.rate_limit_rpm
-        current_count = self._rate_limiter.get_operation_count(
-            "default", "llm", window_seconds
-        )
+        current_count = self._rate_limiter.get_operation_count("default", "llm", window_seconds)
 
         if current_count >= max_requests:
             # Rate limited - calculate wait time

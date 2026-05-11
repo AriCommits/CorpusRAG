@@ -23,6 +23,7 @@ def silence_hf_logging():
     try:
         import transformers
         from huggingface_hub.utils import disable_progress_bars
+
         disable_progress_bars()
         transformers.logging.set_verbosity_error()
     except ImportError:
@@ -43,6 +44,7 @@ def __getattr__(name: str):
     }
     if name in _imports:
         import importlib
+
         module = importlib.import_module(_imports[name], __package__)
         return getattr(module, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
