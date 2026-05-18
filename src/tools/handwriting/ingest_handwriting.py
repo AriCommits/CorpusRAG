@@ -102,9 +102,7 @@ def ingest_handwriting(
 
     images, skipped_dedup = filter_already_ingested(images, ingested_hashes)
     if skipped_dedup > 0:
-        logger.info(
-            f"Skipping {skipped_dedup} already ingested. Processing {len(images)} new."
-        )
+        logger.info(f"Skipping {skipped_dedup} already ingested. Processing {len(images)} new.")
 
     processed_pages = []
     skipped_blank = 0
@@ -130,9 +128,7 @@ def ingest_handwriting(
         try:
             if is_likely_blank(processed_path):
                 skipped_blank += 1
-                logger.debug(
-                    f"Skipping blank page (edge density): {image.relative_path}"
-                )
+                logger.debug(f"Skipping blank page (edge density): {image.relative_path}")
                 continue
         except Exception as e:
             logger.error(f"Failed to check if blank {image.relative_path}: {e}")
@@ -146,9 +142,7 @@ def ingest_handwriting(
             # Check if OCR detected blank page
             if raw_text.strip() == "[BLANK_PAGE]":
                 skipped_blank += 1
-                logger.debug(
-                    f"Skipping blank page (OCR detected): {image.relative_path}"
-                )
+                logger.debug(f"Skipping blank page (OCR detected): {image.relative_path}")
                 continue
 
             # Step 4: LLM Correction
@@ -173,9 +167,7 @@ def ingest_handwriting(
             processed_pages.append(page)
 
         except Exception as e:
-            logger.error(
-                f"Failed OCR/correction for {image.relative_path}: {e}", exc_info=False
-            )
+            logger.error(f"Failed OCR/correction for {image.relative_path}: {e}", exc_info=False)
             failed_pages_count += 1
             continue
 
@@ -213,9 +205,7 @@ def ingest_handwriting(
                 metadata=child.metadata,
             )
 
-    logger.info(
-        f"Ingested {len(processed_pages)} pages across {len(folder_groups)} folders"
-    )
+    logger.info(f"Ingested {len(processed_pages)} pages across {len(folder_groups)} folders")
 
     # Step 8: Write low-confidence warnings file if needed
     warnings_file = None

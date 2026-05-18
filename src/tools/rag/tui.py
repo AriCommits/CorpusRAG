@@ -92,9 +92,7 @@ class ChatMessage(Static):
         self.included_in_context = event.value
         # Show undo notification when message is excluded
         if not event.value:
-            self.app.notify(
-                "Message excluded from context [Click to undo]", timeout=3.0
-            )
+            self.app.notify("Message excluded from context [Click to undo]", timeout=3.0)
             # Check context warning after exclusion
             self.app._check_context_warning()
         self.post_message(self.InclusionToggled(self, event.value))
@@ -222,9 +220,7 @@ class RAGApp(App):
                 yield Label("hybrid", id="strategy-label")
                 yield Label("Filters", classes="sidebar-title")
                 yield Input(placeholder="Tags (comma separated)", id="tag-input")
-                yield Input(
-                    placeholder="Sections (comma separated)", id="section-input"
-                )
+                yield Input(placeholder="Sections (comma separated)", id="section-input")
                 yield Label("Sessions", classes="sidebar-title")
                 yield ListView(id="session-list")
             with Vertical(id="main-chat"):
@@ -240,14 +236,10 @@ class RAGApp(App):
         if self.collection is None:
             collections = self.agent.db.list_collections()
             if not collections:
-                self.notify(
-                    "No collections found. Ingest documents first.", severity="error"
-                )
+                self.notify("No collections found. Ingest documents first.", severity="error")
                 self.exit()
                 return
-            self.push_screen(
-                CollectionPickerScreen(collections), self._on_collection_picked
-            )
+            self.push_screen(CollectionPickerScreen(collections), self._on_collection_picked)
         else:
             self._init_session()
 
@@ -312,9 +304,7 @@ class RAGApp(App):
         usage = self._calculate_context_usage()
         if usage > 80:
             # Show warning toast
-            self.notify(
-                f"⚠️  Context window at {usage:.0f}%", severity="warning", timeout=3.0
-            )
+            self.notify(f"⚠️  Context window at {usage:.0f}%", severity="warning", timeout=3.0)
 
     def refresh_sessions(self) -> None:
         """Refresh the session list."""
@@ -365,11 +355,7 @@ class RAGApp(App):
         sections_raw = self.query_one("#section-input", Input).value.strip()
 
         tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
-        sections = (
-            [s.strip() for s in sections_raw.split(",") if s.strip()]
-            if sections_raw
-            else []
-        )
+        sections = [s.strip() for s in sections_raw.split(",") if s.strip()] if sections_raw else []
 
         # Display user message immediately
         chat_log = self.query_one("#chat-log", VerticalScroll)
@@ -383,9 +369,7 @@ class RAGApp(App):
         """Process the result of a slash command."""
         if result.type == "text" or result.type == "error":
             chat_log = self.query_one("#chat-log", VerticalScroll)
-            chat_log.mount(
-                ChatMessage("assistant", result.content or "", included=True)
-            )
+            chat_log.mount(ChatMessage("assistant", result.content or "", included=True))
             chat_log.scroll_end()
         elif result.type == "toast":
             msg = result.toast_message or ""
@@ -394,9 +378,7 @@ class RAGApp(App):
                 self.collection = new_col
                 self.notify(f"Switched collection to: {new_col}")
                 # Refresh session id for new collection
-                self.current_session_id = (
-                    f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                )
+                self.current_session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                 self.load_session(self.current_session_id)
                 # Refresh sync status for new collection
                 self.run_sync(dry_run=True)
@@ -408,9 +390,7 @@ class RAGApp(App):
                     self.run_sync(dry_run=True)
             elif msg.startswith("export:"):
                 fmt = msg.split(":", 1)[1]
-                self.notify(
-                    f"Exporting to {fmt}... (Feature implementation in progress)"
-                )
+                self.notify(f"Exporting to {fmt}... (Feature implementation in progress)")
             elif msg.startswith("filter:"):
                 filter_val = msg.split(":", 1)[1]
                 tag_input = self.query_one("#tag-input", Input)
@@ -433,15 +413,9 @@ class RAGApp(App):
             # For stream, treat it as a regular message
             tags_raw = self.query_one("#tag-input", Input).value.strip()
             sections_raw = self.query_one("#section-input", Input).value.strip()
-            tags = (
-                [t.strip() for t in tags_raw.split(",") if t.strip()]
-                if tags_raw
-                else []
-            )
+            tags = [t.strip() for t in tags_raw.split(",") if t.strip()] if tags_raw else []
             sections = (
-                [s.strip() for s in sections_raw.split(",") if s.strip()]
-                if sections_raw
-                else []
+                [s.strip() for s in sections_raw.split(",") if s.strip()] if sections_raw else []
             )
 
             chat_log = self.query_one("#chat-log", VerticalScroll)
@@ -496,9 +470,7 @@ class RAGApp(App):
             self.call_from_thread(self.update_sync_status, f"Error: {e}")
 
     @work(exclusive=True, thread=True)
-    def generate_response(
-        self, message: str, tags: list[str], sections: list[str]
-    ) -> None:
+    def generate_response(self, message: str, tags: list[str], sections: list[str]) -> None:
         """Generate response from RAG agent in a background thread."""
         self.sub_title = "Thinking..."
 
@@ -552,9 +524,7 @@ class RAGApp(App):
             latency_info = f"\n\n*({last.total_ms:.0f}ms)*"
 
         chat_log = self.query_one("#chat-log", VerticalScroll)
-        chat_log.mount(
-            ChatMessage("assistant", f"{response}{latency_info}", included=True)
-        )
+        chat_log.mount(ChatMessage("assistant", f"{response}{latency_info}", included=True))
         chat_log.scroll_end()
 
         # Refresh session list in case it's a new session

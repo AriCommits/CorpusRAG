@@ -131,9 +131,7 @@ class InputValidator:
 
         return name
 
-    def validate_top_k(
-        self, top_k: int | None, min_val: int = 1, max_val: int = 100
-    ) -> int:
+    def validate_top_k(self, top_k: int | None, min_val: int = 1, max_val: int = 100) -> int:
         """Validate top_k parameter for retrieval.
 
         Args:
@@ -151,9 +149,7 @@ class InputValidator:
             raise SecurityError("top_k must be an integer")
 
         if not min_val <= top_k <= max_val:
-            raise SecurityError(
-                f"top_k must be between {min_val} and {max_val}, got {top_k}"
-            )
+            raise SecurityError(f"top_k must be between {min_val} and {max_val}, got {top_k}")
 
         return top_k
 
@@ -186,9 +182,7 @@ class InputValidator:
                 raise SecurityError(f"Message {i} must be a dictionary")
 
             if "role" not in msg or "content" not in msg:
-                raise SecurityError(
-                    f"Message {i} must have 'role' and 'content' fields"
-                )
+                raise SecurityError(f"Message {i} must have 'role' and 'content' fields")
 
             # Only allow user and assistant roles
             if msg["role"] not in ("user", "assistant"):
@@ -205,9 +199,7 @@ class InputValidator:
 
         return history
 
-    def validate_chunk_text(
-        self, text: str | None, max_size: int = MAX_CHUNK_SIZE
-    ) -> str:
+    def validate_chunk_text(self, text: str | None, max_size: int = MAX_CHUNK_SIZE) -> str:
         """Validate chunk text size.
 
         Args:
@@ -224,9 +216,7 @@ class InputValidator:
             raise SecurityError("Chunk text must be a string")
 
         if len(text) > max_size:
-            raise SecurityError(
-                f"Chunk text too large: {len(text)} characters (max: {max_size})"
-            )
+            raise SecurityError(f"Chunk text too large: {len(text)} characters (max: {max_size})")
 
         return text
 

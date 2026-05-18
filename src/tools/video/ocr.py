@@ -47,9 +47,7 @@ def ocr_frame(
             f"{endpoint}/api/chat",
             json={
                 "model": model,
-                "messages": [
-                    {"role": "user", "content": prompt, "images": [image_b64]}
-                ],
+                "messages": [{"role": "user", "content": prompt, "images": [image_b64]}],
                 "stream": False,
             },
         )

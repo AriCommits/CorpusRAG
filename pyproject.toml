@@ -34,6 +34,11 @@ dependencies = [
   "huggingface-hub>=0.20.0",
   "langchain-core>=0.3.0",
   "langchain-text-splitters>=0.3.0",
+  "torch>=2.11.0",
+  "torchvision>=0.26.0",
+  "torchaudio>=2.11.0",
+  "faster-whisper>=1.2.1",
+  "ruff>=0.15.12",
 ]
 
 [project.optional-dependencies]
@@ -212,3 +217,19 @@ DEP002 = ["uvicorn", "python-dotenv", "ollama", "langchain", "opentelemetry-api"
 
 [tool.uv]
 python-preference = "managed"
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchaudio = [
+  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

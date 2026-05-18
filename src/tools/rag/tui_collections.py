@@ -51,9 +51,7 @@ class CollectionManagerScreen(Screen):
             yield Label("Collection Management")
             yield DataTable(id="collections-table")
             with Vertical(id="actions-panel"):
-                yield Label(
-                    "Press bindings to act on selected row: d=delete, i=info, q=quit"
-                )
+                yield Label("Press bindings to act on selected row: d=delete, i=info, q=quit")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -97,9 +95,7 @@ class CollectionManagerScreen(Screen):
             return
 
         if not isinstance(self.db, ChromaDBBackend):
-            self.notify(
-                "Stats are only supported on ChromaDB backends", severity="warning"
-            )
+            self.notify("Stats are only supported on ChromaDB backends", severity="warning")
             return
 
         try:

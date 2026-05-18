@@ -1,5 +1,3 @@
-
-
 class TestMiddlewareImport:
     def test_module_importable(self):
         from mcp_server.middleware import apply_http_middleware

@@ -95,9 +95,7 @@ class VectorStoreAdapter(Protocol):
         """
         ...
 
-    def get_metadata_by_filter(
-        self, collection: str, where: dict, limit: int
-    ) -> list[dict]:
+    def get_metadata_by_filter(self, collection: str, where: dict, limit: int) -> list[dict]:
         """Get metadata for documents matching filter.
 
         Args:

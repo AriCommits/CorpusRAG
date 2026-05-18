@@ -18,13 +18,9 @@ def run_doctor(config) -> list[tuple[bool, str]]:
 
             db = ChromaDBBackend(config.database)
             cols = db.list_collections()
-            results.append(
-                (True, f"ChromaDB reachable: {host}:{port} ({len(cols)} collections)")
-            )
+            results.append((True, f"ChromaDB reachable: {host}:{port} ({len(cols)} collections)"))
         else:
-            results.append(
-                (False, f"ChromaDB unhealthy: {host}:{port} (status {r.status_code})")
-            )
+            results.append((False, f"ChromaDB unhealthy: {host}:{port} (status {r.status_code})"))
     except Exception as e:
         results.append((False, f"ChromaDB unreachable: {host}:{port} - {e}"))
 
@@ -52,9 +48,7 @@ def run_doctor(config) -> list[tuple[bool, str]]:
             # Embedding model
             embed_model = config.embedding.model.split(":")[0]
             if embed_model in model_names:
-                results.append(
-                    (True, f"Embedding model available: {config.embedding.model}")
-                )
+                results.append((True, f"Embedding model available: {config.embedding.model}"))
             else:
                 results.append(
                     (
@@ -74,9 +68,7 @@ def run_doctor(config) -> list[tuple[bool, str]]:
                     dims = len(er.json().get("embeddings", [[]])[0])
                     results.append((True, f"Test embedding: {dims} dimensions"))
                 else:
-                    results.append(
-                        (False, f"Embedding failed: status {er.status_code}")
-                    )
+                    results.append((False, f"Embedding failed: status {er.status_code}"))
             except Exception as e:
                 results.append((False, f"Embedding failed: {e}"))
         else:

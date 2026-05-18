@@ -25,9 +25,7 @@ def video():
 @click.option("--course", "-c", default=None, help="Course identifier (e.g., BIOL101)")
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
 @click.option("--clean", is_flag=True, help="Run LLM cleaning after transcription")
-def transcribe(
-    input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool
-):
+def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool):
     """Transcribe video files to text."""
     cfg = load_cli_config(config, VideoConfig)
 
@@ -45,14 +43,12 @@ def transcribe(
     if output:
         output_path = Path(output)
     elif course and lecture:
-        output_path = (
-            cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
-        )
+        output_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
     else:
         output_path = cfg.paths.output_dir / "transcript.md"
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(combined)
+    output_path.write_text(combined, encoding="utf-8")
 
     click.echo(f"✓ Transcribed {len(transcripts)} videos to {output_path}")
 
@@ -76,9 +72,7 @@ def clean(transcript_file: str, output: str, config: str):
 
     # Clean transcript
     click.echo(f"Cleaning transcript {transcript_file}...")
-    output_path = cleaner.clean_file(
-        Path(transcript_file), Path(output) if output else None
-    )
+    output_path = cleaner.clean_file(Path(transcript_file), Path(output) if output else None)
 
     click.echo(f"✓ Cleaned transcript written to {output_path}")
 
@@ -113,7 +107,7 @@ def augment(transcript_file: str, output: str, config: str, auto: bool):
 @click.option("--course", "-c", default=None, help="Course identifier")
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
 @click.option("--skip-clean", is_flag=True, help="Skip cleaning step")
-@click.option("--skip-augment", is_flag=True, help="Skip augmentation step")
+@click.option("--augment", is_flag=True, help="Open editor for manual augmentation")
 def pipeline(
     input_folder: str,
     output: str,
@@ -121,17 +115,17 @@ def pipeline(
     course: str,
     lecture: int,
     skip_clean: bool,
-    skip_augment: bool,
+    augment: bool,
 ):
     """Run complete video processing pipeline."""
     cfg = load_cli_config(config, VideoConfig)
 
-    # Create scratch directory
-    scratch = (
-        cfg.paths.scratch_dir / f"{course}_Lecture{lecture:02d}"
-        if course and lecture
-        else cfg.paths.scratch_dir / "video"
-    )
+    # Derive name from input folder if no course/lecture specified
+    folder_name = Path(input_folder).resolve().name
+    if course and lecture:
+        scratch = cfg.paths.scratch_dir / f"{course}_Lecture{lecture:02d}"
+    else:
+        scratch = cfg.paths.scratch_dir / "video" / folder_name
     scratch.mkdir(parents=True, exist_ok=True)
 
     # Step 1: Transcribe
@@ -140,8 +134,8 @@ def pipeline(
     transcripts = transcriber.transcribe_folder(Path(input_folder), course, lecture)
     combined = transcriber.combine_transcripts(transcripts, course, lecture)
 
-    raw_transcript = scratch / "raw_transcript.md"
-    raw_transcript.write_text(combined)
+    raw_transcript = scratch / "transcript_raw.md"
+    raw_transcript.write_text(combined, encoding="utf-8")
     click.echo(f"✓ Raw transcript: {raw_transcript}")
 
     current_file = raw_transcript
@@ -150,22 +144,21 @@ def pipeline(
     if not skip_clean:
         click.echo("\nStep 2: Cleaning...")
         cleaner = TranscriptCleaner(cfg)
-        current_file = cleaner.clean_file(current_file)
+        cleaned_path = scratch / "transcript_cleaned.md"
+        current_file = cleaner.clean_file(current_file, cleaned_path)
         click.echo(f"✓ Cleaned transcript: {current_file}")
 
-    # Step 3: Augment (optional)
-    if not skip_augment:
+    # Step 3: Augment (only if explicitly requested)
+    if augment:
         click.echo("\nStep 3: Augmenting...")
         augmenter = TranscriptAugmenter(cfg)
 
         if output:
             final_path = Path(output)
         elif course and lecture:
-            final_path = (
-                cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_final.md"
-            )
+            final_path = scratch / f"{course}_Lecture{lecture:02d}_final.md"
         else:
-            final_path = cfg.paths.output_dir / "final_transcript.md"
+            final_path = scratch / "transcript_final.md"
 
         current_file = augmenter.augment(current_file, final_path, auto_save=False)
 
@@ -183,9 +176,7 @@ def pipeline(
 )
 @click.option("--model", default=None, help="Ollama vision model for OCR")
 @click.option("--no-latex", is_flag=True, help="Disable pix2tex math fallback")
-@click.option(
-    "--context-window", default=None, type=int, help="Adjacent frames per chunk"
-)
+@click.option("--context-window", default=None, type=int, help="Adjacent frames per chunk")
 @click.option("--keep-frames", is_flag=True, help="Keep extracted frames after ingest")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest_cmd(
@@ -238,9 +229,7 @@ def ingest_cmd(
 @video.command("ingest-url")
 @click.argument("url")
 @click.option("--collection", "-c", required=True, help="Target collection")
-@click.option(
-    "--threshold", default=None, type=float, help="Scene detection sensitivity"
-)
+@click.option("--threshold", default=None, type=float, help="Scene detection sensitivity")
 @click.option("--model", default=None, help="Ollama vision model for OCR")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest_url_cmd(url, collection, threshold, model, config):
@@ -292,9 +281,7 @@ def list_jobs_cmd():
         click.echo("No active jobs.")
         return
     for j in jobs:
-        click.echo(
-            f"  {j.job_id}  {j.status.value:8s}  {j.progress_pct:3d}%  {j.current_step}"
-        )
+        click.echo(f"  {j.job_id}  {j.status.value:8s}  {j.progress_pct:3d}%  {j.current_step}")
 
 
 @video.command("status")

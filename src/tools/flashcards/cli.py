@@ -23,17 +23,13 @@ from .generator import FlashcardGenerator
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 @click.option("--difficulty", "-d", default="intermediate", help="Difficulty level")
 @click.option("--count", "-n", default=None, type=int, help="Number of flashcards")
-def flashcards(
-    collection: str, output: str, export: str, config: str, difficulty: str, count: int
-):
+def flashcards(collection: str, output: str, export: str, config: str, difficulty: str, count: int):
     """Generate flashcards from a collection."""
     cfg, db = load_cli_db(config, FlashcardConfig)
     generator = FlashcardGenerator(cfg, db)
 
     # Generate flashcards
-    click.echo(
-        f"Generating {count or cfg.cards_per_topic} flashcards from '{collection}'..."
-    )
+    click.echo(f"Generating {count or cfg.cards_per_topic} flashcards from '{collection}'...")
     cards = generator.generate(collection, difficulty=difficulty, count=count)
 
     if export == "anki":

@@ -46,18 +46,10 @@ def ingest_video(
     directly — the caller handles that via RAG ingester or direct DB calls.
     """
     # Resolve config overrides
-    threshold = (
-        scene_threshold if scene_threshold is not None else config.scene_threshold
-    )
+    threshold = scene_threshold if scene_threshold is not None else config.scene_threshold
     model = vision_model or config.vision_model
-    latex = (
-        use_latex_fallback
-        if use_latex_fallback is not None
-        else config.use_latex_fallback
-    )
-    dedup_thresh = (
-        dedup_threshold if dedup_threshold is not None else config.dedup_threshold
-    )
+    latex = use_latex_fallback if use_latex_fallback is not None else config.use_latex_fallback
+    dedup_thresh = dedup_threshold if dedup_threshold is not None else config.dedup_threshold
     ctx_window = context_window if context_window is not None else config.context_window
     endpoint = config.llm.endpoint
 
@@ -70,12 +62,8 @@ def ingest_video(
 
     # Step 1: Extract keyframes (0-20%)
     _progress(0, "Extracting keyframes")
-    logger.info(
-        "Extracting keyframes from %s (threshold=%.2f)", video_path.name, threshold
-    )
-    frames = extract_keyframes(
-        video_path, frames_dir, threshold, config.min_frame_interval
-    )
+    logger.info("Extracting keyframes from %s (threshold=%.2f)", video_path.name, threshold)
+    frames = extract_keyframes(video_path, frames_dir, threshold, config.min_frame_interval)
     logger.info("Extracted %d frames", len(frames))
     _progress(20, f"Extracted {len(frames)} frames")
 

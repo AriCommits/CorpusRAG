@@ -101,18 +101,14 @@ def sync(path: str | None, collection: str, dry_run: bool, config: str):
     if dry_run:
         click.echo("[DRY RUN] Sync complete: +0 chunks, -0 chunks")
     else:
-        click.echo(
-            f"Sync complete: +{res.chunks_added} chunks, -{res.chunks_removed} chunks"
-        )
+        click.echo(f"Sync complete: +{res.chunks_added} chunks, -{res.chunks_removed} chunks")
 
 
 @rag.command()
 @click.argument("query")
 @click.option("--collection", "-c", required=True, help="Collection name")
 @click.option("--top-k", "-k", default=None, type=int, help="Number of results")
-@click.option(
-    "--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)"
-)
+@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
 @click.option(
     "--section",
     "-s",
@@ -159,17 +155,13 @@ def query(
             if len(validated_tags) == 1:
                 tag_filter = {"tags": {"$contains": validated_tags[0]}}
             else:
-                tag_filter = {
-                    "$or": [{"tags": {"$contains": t}} for t in validated_tags]
-                }
+                tag_filter = {"$or": [{"tags": {"$contains": t}} for t in validated_tags]}
 
         section_filter = None
         if section:
             # Validate all section values for safe ChromaDB usage
             try:
-                validated_sections = [
-                    _validate_filter_value(s, f"section '{s}'") for s in section
-                ]
+                validated_sections = [_validate_filter_value(s, f"section '{s}'") for s in section]
             except ValueError as e:
                 click.echo(f"Error: {e}", err=True)
                 return
@@ -201,9 +193,7 @@ def query(
 
 @rag.command()
 @click.option("--collection", "-c", required=True, help="Collection name")
-@click.option(
-    "--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)"
-)
+@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
 @click.option(
     "--section",
     "-s",
@@ -280,9 +270,7 @@ def chat(
 
 
 @rag.command()
-@click.option(
-    "--collection", "-c", required=False, default=None, help="Collection name"
-)
+@click.option("--collection", "-c", required=False, default=None, help="Collection name")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ui(collection: str | None, config: str):
     """Launch the Terminal User Interface."""

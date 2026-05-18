@@ -169,12 +169,8 @@ class FlashcardGenerator:
                 continue
 
             # Look for Q: ... A: ... pattern
-            q_match = re.search(
-                r"Q:\s*(.+?)(?=A:|$)", section, re.DOTALL | re.IGNORECASE
-            )
-            a_match = re.search(
-                r"A:\s*(.+?)(?=Q:|$)", section, re.DOTALL | re.IGNORECASE
-            )
+            q_match = re.search(r"Q:\s*(.+?)(?=A:|$)", section, re.DOTALL | re.IGNORECASE)
+            a_match = re.search(r"A:\s*(.+?)(?=Q:|$)", section, re.DOTALL | re.IGNORECASE)
 
             if q_match and a_match:
                 question = q_match.group(1).strip()
