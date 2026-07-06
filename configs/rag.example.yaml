@@ -1,0 +1,31 @@
+# CorpusRAG — RAG (Retrieval-Augmented Generation) settings.
+# Load layered on top of the core config:
+#   load_config("configs/rag.yaml", "configs/base.yaml")
+rag:
+  # Child chunking for vector search indexing.
+  chunking:
+    # Size of each child chunk in characters.
+    child_chunk_size: 400
+    # Overlap between consecutive child chunks (helps context preservation).
+    child_chunk_overlap: 50
+
+  # Retrieval settings.
+  retrieval:
+    # Number of child chunks retrieved from vector search.
+    top_k_semantic: 25
+    # BM25 keyword search results (reserved for future use).
+    top_k_bm25: 25
+    # Final number of parent documents returned to the LLM.
+    top_k_final: 10
+    # Reciprocal Rank Fusion parameter (reserved for future use).
+    rrf_k: 80
+
+  # Parent document storage (full context retrieval).
+  parent_store:
+    # Storage type: local_file (persistent) | in_memory (lost on restart).
+    type: local_file
+    # Directory path for parent document storage (local_file only).
+    path: ./parent_store
+
+  # Prefix for RAG collection names in the database (rag_<name>).
+  collection_prefix: rag

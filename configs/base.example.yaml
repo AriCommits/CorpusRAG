@@ -1,22 +1,22 @@
-# CorpusCallosum Example Configuration File
+# CorpusRAG Example Configuration File
 # Copy this file to my-config.yaml and modify as needed
 #
 # This file documents all available configuration options.
 # Values shown are the defaults. Modify as needed for your setup.
 #
 # To override any setting, use environment variables with CC_ prefix:
-#   CC_LLM_MODEL=mistral python -m cli rag query "What is X?" --collection notes
-#   CC_DATABASE_MODE=http python -m cli rag ingest ./docs --collection notes
+#   CC_LLM_MODEL=mistral corpus tools rag query "What is X?" --collection notes
+#   CC_DATABASE_MODE=http corpus tools rag ingest ./docs --collection notes
 
 # LLM Configuration (for text generation, cleaning, augmentation, etc.)
 llm:
-  # Backend selection: ollama (local), openai, anthropic, or other compatible API
+  # Backend selection: ollama (local), openai_compatible, or anthropic_compatible
   backend: ollama
 
   # Endpoint URL for the LLM service
-  # Ollama:   http://localhost:11434
-  # OpenAI:   https://api.openai.com/v1
-  # Anthropic: https://api.anthropic.com
+  # Ollama:               http://localhost:11434
+  # openai_compatible:    https://api.openai.com/v1
+  # anthropic_compatible: https://api.anthropic.com
   endpoint: http://localhost:11434
 
   # Model identifier
@@ -25,11 +25,11 @@ llm:
   #   - gemma2:27b (good alternative)
   #   - mistral:latest (7B, fast)
   #   - neural-chat:latest (small, fast)
-  # OpenAI examples:
+  # openai_compatible examples:
   #   - gpt-4-turbo
   #   - gpt-4o
   #   - gpt-3.5-turbo
-  # Anthropic examples:
+  # anthropic_compatible examples:
   #   - claude-opus-4-1
   #   - claude-sonnet-4
   #   - claude-haiku
@@ -83,7 +83,7 @@ embedding:
   # Changing this setting requires re-ingesting documents.
 
 # Database Configuration (vector storage)
-# CorpusCallosum uses ChromaDB for vector storage and retrieval
+# CorpusRAG uses ChromaDB for vector storage and retrieval
 database:
   # Currently only chromadb backend is supported
   backend: chromadb
@@ -126,7 +126,7 @@ database:
 # Directories will be created if they don't exist
 paths:
   # Directory containing source documents for ingestion
-  # Used by 'corpus rag ingest' and 'corpus orchestrate lecture-pipeline'
+  # Used by 'corpus tools rag ingest' and 'corpus orchestrate lecture-pipeline'
   # Add .md, .txt, and .pdf files here
   vault: ./vault
 
@@ -142,7 +142,7 @@ paths:
   output_dir: ./output
 
 # RAG (Retrieval-Augmented Generation) Settings
-# CorpusCallosum uses a parent-child retrieval architecture:
+# CorpusRAG uses a parent-child retrieval architecture:
 #
 # 1. Document Ingestion:
 #    - Documents split by markdown headers (# ## ###) → parent documents
@@ -211,25 +211,25 @@ rag:
 
   # Prefix for RAG collection names in database
   # Collection names will be: rag_<name>
-  # Example: 'corpus rag ingest ./docs --collection notes' → 'rag_notes'
+  # Example: 'corpus tools rag ingest ./docs --collection notes' → 'rag_notes'
   collection_prefix: rag
 
 # RAG Usage Examples:
 #
 # Basic ingestion (semantic markdown splitting with tag extraction):
-#   corpus rag ingest ./documents --collection notes
+#   corpus tools rag ingest ./documents --collection notes
 #
 # Query without filters:
-#   corpus rag query "What is machine learning?" --collection notes
+#   corpus tools rag query "What is machine learning?" --collection notes
 #
 # Query with tag filtering (returns only documents with these tags):
-#   corpus rag query "algorithms" --collection notes --tag python --tag ml
+#   corpus tools rag query "algorithms" --collection notes --tag python --tag ml
 #
 # Query with section filtering (by markdown header):
-#   corpus rag query "sorting" --collection notes --section "Algorithms"
+#   corpus tools rag query "sorting" --collection notes --section "Algorithms"
 #
 # Interactive chat with tag filtering:
-#   corpus rag chat --collection notes --tag important
+#   corpus tools rag chat --collection notes --tag important
 
 # Video Processing Configuration
 # Transcribe videos to text, clean with LLM, and optionally generate study materials
@@ -310,7 +310,7 @@ video:
 
   # Prefix for video collection names in RAG database
   # Collection names will be: videos_<name>
-  # Example: 'corpus video transcribe ./lecture.mp4 --course BIOL101' → 'videos_BIOL101'
+  # Example: 'corpus tools video transcribe ./lecture.mp4 --course BIOL101' → 'videos_BIOL101'
   collection_prefix: videos
 
   # Automatically ingest transcripts into RAG after processing
@@ -468,24 +468,10 @@ orchestrations:
     # Length of generated summary
     summary_length: medium
 
-  # Study session workflow configuration
-  # Generates study materials from documents in collection
-  study_session:
-    # Automatically generate flashcards for study session
-    generate_flashcards: true
-    flashcard_count: 20
-
-    # Automatically generate quiz for study session
-    generate_quiz: true
-    quiz_count: 10
-
 # Orchestration Usage Examples:
 #
 # Full lecture pipeline (transcribe + clean + ingest + generate materials):
 #   corpus orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 1
-#
-# Study session (generate materials from existing documents):
-#   corpus orchestrate study-session --collection notes --topic "databases"
 
 # Developer Tools Configuration
 # Settings for development, testing, and code quality tools
@@ -565,14 +551,11 @@ tools:
 #
 # Common Commands:
 #   # Configure and run
-#   corpus --config my-config.yaml rag ingest ./vault --collection notes
-#   corpus rag query "What is ML?" --collection notes --tag python
+#   corpus --config my-config.yaml tools rag ingest ./vault --collection notes
+#   corpus tools rag query "What is ML?" --collection notes --tag python
 #
 #   # Video to notes pipeline
 #   corpus orchestrate lecture-pipeline ./lecture.mp4 --course CS101 --lecture 1
-#
-#   # Generate study materials
-#   corpus orchestrate study-session --collection notes --topic algorithms
 #
 #   # Code quality
 #   python scripts/lint_and_format.py --fix --test

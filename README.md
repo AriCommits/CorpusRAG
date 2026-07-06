@@ -4,6 +4,21 @@
 
 Ingest your documents, query them with context-aware retrieval, and expose everything to AI agents via the Model Context Protocol. Optionally generate flashcards, summaries, and quizzes from your knowledge base.
 
+## New to RAG / AI?
+
+If the terms below are unfamiliar, start here. Plain-language definitions of the core concepts CorpusRAG uses:
+
+- **RAG (Retrieval-Augmented Generation)** — Search your own documents for the passages relevant to your question, then let an AI answer using those passages so responses stay grounded in your material.
+- **Embedding** — Turning a piece of text into a list of numbers that captures its meaning, so text with similar meaning ends up with similar numbers.
+- **Vector** — That list of numbers itself. Vector search finds the text whose meaning is closest to your query.
+- **Collection** — A named, searchable group of documents, much like a folder or a database table.
+- **Chunking** — Splitting long documents into smaller passages so search can return focused sections instead of whole files.
+- **BM25** — A classic keyword-matching ranking method that complements meaning-based (vector) search.
+- **Reranking** — A second pass over search results that reorders them to put the most relevant ones first.
+- **MCP (Model Context Protocol)** — An open standard that lets AI assistants and editors connect to external tools; CorpusRAG ships an MCP server.
+- **Ollama** — A tool that runs language models locally on your own machine.
+- **ChromaDB** — The vector database CorpusRAG uses to store embeddings and perform similarity search.
+
 ## Quick Start
 
 ```bash
@@ -64,7 +79,17 @@ corpus
 │       └── quizzes    # Quiz generation
 ├── db                 # Database management (backup, export, restore)
 ├── collections        # Collection management (list, info, delete)
-└── dev                # Development tools (test, lint, fmt)
+├── dev                # Development tools (test, lint, fmt)
+└── orchestrate
+    └── lecture-pipeline  # Video → transcript → summary + flashcards + quizzes
+```
+
+Orchestration workflows chain several tools together and are config-driven — you
+pass only the essential inputs and the rest comes from configuration:
+
+```bash
+# Turn a lecture video into complete study materials
+corpus orchestrate lecture-pipeline lecture01.mp4 --course BIOL101 --lecture 1
 ```
 
 Full CLI reference: [`src/CLI.md`](src/CLI.md)
