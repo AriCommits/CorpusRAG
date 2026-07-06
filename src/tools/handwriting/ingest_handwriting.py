@@ -4,12 +4,12 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.tools.handwriting.chunker import build_child_chunks
-from src.tools.handwriting.corrector import correct_ocr_output, estimate_correction_confidence
-from src.tools.handwriting.ocr import ocr_handwriting
-from src.tools.handwriting.postprocessor import build_page
-from src.tools.handwriting.preprocessor import is_likely_blank, preprocess_image
-from src.tools.handwriting.walker import filter_already_ingested, walk_directory
+from tools.handwriting.chunker import build_child_chunks
+from tools.handwriting.corrector import correct_ocr_output, estimate_correction_confidence
+from tools.handwriting.ocr import ocr_handwriting
+from tools.handwriting.postprocessor import build_page
+from tools.handwriting.preprocessor import is_likely_blank, preprocess_image
+from tools.handwriting.walker import filter_already_ingested, walk_directory
 
 logger = logging.getLogger(__name__)
 

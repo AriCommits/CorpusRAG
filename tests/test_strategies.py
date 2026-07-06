@@ -1,8 +1,9 @@
 """Tests for RAG retrieval strategies."""
 
 import pytest
-from src.tools.rag.config import RAGConfig
-from src.tools.rag.strategies import (
+
+from tools.rag.config import RAGConfig
+from tools.rag.strategies import (
     HybridStrategy,
     KeywordStrategy,
     RetrievedDocument,

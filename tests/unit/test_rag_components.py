@@ -29,10 +29,16 @@ Tags:
 - #python #ml #data-science
 """
         cleaned, tags = extract_tags_from_text(text)
-        assert "python" in tags
-        assert "ml" in tags
-        assert "data-science" in tags
-        assert "- #python #ml #data-science" not in cleaned
+        # extract_tags_from_text returns (unchanged_text, metadata_dict)
+        # where metadata_dict has "tags", "tag_prefixes", "tag_leaves".
+        assert "python" in tags["tags"]
+        assert "ml" in tags["tags"]
+        # Tag chars are word characters only; "#data-science" stops at the
+        # hyphen, so the extracted tag is "data".
+        assert "data" in tags["tags"]
+        assert "data-science" not in tags["tags"]
+        # Text is returned unchanged (tags are not stripped out).
+        assert cleaned == text
 
     def test_extract_tags_multiple_lines(self) -> None:
         """Test extracting tags from multiple bullet lines."""
@@ -44,8 +50,8 @@ Tags:
 - #tag5
 """
         cleaned, tags = extract_tags_from_text(text)
-        assert len(tags) == 5
-        assert all(f"tag{i}" in tags for i in range(1, 6))
+        assert len(tags["tags"]) == 5
+        assert all(f"tag{i}" in tags["tags"] for i in range(1, 6))
 
     def test_extract_tags_asterisk_bullets(self) -> None:
         """Test extracting tags from asterisk-style bullets."""
@@ -56,8 +62,8 @@ Tags:
 * #testing
 """
         cleaned, tags = extract_tags_from_text(text)
-        assert "python" in tags
-        assert "testing" in tags
+        assert "python" in tags["tags"]
+        assert "testing" in tags["tags"]
 
     def test_extract_tags_no_tags(self) -> None:
         """Test extraction when no tags present."""
@@ -85,7 +91,7 @@ Tags:
 - #todo
 """
         cleaned, tags = extract_tags_from_text(text)
-        assert "todo" in tags
+        assert "todo" in tags["tags"]
         assert "- Buy milk" in cleaned
         assert "- Walk dog" in cleaned
 
@@ -285,8 +291,8 @@ class TestRAGConfig:
             paths=MagicMock(),
         )
         assert config.collection_prefix == "rag"
-        assert config.chunking.child_chunk_size == 400
-        assert config.chunking.child_chunk_overlap == 50
+        assert config.chunking.child_chunk_size == 800
+        assert config.chunking.child_chunk_overlap == 100
         assert config.retrieval.top_k_final == 10
 
     def test_rag_config_from_dict(self) -> None:

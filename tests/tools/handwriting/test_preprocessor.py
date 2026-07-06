@@ -9,7 +9,8 @@ Tests cover:
 """
 
 from PIL import Image, ImageDraw
-from src.tools.handwriting.preprocessor import is_likely_blank, preprocess_image
+
+from tools.handwriting.preprocessor import is_likely_blank, preprocess_image
 
 
 class TestPreprocessImage:

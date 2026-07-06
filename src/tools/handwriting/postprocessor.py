@@ -3,7 +3,7 @@
 import hashlib
 from dataclasses import dataclass, field
 
-from src.tools.handwriting.walker import DiscoveredImage
+from tools.handwriting.walker import DiscoveredImage
 
 
 @dataclass

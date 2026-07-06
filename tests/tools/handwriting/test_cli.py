@@ -1,18 +1,13 @@
 """Tests for the handwriting ingestion CLI."""
 
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 from PIL import Image, ImageDraw
 
-# Ensure src/ is on the path (mirrors editable install)
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
-
-from src.tools.handwriting.cli import handwriting
-from src.tools.handwriting.ingest_handwriting import HandwritingIngestResult
+from tools.handwriting.cli import handwriting
+from tools.handwriting.ingest_handwriting import HandwritingIngestResult
 
 
 @pytest.fixture()
@@ -67,9 +62,9 @@ class TestHandwritingCLI:
     def test_ingest_with_default_collection(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with default collection='notes'."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -98,9 +93,9 @@ class TestHandwritingCLI:
     def test_ingest_with_custom_collection(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with custom collection name."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -130,9 +125,9 @@ class TestHandwritingCLI:
     def test_ingest_with_no_recursive(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with --no-recursive flag."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -160,9 +155,9 @@ class TestHandwritingCLI:
     def test_ingest_with_recursive(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with --recursive flag (default)."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -190,9 +185,9 @@ class TestHandwritingCLI:
     def test_ingest_with_no_autocorrect(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with --no-autocorrect flag."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -220,9 +215,9 @@ class TestHandwritingCLI:
     def test_ingest_with_autocorrect_default(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test that autocorrect defaults to True."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -250,9 +245,9 @@ class TestHandwritingCLI:
     def test_ingest_with_keep_preprocessed(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with --keep-preprocessed flag."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -284,9 +279,9 @@ class TestHandwritingCLI:
     ) -> None:
         """Test that cleanup_preprocessed defaults to True."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -314,9 +309,9 @@ class TestHandwritingCLI:
     def test_ingest_with_single_tag(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with single -t tag flag."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -344,9 +339,9 @@ class TestHandwritingCLI:
     def test_ingest_with_multiple_tags(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with multiple -t tag flags."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -377,9 +372,9 @@ class TestHandwritingCLI:
     def test_ingest_with_no_tags(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with no tags (should be None)."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -407,9 +402,9 @@ class TestHandwritingCLI:
     def test_ingest_with_context_window(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with custom --context-window."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -439,9 +434,9 @@ class TestHandwritingCLI:
     def test_ingest_with_max_depth(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test ingest with --max-depth flag."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -469,9 +464,9 @@ class TestHandwritingCLI:
     def test_ingest_output_summary(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test that ingest prints correct summary output."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -503,9 +498,9 @@ class TestHandwritingCLI:
     ) -> None:
         """Test output includes low-confidence warning."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -531,9 +526,9 @@ class TestHandwritingCLI:
     def test_ingest_output_with_failed_pages(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test output includes failed pages warning."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())
@@ -559,9 +554,9 @@ class TestHandwritingCLI:
     def test_ingest_output_with_warnings_file(self, runner: CliRunner, tmp_image_dir) -> None:
         """Test output includes warnings file path."""
         with (
-            patch("src.tools.handwriting.cli.load_cli_db") as mock_load_db,
-            patch("src.tools.handwriting.cli.ingest_handwriting") as mock_ingest,
-            patch("src.tools.handwriting.cli.RAGAgent") as mock_agent_class,
+            patch("tools.handwriting.cli.load_cli_db") as mock_load_db,
+            patch("tools.handwriting.cli.ingest_handwriting") as mock_ingest,
+            patch("tools.handwriting.cli.RAGAgent") as mock_agent_class,
         ):
             mock_agent_class.return_value = MagicMock()
             mock_load_db.return_value = (MagicMock(), MagicMock())

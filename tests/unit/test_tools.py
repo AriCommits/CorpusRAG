@@ -104,15 +104,17 @@ def test_rag_config_creation():
     """Test RAG config from dict."""
     from tools.rag import RAGConfig
 
-    # RAGConfig.from_dict reads "chunking" and "retrieval" as top-level keys
+    # RAGConfig.from_dict reads "chunking" and "retrieval" nested under "rag"
     data = {
         "llm": {"backend": "ollama", "model": "qwen3:8b"},
         "database": {"backend": "chroma", "persist_directory": "./data/chroma"},
-        "chunking": {"size": 1000, "overlap": 100},
-        "retrieval": {"top_k_semantic": 10},
+        "rag": {
+            "chunking": {"child_chunk_size": 1000, "child_chunk_overlap": 100},
+            "retrieval": {"top_k_semantic": 10},
+        },
     }
 
     config = RAGConfig.from_dict(data)
-    assert config.chunking.size == 1000
-    assert config.chunking.overlap == 100
+    assert config.chunking.child_chunk_size == 1000
+    assert config.chunking.child_chunk_overlap == 100
     assert config.retrieval.top_k_semantic == 10

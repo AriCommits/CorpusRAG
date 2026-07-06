@@ -38,7 +38,6 @@ dependencies = [
   "torchvision>=0.26.0",
   "torchaudio>=2.11.0",
   "faster-whisper>=1.2.1",
-  "ruff>=0.15.12",
 ]
 
 [project.optional-dependencies]
@@ -47,7 +46,8 @@ generators = [
   "tiktoken>=0.5.0",
 ]
 
-# Server-only (slim Docker image -- no torch, no local embeddings)
+# Server-only footprint. NOTE: this is NOT torch-free. Because sentence-transformers
+# requires torch, this group still pulls in torch, faster-whisper, and transformers.
 server = [
   "fastapi>=0.116.0",
   "uvicorn>=0.35.0",
@@ -97,9 +97,9 @@ full = [
 dev = [
   "pytest>=8.0.0",
   "pytest-cov>=4.1.0",
+  "hypothesis>=6.100.0",
   "ruff>=0.4.0",
-  "mypy>=1.10.0",
-  "types-PyYAML>=6.0.0",
+  "deptry>=0.20.0",
 ]
 
 # Observability (telemetry, tracing)
@@ -150,6 +150,11 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/test_smoke.py" = ["E402"]  # imports after sys.path manipulation
 "src/tools/rag/retriever.py" = ["E402"]
+# Intentional: these strategies suppress transformers/HF import-time logging
+# by calling disable_progress_bars()/set_verbosity_error() before importing
+# sentence_transformers, so those imports deliberately follow runtime calls.
+"src/tools/rag/strategies/hybrid.py" = ["E402"]
+"src/tools/rag/strategies/semantic.py" = ["E402"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["config", "db", "llm", "mcp_server", "orchestrations", "tools", "utils"]
@@ -160,38 +165,18 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-strict_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-module = [
-  "chromadb.*",
-  "sentence_transformers.*",
-  "rank_bm25.*",
-  "httpx.*",
-  "opentelemetry.*",
-  "openllmetry.*",
-  "docx.*",
-  "bs4.*",
-  "markdownify.*",
-  "striprtf.*",
-]
-ignore_missing_imports = true
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
+# Align the test import model with the package architecture: put src/ on the
+# import path and use importlib import mode so modules are imported under a
+# single canonical name (e.g. `tools.flashcards`). This avoids pytest's
+# prepend-mode inserting test directories onto sys.path, which previously
+# caused dual-package collisions (`tools` vs `src.tools`) during collection.
+pythonpath = ["src"]
 markers = ["live: tests requiring running ChromaDB and Ollama"]
-addopts = "-v --tb=short -m 'not live'"
+addopts = "-v --tb=short -m 'not live' --import-mode=importlib"
 filterwarnings = [
   "ignore::DeprecationWarning",
 ]
@@ -212,22 +197,46 @@ known_first_party = [
 ]
 
 [tool.deptry.per_rule_ignores]
-# Ignore 'obsolete' (DEP002) warnings for CLI/infra tools
-DEP002 = ["uvicorn", "python-dotenv", "ollama", "langchain", "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp", "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-httpx", "traceloop-sdk"]
+# DEP002 'defined but not used in src': CLI/infra tools, dev/test tooling, and
+# ML backends that are used transitively (torch via sentence-transformers /
+# faster-whisper) or only at runtime rather than imported directly in src.
+DEP002 = [
+  "uvicorn", "python-dotenv", "ollama", "langchain",
+  "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp",
+  "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-httpx",
+  "traceloop-sdk",
+  "langchain-community", "langchain-chroma",
+  "torch", "torchvision", "torchaudio",
+  "pytest", "pytest-cov", "hypothesis", "ruff", "deptry",
+]
+# DEP003 'transitive': starlette is provided by fastapi and imported directly
+# in the MCP middleware; it is guaranteed present wherever fastapi is installed.
+DEP003 = ["starlette"]
+# DEP001 'missing': pix2tex is an optional LaTeX-OCR backend imported lazily
+# inside a function; it is not a required dependency of the core package.
+DEP001 = ["pix2tex"]
 
 [tool.uv]
 python-preference = "managed"
 
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
 ]
 torchvision = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
 ]
 torchaudio = [
-  { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform == 'win32'" },
 ]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-cu128"

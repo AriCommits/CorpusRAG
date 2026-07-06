@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Authentication and authorization module for MCP server."""
+
+from __future__ import annotations
 
 import json
 import os
@@ -10,7 +10,11 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from fastapi import Request
+    from fastapi.security import HTTPAuthorizationCredentials
 
 
 @dataclass

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from src.tools.handwriting.postprocessor import ProcessedPage, build_chromadb_metadata
+from tools.handwriting.postprocessor import ProcessedPage, build_chromadb_metadata
 
 
 @dataclass

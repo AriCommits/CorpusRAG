@@ -14,6 +14,7 @@ from cli_lazy import LazyGroup
         "db": "db.management:db",
         "collections": "db.collections_cli:collections_cmd",
         "dev": "cli_dev:dev",
+        "orchestrate": "orchestrations.cli:orchestrate",
     },
 )
 @click.version_option(package_name="corpusrag")

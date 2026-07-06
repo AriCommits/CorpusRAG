@@ -2,6 +2,7 @@
 
 from unittest.mock import MagicMock
 
+from llm import PromptTemplates
 from tools.flashcards.config import FlashcardConfig
 from tools.quizzes.config import QuizConfig
 from tools.summaries.config import SummaryConfig
@@ -18,9 +19,11 @@ class TestFlashcardConfig:
             database=MagicMock(),
             paths=MagicMock(),
         )
-        assert config.count == 15
-        assert config.difficulty in ["beginner", "intermediate", "advanced"]
-        assert config.format == "markdown"
+        assert config.cards_per_topic == 10
+        assert config.difficulty_levels == ["basic", "intermediate", "advanced"]
+        assert config.format == "anki"
+        assert config.collection_prefix == "flashcards"
+        assert config.max_context_chars == 12000
 
     def test_custom_values(self) -> None:
         """Test custom flashcard config values."""
@@ -29,13 +32,13 @@ class TestFlashcardConfig:
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
-            count=20,
-            difficulty="advanced",
-            format="json",
+            cards_per_topic=20,
+            difficulty_levels=["advanced"],
+            format="quizlet",
         )
-        assert config.count == 20
-        assert config.difficulty == "advanced"
-        assert config.format == "json"
+        assert config.cards_per_topic == 20
+        assert config.difficulty_levels == ["advanced"]
+        assert config.format == "quizlet"
 
     def test_from_dict(self) -> None:
         """Test creating config from dictionary."""
@@ -44,31 +47,27 @@ class TestFlashcardConfig:
             "embedding": {"model": "test"},
             "database": {"mode": "persistent"},
             "paths": {"vault": "./vault"},
-            "flashcards": {"count": 25, "difficulty": "beginner"},
+            "flashcards": {"cards_per_topic": 25, "format": "plain"},
         }
         config = FlashcardConfig.from_dict(data)
-        assert config.count == 25
-        assert config.difficulty == "beginner"
+        assert config.cards_per_topic == 25
+        assert config.format == "plain"
 
     def test_prompt_template_formatting(self) -> None:
-        """Test prompt template can be formatted."""
+        """Test flashcard prompt template renders with config values."""
         config = FlashcardConfig(
             llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
         )
-        text = "Sample text about Python programming"
-        try:
-            prompt = config.prompt_template.format(
-                count=config.count,
-                difficulty=config.difficulty,
-                text=text,
-            )
-            assert "Python" in prompt or "text" in prompt.lower()
-        except KeyError:
-            # Template might have different format
-            pass
+        prompt = PromptTemplates.flashcard_generation(
+            documents=["Sample text about Python programming"],
+            difficulty="intermediate",
+            count=config.cards_per_topic,
+        )
+        assert "Python" in prompt
+        assert str(config.cards_per_topic) in prompt
 
 
 class TestQuizConfig:
@@ -82,9 +81,10 @@ class TestQuizConfig:
             database=MagicMock(),
             paths=MagicMock(),
         )
-        assert config.count == 10
-        assert config.difficulty in ["beginner", "intermediate", "advanced"]
+        assert config.questions_per_topic == 15
+        assert config.difficulty_distribution == {"easy": 0.3, "medium": 0.5, "hard": 0.2}
         assert config.format == "markdown"
+        assert config.include_explanations is True
         assert isinstance(config.question_types, list)
 
     def test_custom_values(self) -> None:
@@ -94,12 +94,12 @@ class TestQuizConfig:
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
-            count=20,
-            difficulty="intermediate",
+            questions_per_topic=20,
+            include_explanations=False,
             format="json",
         )
-        assert config.count == 20
-        assert config.difficulty == "intermediate"
+        assert config.questions_per_topic == 20
+        assert config.include_explanations is False
         assert config.format == "json"
 
     def test_from_dict(self) -> None:
@@ -109,11 +109,10 @@ class TestQuizConfig:
             "embedding": {"model": "test"},
             "database": {"mode": "persistent"},
             "paths": {"vault": "./vault"},
-            "quizzes": {"count": 15, "difficulty": "advanced", "format": "csv"},
+            "quizzes": {"questions_per_topic": 15, "format": "csv"},
         }
         config = QuizConfig.from_dict(data)
-        assert config.count == 15
-        assert config.difficulty == "advanced"
+        assert config.questions_per_topic == 15
         assert config.format == "csv"
 
     def test_question_types_available(self) -> None:
@@ -142,7 +141,9 @@ class TestSummaryConfig:
             paths=MagicMock(),
         )
         assert config.summary_length in ["short", "medium", "long"]
-        assert hasattr(config, "prompt_template")
+        assert config.include_keywords is True
+        assert config.include_outline is True
+        assert config.max_context_chars == 15000
 
     def test_custom_values(self) -> None:
         """Test custom summary config values."""
@@ -194,7 +195,7 @@ class TestToolConfigFromDict:
         }
         config = FlashcardConfig.from_dict(minimal_data)
         # Should use defaults
-        assert config.count == 15
+        assert config.cards_per_topic == 10
 
     def test_quiz_config_missing_keys(self) -> None:
         """Test quiz config handles missing keys gracefully."""
@@ -206,7 +207,7 @@ class TestToolConfigFromDict:
         }
         config = QuizConfig.from_dict(minimal_data)
         # Should use defaults
-        assert config.count == 10
+        assert config.questions_per_topic == 15
 
     def test_summary_config_missing_keys(self) -> None:
         """Test summary config handles missing keys gracefully."""
@@ -252,20 +253,20 @@ class TestToolConfigValidation:
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
-            count=0,
+            cards_per_topic=0,
         )
         # Should allow 0 (even if not meaningful)
-        assert config.count == 0
+        assert config.cards_per_topic == 0
 
         config = FlashcardConfig(
             llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
-            count=-1,
+            cards_per_topic=-1,
         )
         # Should allow negative (validation happens elsewhere)
-        assert config.count == -1
+        assert config.cards_per_topic == -1
 
     def test_quiz_format_valid(self) -> None:
         """Test quiz format validation."""

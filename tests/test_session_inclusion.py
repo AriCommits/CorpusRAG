@@ -5,7 +5,8 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from src.tools.rag.session import SessionManager
+
+from tools.rag.session import SessionManager
 
 
 @pytest.fixture

@@ -16,6 +16,7 @@ jobs:
       - run: uv sync --extra dev --frozen
       - run: uv run ruff check src/ tests/
       - run: uv run ruff format --check src/ tests/
+      - run: uv run deptry src
 
   test:
     name: Test
@@ -32,8 +33,6 @@ jobs:
       - run: uv sync --extra generators --extra export --extra dev --frozen
       - run: cp configs/base.example.yaml configs/base.yaml
       - run: uv run pytest tests/ -v --cov=src --cov-report=xml --ignore=tests/test_smoke.py
-        env:
-          CORPUSRAG_CONFIG: configs/base.yaml
 
   docker-build:
     name: Docker Build

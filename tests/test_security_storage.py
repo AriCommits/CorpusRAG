@@ -4,8 +4,8 @@ import tempfile
 
 import pytest
 from langchain_core.documents import Document
-from src.tools.rag.pipeline.storage import LocalFileStore
 
+from tools.rag.pipeline.storage import LocalFileStore
 from utils.security import sanitize_filename
 
 

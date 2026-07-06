@@ -27,7 +27,7 @@ PRESETS = {
 def classify_content(text: str) -> str:
     """Classify text content type using simple heuristics."""
     lines = text.split("\n")
-    non_empty = [l for l in lines if l.strip()]
+    non_empty = [ln for ln in lines if ln.strip()]
 
     if not non_empty:
         return "short"
@@ -35,11 +35,11 @@ def classify_content(text: str) -> str:
     # Check structural signals before length gate so small code/list blocks
     # are classified correctly.
     code_fences = text.count("```")
-    indented = sum(1 for l in non_empty if l.startswith("    ") or l.startswith("\t"))
+    indented = sum(1 for ln in non_empty if ln.startswith("    ") or ln.startswith("\t"))
     if code_fences >= 2 or (indented / len(non_empty)) > 0.4:
         return "code"
 
-    list_lines = sum(1 for l in non_empty if re.match(r"^\s*[-*]\s|^\s*\d+\.\s", l))
+    list_lines = sum(1 for ln in non_empty if re.match(r"^\s*[-*]\s|^\s*\d+\.\s", ln))
     if (list_lines / len(non_empty)) > 0.4:
         return "list"
 

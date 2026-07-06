@@ -1,6 +1,6 @@
 """Tests for hierarchical tag parsing."""
 
-from src.tools.rag.pipeline.parsers import (
+from tools.rag.pipeline.parsers import (
     ParsedTag,
     build_tag_metadata,
     extract_tags_from_text,

@@ -32,16 +32,18 @@ class TestCorpusGroup:
     def test_help_lists_all_subcommands(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["--help"])
         output = result.output
+        # Tool commands are now nested under the `tools` group; the top-level
+        # corpus group exposes tools, db, collections, dev, orchestrate, plus
+        # the standalone setup/benchmark/doctor commands.
         for cmd in (
-            "rag",
-            "video",
-            "orchestrate",
-            "flashcards",
-            "handwriting",
-            "summaries",
-            "quizzes",
+            "tools",
             "db",
+            "collections",
             "dev",
+            "orchestrate",
+            "setup",
+            "benchmark",
+            "doctor",
         ):
             assert cmd in output, f"Expected '{cmd}' in corpus --help output"
 
@@ -56,35 +58,36 @@ class TestCorpusGroup:
         assert result.exit_code != 0
 
     def test_rag_subgroup_reachable(self, runner: CliRunner) -> None:
-        result = runner.invoke(corpus, ["rag", "--help"])
+        result = runner.invoke(corpus, ["tools", "rag", "--help"])
         assert result.exit_code == 0
         assert "ingest" in result.output
         assert "query" in result.output
 
     def test_video_subgroup_reachable(self, runner: CliRunner) -> None:
-        result = runner.invoke(corpus, ["video", "--help"])
+        result = runner.invoke(corpus, ["tools", "video", "--help"])
         assert result.exit_code == 0
         assert "transcribe" in result.output
 
     def test_orchestrate_subgroup_reachable(self, runner: CliRunner) -> None:
         result = runner.invoke(corpus, ["orchestrate", "--help"])
         assert result.exit_code == 0
+        assert "lecture-pipeline" in result.output
 
     def test_flashcards_reachable(self, runner: CliRunner) -> None:
-        result = runner.invoke(corpus, ["flashcards", "--help"])
+        result = runner.invoke(corpus, ["tools", "learning", "flashcards", "--help"])
         assert result.exit_code == 0
 
     def test_handwriting_subgroup_reachable(self, runner: CliRunner) -> None:
-        result = runner.invoke(corpus, ["handwriting", "--help"])
+        result = runner.invoke(corpus, ["tools", "handwriting", "--help"])
         assert result.exit_code == 0
         assert "ingest" in result.output
 
     def test_summaries_reachable(self, runner: CliRunner) -> None:
-        result = runner.invoke(corpus, ["summaries", "--help"])
+        result = runner.invoke(corpus, ["tools", "summaries", "--help"])
         assert result.exit_code == 0
 
     def test_quizzes_reachable(self, runner: CliRunner) -> None:
-        result = runner.invoke(corpus, ["quizzes", "--help"])
+        result = runner.invoke(corpus, ["tools", "learning", "quizzes", "--help"])
         assert result.exit_code == 0
 
     def test_dev_subgroup_reachable(self, runner: CliRunner) -> None:
