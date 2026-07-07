@@ -4,11 +4,7 @@ import pytest
 
 from config import BaseConfig, DatabaseConfig
 from db import ChromaDBBackend
-from orchestrations import (
-    KnowledgeBaseOrchestrator,
-    LecturePipelineOrchestrator,
-    StudySessionOrchestrator,
-)
+from orchestrations import LecturePipelineOrchestrator
 
 
 @pytest.fixture
@@ -26,54 +22,6 @@ def base_config(tmp_path):
 def db_backend(base_config):
     """Create a test database backend."""
     return ChromaDBBackend(base_config.database)
-
-
-def test_study_session_orchestrator_creation(base_config, db_backend):
-    """Test creating a study session orchestrator."""
-    orchestrator = StudySessionOrchestrator(base_config, db_backend)
-
-    assert orchestrator is not None
-    assert orchestrator.config == base_config
-    assert orchestrator.db == db_backend
-
-
-def test_study_session_format(base_config, db_backend):
-    """Test formatting a study session."""
-    orchestrator = StudySessionOrchestrator(base_config, db_backend)
-
-    session = {
-        "collection": "test_collection",
-        "topic": "Test Topic",
-        "summary": "This is a summary",
-        "flashcards": "Q: Question?\nA: Answer",
-        "quiz": "1. Test question?",
-    }
-
-    formatted = orchestrator.format_session(session)
-
-    assert "test_collection" in formatted
-    assert "Test Topic" in formatted
-    assert "This is a summary" in formatted
-    assert "Q: Question?" in formatted
-
-
-def test_knowledge_base_orchestrator_creation(base_config, db_backend):
-    """Test creating a knowledge base orchestrator."""
-    orchestrator = KnowledgeBaseOrchestrator(base_config, db_backend)
-
-    assert orchestrator is not None
-    assert orchestrator.config == base_config
-    assert orchestrator.db == db_backend
-
-
-def test_knowledge_base_list_collections(base_config, db_backend):
-    """Test listing collections."""
-    orchestrator = KnowledgeBaseOrchestrator(base_config, db_backend)
-
-    # Initially should be empty or have test collections
-    collections = orchestrator.list_collections()
-
-    assert isinstance(collections, list)
 
 
 def test_lecture_pipeline_orchestrator_creation(base_config, db_backend):

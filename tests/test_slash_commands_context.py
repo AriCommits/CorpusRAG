@@ -1,7 +1,8 @@
 """Tests for /context slash command."""
 
 import pytest
-from src.tools.rag.slash_commands import SlashCommandRouter
+
+from tools.rag.slash_commands import SlashCommandRouter
 
 
 @pytest.fixture

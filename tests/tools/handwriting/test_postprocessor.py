@@ -4,8 +4,9 @@ import hashlib
 from pathlib import Path
 
 import pytest
-from src.tools.handwriting.postprocessor import ProcessedPage, build_chromadb_metadata, build_page
-from src.tools.handwriting.walker import DiscoveredImage
+
+from tools.handwriting.postprocessor import ProcessedPage, build_chromadb_metadata, build_page
+from tools.handwriting.walker import DiscoveredImage
 
 
 @pytest.fixture

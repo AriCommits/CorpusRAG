@@ -1,0 +1,19 @@
+# CorpusRAG — orchestration workflow settings.
+# Load layered on top of the core config:
+#   load_config("configs/orchestrations.yaml", "configs/base.yaml")
+orchestrations:
+  # Default RAG collection for workflow outputs when none is specified.
+  default_collection: notes
+
+  # Lecture pipeline: transcribe → clean → ingest → generate study materials.
+  lecture_pipeline:
+    # Generate flashcards from the transcribed/cleaned lecture.
+    generate_flashcards: true
+    flashcard_count: 20
+    # Generate a quiz from the transcribed/cleaned lecture.
+    generate_quiz: true
+    quiz_count: 15
+    # Generate a summary from the transcribed/cleaned lecture.
+    generate_summary: true
+    # Length of the generated summary: short | medium | long
+    summary_length: medium

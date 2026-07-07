@@ -1,0 +1,67 @@
+# CorpusRAG — study-material generators (summaries, flashcards, quizzes).
+# Load layered on top of the core config:
+#   load_config("configs/generators.yaml", "configs/base.yaml")
+
+# Summaries Configuration
+summaries:
+  # Default summary length: short | medium | long
+  summary_length: medium
+  # LLM overrides for summarization.
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.3
+    max_tokens: 500
+  # Custom prompt. Variables: {length}, {text}
+  prompt_template: |
+    Generate a {length} summary of the following text:
+    {text}
+
+    Summary should be concise and capture the key points.
+
+# Flashcards Configuration
+flashcards:
+  # Default difficulty: beginner | intermediate | advanced
+  difficulty: intermediate
+  # Default number of flashcards to generate.
+  count: 15
+  # LLM overrides for flashcard generation.
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.5
+  # Output format: markdown | json | csv
+  format: markdown
+  # Custom prompt. Variables: {count}, {difficulty}, {text}
+  prompt_template: |
+    Generate {count} flashcards at {difficulty} difficulty level from the following text:
+    {text}
+
+    Each flashcard should have a clear question and concise answer.
+    Format as JSON: [{{"front": "question", "back": "answer"}}]
+
+# Quizzes Configuration
+quizzes:
+  # Default number of questions to generate.
+  count: 10
+  # Output format: markdown | json | csv
+  format: markdown
+  # Default difficulty: beginner | intermediate | advanced
+  difficulty: intermediate
+  # LLM overrides for quiz generation.
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.4
+  # Question types: multiple_choice | true_false | short_answer
+  question_types: [multiple_choice, true_false, short_answer]
+  # Custom prompt. Variables: {count}, {difficulty}, {question_types}, {text}
+  prompt_template: |
+    Generate a quiz with {count} questions at {difficulty} difficulty level.
+    Include a mix of question types: {question_types}.
+    Base the questions on the following text:
+    {text}
+
+    Format as JSON array with objects containing:
+    - "question": the question text
+    - "type": question type (multiple_choice, true_false, short_answer)
+    - "options": array of options (for multiple_choice only)
+    - "correct_answer": the correct answer
+    - "explanation": brief explanation of why answer is correct

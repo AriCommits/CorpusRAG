@@ -1,0 +1,46 @@
+# CorpusRAG — video processing settings.
+# Load layered on top of the core config:
+#   load_config("configs/video.yaml", "configs/base.yaml")
+video:
+  # Transcription settings (faster-whisper).
+  # Model size: tiny.en | base.en | small.en | medium.en | large-v2
+  whisper_model: medium.en
+  # Device: cuda (NVIDIA GPU) | cpu | mps (Apple Metal)
+  whisper_device: cpu
+  # Compute type: float32 | float16 (CUDA) | int8 (recommended for CPU)
+  whisper_compute_type: int8
+  # Language code (ISO 639-1) or null/"auto" to auto-detect.
+  whisper_language: en
+  # Directory to cache downloaded Whisper models.
+  models_dir: ./models/whisper
+
+  # Transcript cleaning (LLM-based post-processing).
+  clean_model: gemma4:26b-a4b-it-q4_K_M
+  # Deprecated: cleaning now uses the global llm configuration.
+  clean_ollama_host: http://localhost:11434
+  # Prompt template for transcript cleaning.
+  clean_prompt: |
+    Clean this lecture transcript into structured markdown notes.
+    - Remove filler words, false starts, and repetition
+    - Preserve all specific facts, definitions, numbers, and examples exactly
+    - Use ## headers to separate distinct topics as they appear
+    - Preserve the segment markers (e.g. ## Segment 1: filename) exactly as they are
+    - Do not summarize away any detail — only remove noise
+
+  # Output format for cleaned transcripts: markdown | text | json
+  output_format: markdown
+  # Whether to include timestamps in transcript output.
+  include_timestamps: false
+  # Prefix for video collection names in the RAG database (videos_<name>).
+  collection_prefix: videos
+  # Automatically ingest transcripts into RAG after processing.
+  auto_ingest: true
+  # Supported video file extensions.
+  supported_extensions:
+    - .mp4
+    - .mkv
+    - .mov
+    - .avi
+    - .webm
+    - .m4v
+    - .zoom

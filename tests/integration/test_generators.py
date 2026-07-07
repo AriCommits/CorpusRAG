@@ -56,6 +56,9 @@ def flashcard_config(db_config: DatabaseConfig, llm_config: LLMConfig) -> Flashc
         llm=llm_config,
         cards_per_topic=5,
         format="plain",
+        # Generators read from the RAG-ingested collection, which the
+        # populated_collection fixture creates with the default "rag" prefix.
+        collection_prefix="rag",
     )
 
 
@@ -68,6 +71,7 @@ def summary_config(db_config: DatabaseConfig, llm_config: LLMConfig) -> SummaryC
         summary_length="medium",
         include_keywords=True,
         include_outline=True,
+        collection_prefix="rag",
     )
 
 
@@ -81,6 +85,7 @@ def quiz_config(db_config: DatabaseConfig, llm_config: LLMConfig) -> QuizConfig:
         question_types=["multiple_choice", "true_false", "short_answer"],
         include_explanations=True,
         format="markdown",
+        collection_prefix="rag",
     )
 
 
@@ -227,8 +232,22 @@ class TestFlashcardGenerator:
     ) -> None:
         """Test generating flashcards from real ingested documents."""
         generator = FlashcardGenerator(flashcard_config, db_backend)
+        # Mock the LLM backend so generation is deterministic and offline.
+        generator.llm_backend = MagicMock()
+        generator.llm_backend.complete.return_value = MagicMock(
+            text=(
+                "Q: What is machine learning?\n"
+                "A: A subset of AI that learns from data.\n\n"
+                "---\n\n"
+                "Q: What is supervised learning?\n"
+                "A: Learning from labeled training data.\n\n"
+                "---\n\n"
+                "Q: What is Python?\n"
+                "A: A high-level programming language.\n"
+            )
+        )
 
-        with patch("tools.rag.embeddings.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.flashcards.generator.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -258,9 +277,9 @@ class TestFlashcardGenerator:
 
         # Create an empty collection
         full_collection = f"{flashcard_config.collection_prefix}_empty_collection"
-        db_backend.add_collection(full_collection)
+        db_backend.create_collection(full_collection)
 
-        with patch("tools.rag.embeddings.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.flashcards.generator.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -286,8 +305,17 @@ class TestSummaryGenerator:
     ) -> None:
         """Test generating summary from real ingested documents."""
         generator = SummaryGenerator(summary_config, db_backend)
+        # Mock the LLM backend so generation is deterministic and offline.
+        generator.llm_backend = MagicMock()
+        generator.llm_backend.complete.return_value = MagicMock(
+            text=(
+                "Machine learning is a subset of AI. Python is a popular language "
+                "for data science.\n\nKeywords: machine learning, python, data science\n\n"
+                "- Introduction\n- Core concepts\n- Conclusion"
+            )
+        )
 
-        with patch("tools.rag.embeddings.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.summaries.generator.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -317,7 +345,7 @@ class TestSummaryGenerator:
 
         # Create an empty collection
         full_collection = f"{summary_config.collection_prefix}_empty_summary"
-        db_backend.add_collection(full_collection)
+        db_backend.create_collection(full_collection)
 
         with pytest.raises(ValueError, match="No documents found"):
             generator.generate("empty_summary")
@@ -340,8 +368,33 @@ class TestQuizGenerator:
     ) -> None:
         """Test generating quiz from real ingested documents."""
         generator = QuizGenerator(quiz_config, db_backend)
+        # Mock the LLM backend so generation is deterministic and offline.
+        generator.llm_backend = MagicMock()
+        generator.llm_backend.complete.return_value = MagicMock(
+            text=(
+                "Question 1:\n"
+                "What is machine learning?\n"
+                "Type: Multiple Choice\n"
+                "A) A subset of AI\n"
+                "B) A database\n"
+                "C) A language\n"
+                "D) A framework\n"
+                "Correct Answer: A\n"
+                "Explanation: ML is a subset of AI.\n\n"
+                "Question 2:\n"
+                "Python is a programming language.\n"
+                "Type: True-False\n"
+                "Correct Answer: True\n"
+                "Explanation: Python is indeed a language.\n\n"
+                "Question 3:\n"
+                "Define data science.\n"
+                "Type: Short Answer\n"
+                "Correct Answer: The study of extracting insights from data.\n"
+                "Explanation: It combines statistics and programming.\n"
+            )
+        )
 
-        with patch("tools.rag.embeddings.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.quizzes.generator.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -369,9 +422,9 @@ class TestQuizGenerator:
 
         # Create an empty collection
         full_collection = f"{quiz_config.collection_prefix}_empty_quiz"
-        db_backend.add_collection(full_collection)
+        db_backend.create_collection(full_collection)
 
-        with patch("tools.rag.embeddings.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.quizzes.generator.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384

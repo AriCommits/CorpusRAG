@@ -4,7 +4,8 @@ import hashlib
 from pathlib import Path
 
 import pytest
-from src.tools.handwriting.walker import (
+
+from tools.handwriting.walker import (
     DiscoveredImage,
     _hash_file,
     filter_already_ingested,

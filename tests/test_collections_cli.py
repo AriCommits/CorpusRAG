@@ -14,9 +14,7 @@ def runner():
 def test_list_collections(runner):
     with patch("db.collections_cli.load_cli_db") as mock_load:
         mock_db = MagicMock()
-        mock_col = MagicMock()
-        mock_col.name = "test_col"
-        mock_db.list_collections.return_value = [mock_col]
+        mock_db.list_collections.return_value = ["test_col"]
         mock_db.get_collection_stats.return_value = {
             "doc_count": 5,
             "size_estimate": 100,

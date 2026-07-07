@@ -66,14 +66,15 @@ class FlashcardGenerator:
             n_results=10,
         )
 
-        if not sample_docs or not sample_docs.get("documents"):
+        # Extract document texts. ChromaDB returns {"documents": [[]]} for an
+        # existing-but-empty collection, so inspect the inner list rather than
+        # the (always-truthy) outer wrapper before deciding it is empty.
+        document_texts = (sample_docs.get("documents") or [[]])[0] if sample_docs else []
+        if not document_texts:
             raise ValueError(
                 f"No documents found in '{full_collection}'. "
                 f"Run: corpus rag ingest --collection {collection}"
             )
-
-        # Extract document texts
-        document_texts = sample_docs.get("documents", [[]])[0]
 
         # Generate flashcards using LLM
         flashcards = self._generate_with_llm(

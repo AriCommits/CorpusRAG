@@ -220,12 +220,15 @@ class TestEnvironmentVariableOverrides:
     def test_parses_simple_env_override(self, monkeypatch):
         """Test parsing simple environment variable overrides."""
         monkeypatch.setenv("CC_LLM_MODEL", "llama3")
-        monkeypatch.setenv("CC_LLM_ENDPOINT", "http://localhost:5000")
+        # NOTE: security-sensitive keys such as CC_LLM_ENDPOINT are blocked from
+        # env override (raise SecurityError), so use a non-blocked key here to
+        # validate the basic nested-parse path.
+        monkeypatch.setenv("CC_LLM_BACKEND", "ollama")
 
         result = parse_env_overrides()
 
         assert result["llm"]["model"] == "llama3"
-        assert result["llm"]["endpoint"] == "http://localhost:5000"
+        assert result["llm"]["backend"] == "ollama"
 
     def test_parses_typed_values(self, monkeypatch):
         """Test parsing typed values from environment."""

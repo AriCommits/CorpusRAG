@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from src.tools.handwriting.corrector import (
+from tools.handwriting.corrector import (
     CORRECTION_PROMPT,
     correct_ocr_output,
     estimate_correction_confidence,
@@ -14,21 +14,21 @@ class TestCorrectOCROutput:
 
     def test_short_circuit_blank_page(self):
         """Test that [BLANK_PAGE] is returned unchanged without calling ollama."""
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             result = correct_ocr_output("[BLANK_PAGE]")
             assert result == "[BLANK_PAGE]"
             mock_gen.assert_not_called()
 
     def test_short_circuit_empty_string(self):
         """Test that empty string is returned unchanged without calling ollama."""
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             result = correct_ocr_output("")
             assert result == ""
             mock_gen.assert_not_called()
 
     def test_short_circuit_whitespace_only(self):
         """Test that whitespace-only string is treated as empty and short-circuits."""
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             result = correct_ocr_output("   \n\t  ")
             assert result == "   \n\t  "
             mock_gen.assert_not_called()
@@ -38,7 +38,7 @@ class TestCorrectOCROutput:
         raw_text = "The quikc broun fox jumps"
         corrected_text = "The quick brown fox jumps"
 
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             mock_gen.return_value = {"response": f"{corrected_text}   "}
 
             result = correct_ocr_output(raw_text)
@@ -55,7 +55,7 @@ class TestCorrectOCROutput:
         """Test that custom model is passed to ollama."""
         raw_text = "Some text to correct"
 
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             mock_gen.return_value = {"response": "Corrected"}
 
             correct_ocr_output(raw_text, model="llama3")
@@ -67,7 +67,7 @@ class TestCorrectOCROutput:
         """Test that response from ollama is stripped of whitespace."""
         raw_text = "Text to correct"
 
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             mock_gen.return_value = {"response": "  Corrected text  \n\n"}
 
             result = correct_ocr_output(raw_text)
@@ -78,7 +78,7 @@ class TestCorrectOCROutput:
         """Test that the prompt includes the raw_text placeholder."""
         raw_text = "OCR output here"
 
-        with patch("src.tools.handwriting.corrector.ollama.generate") as mock_gen:
+        with patch("tools.handwriting.corrector.ollama.generate") as mock_gen:
             mock_gen.return_value = {"response": "Corrected"}
 
             correct_ocr_output(raw_text)

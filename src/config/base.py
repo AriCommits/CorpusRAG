@@ -78,6 +78,11 @@ class BaseConfig:
     database: DatabaseConfig = field(default_factory=DatabaseConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
 
+    # Full unmodeled configuration dictionary as loaded (retains keys not
+    # represented by the typed sub-configs above). Excluded from equality
+    # comparisons and repr so it does not affect config identity or logging.
+    raw: dict = field(default_factory=dict, compare=False, repr=False)
+
     @classmethod
     def from_dict(cls, data: dict) -> "BaseConfig":
         """Create config from dictionary.
@@ -103,12 +108,18 @@ class BaseConfig:
             if key in paths_data and isinstance(paths_data[key], str):
                 paths_data[key] = Path(paths_data[key])
 
-        return cls(
+        inst = cls(
             llm=LLMConfig(**llm_data),
             embedding=EmbeddingConfig(**embedding_data),
             database=DatabaseConfig(**database_data),
             paths=PathsConfig(**paths_data),
         )
+
+        # Retain the full input dictionary (including keys not modeled by the
+        # typed sub-configs) so downstream consumers can access extra sections.
+        inst.raw = data
+
+        return inst
 
     def to_dict(self) -> dict:
         """Convert config to dictionary.

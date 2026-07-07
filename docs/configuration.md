@@ -1,13 +1,13 @@
-# CorpusCallosum Configuration Guide
+# CorpusRAG Configuration Guide
 
-This guide covers all aspects of configuring CorpusCallosum, from basic setup to advanced customization.
+This guide covers all aspects of configuring CorpusRAG, from basic setup to advanced customization.
 
 ## Configuration System Overview
 
-CorpusCallosum uses a hierarchical YAML-based configuration system that allows flexible customization while maintaining sensible defaults. The configuration system supports:
+CorpusRAG uses a hierarchical YAML-based configuration system that allows flexible customization while maintaining sensible defaults. The configuration system supports:
 
 - **Hierarchical loading**: Base configuration + tool-specific overrides
-- **Environment variables**: Runtime overrides using `CC_*` prefix
+- **Environment variables**: Runtime overrides using the `CC_*` prefix
 - **CLI arguments**: Highest precedence overrides
 - **Deep merging**: Nested configuration sections merge intelligently
 - **Type validation**: Configuration values are validated and type-checked
@@ -24,8 +24,7 @@ Configuration values are loaded in the following order (later values override ea
 ### Example Loading Process
 
 ```bash
-# Base config has llm.model = "llama3"
-# Tool config has llm.model = "llama3.2"
+# Base config has llm.model = "gemma4:26b-a4b-it-q4_K_M"
 # Environment: CC_LLM_MODEL=mistral
 # CLI: --model qwen3
 
@@ -34,18 +33,18 @@ Configuration values are loaded in the following order (later values override ea
 
 ## Base Configuration
 
-The base configuration file (`configs/base.yaml`) contains shared settings inherited by all tools.
+The base configuration file (`configs/base.yaml`) contains shared settings inherited by all tools. A fully commented reference lives in `configs/base.example.yaml`.
 
-### Complete Base Configuration
+### Base Configuration Sections
 
 ```yaml
-# CorpusCallosum Base Configuration
+# CorpusRAG Base Configuration
 # This file contains shared settings inherited by all tools
 
 llm:
-  endpoint: http://localhost:11434
-  model: llama3
   backend: ollama                    # ollama | openai_compatible | anthropic_compatible
+  endpoint: http://localhost:11434
+  model: gemma4:26b-a4b-it-q4_K_M
   timeout_seconds: 120.0
   temperature: 0.7
   max_tokens: null                   # null for model default
@@ -54,15 +53,15 @@ llm:
 
 embedding:
   backend: ollama                    # ollama | sentence-transformers
-  model: nomic-embed-text
+  model: embeddinggemma
   dimensions: null                   # Auto-detect if null
 
 database:
   backend: chromadb
   mode: persistent                   # persistent | http
+  persist_directory: ./chroma_store  # For persistent mode
   host: localhost                    # For HTTP mode
-  port: 8000
-  persist_directory: ./chroma_store
+  port: 8000                         # For HTTP mode
 
 paths:
   vault: ./vault                     # Document storage
@@ -74,30 +73,32 @@ paths:
 
 ### LLM Configuration
 
-Controls how CorpusCallosum connects to Large Language Models.
+Controls how CorpusRAG connects to Large Language Models.
 
 ```yaml
 llm:
+  backend: ollama                    # ollama | openai_compatible | anthropic_compatible
   endpoint: http://localhost:11434   # LLM service endpoint
-  model: llama3                      # Primary model name
-  backend: ollama                    # Backend type
+  model: gemma4:26b-a4b-it-q4_K_M    # Primary model name
   timeout_seconds: 120.0             # Request timeout
-  temperature: 0.7                   # Sampling temperature (0.0-1.0)
+  temperature: 0.7                   # Sampling temperature
   max_tokens: null                   # Max response tokens (null=model default)
   api_key: null                      # API key for cloud providers
   fallback_models:                   # Fallback models if primary fails
-    - llama3.1
-    - qwen2
+    - mistral:latest
+    - neural-chat:latest
 ```
 
 #### Supported Backends
+
+The `backend` value must be one of: `ollama`, `openai_compatible`, or `anthropic_compatible`.
 
 **Ollama Backend** (`backend: ollama`):
 ```yaml
 llm:
   backend: ollama
   endpoint: http://localhost:11434
-  model: llama3
+  model: gemma4:26b-a4b-it-q4_K_M
   # No API key required
 ```
 
@@ -106,7 +107,7 @@ llm:
 llm:
   backend: openai_compatible
   endpoint: https://api.openai.com/v1
-  model: gpt-4
+  model: gpt-4o
   api_key: sk-your-api-key-here
 ```
 
@@ -115,7 +116,7 @@ llm:
 llm:
   backend: anthropic_compatible
   endpoint: https://api.anthropic.com
-  model: claude-3-sonnet-20240229
+  model: claude-sonnet-4
   api_key: your-anthropic-api-key
 ```
 
@@ -126,7 +127,7 @@ Controls document embedding generation for vector search.
 ```yaml
 embedding:
   backend: ollama                    # ollama | sentence-transformers
-  model: nomic-embed-text           # Embedding model name
+  model: embeddinggemma              # Embedding model name
   dimensions: null                   # Vector dimensions (auto-detect if null)
 ```
 
@@ -135,7 +136,7 @@ embedding:
 ```yaml
 embedding:
   backend: ollama
-  model: nomic-embed-text           # Or: all-minilm, bge-large, etc.
+  model: embeddinggemma             # Or: nomic-embed-text, mxbai-embed-large
   dimensions: null                   # Auto-detected from model
 ```
 
@@ -148,17 +149,19 @@ embedding:
   dimensions: 384                   # Model-specific dimensions
 ```
 
+> **Note:** All embeddings in a collection must share the same dimensions. Changing this setting requires re-ingesting documents.
+
 ### Database Configuration
 
-Controls ChromaDB vector database connection.
+Controls the ChromaDB vector database connection.
 
 ```yaml
 database:
   backend: chromadb
   mode: persistent                   # persistent | http
-  host: localhost                    # For HTTP mode
-  port: 8000                        # For HTTP mode
   persist_directory: ./chroma_store  # For persistent mode
+  host: localhost                    # For HTTP mode
+  port: 8000                         # For HTTP mode
 ```
 
 #### Persistent Mode (Local Files)
@@ -183,7 +186,7 @@ database:
   backend: chromadb
   mode: http
   host: localhost                    # ChromaDB server host
-  port: 8000                        # ChromaDB server port
+  port: 8000                         # ChromaDB server port
 ```
 
 Best for:
@@ -208,79 +211,107 @@ paths:
 ```yaml
 paths:
   vault: ~/Documents/corpus-vault
-  scratch_dir: ~/.cache/corpus-callosum
+  scratch_dir: ~/.cache/corpusrag
   output_dir: ~/Documents/corpus-output
 ```
 
 ## Tool-Specific Configuration
 
-Individual tools can extend the base configuration with tool-specific settings.
+Individual tools extend the base configuration with tool-specific settings.
 
 ### RAG Configuration
 
+CorpusRAG uses a parent-child retrieval architecture: parent documents are split into smaller child chunks that are embedded and indexed for search.
+
 ```yaml
-# Inherit from base configuration, then add:
 rag:
   chunking:
-    size: 500                        # Chunk size in characters
-    overlap: 50                      # Overlap between chunks
+    child_chunk_size: 400            # Size of each child chunk in characters
+    child_chunk_overlap: 50          # Overlap between consecutive child chunks
   retrieval:
-    top_k_semantic: 10               # Semantic search results
-    top_k_bm25: 10                   # Keyword search results
-    top_k_final: 5                   # Final combined results
-    rrf_k: 60                        # Reciprocal Rank Fusion parameter
-  collection_prefix: "rag"           # Collection name prefix
+    top_k_semantic: 25               # Child chunks to retrieve from vector search
+    top_k_bm25: 25                   # BM25 keyword results (reserved for future use)
+    top_k_final: 10                  # Final parent documents returned to the LLM
+    rrf_k: 80                        # Reciprocal Rank Fusion parameter (reserved)
+  parent_store:
+    type: local_file                 # local_file | in_memory
+    path: ./parent_store             # Directory for parent document storage
+  collection_prefix: rag             # Collection name prefix (e.g. rag_notes)
 ```
 
-### Flashcards Configuration
+### Video Configuration
+
+Transcribe videos to text (via faster-whisper) and clean them with the LLM.
 
 ```yaml
-flashcards:
-  cards_per_topic: 15                # Default cards to generate
-  difficulty_levels:                 # Available difficulty levels
-    - basic
-    - intermediate
-    - advanced
-  format: anki                       # Output format: anki | quizlet | plain
-  collection_prefix: "flashcards"    # Collection name prefix
-  max_context_chars: 12000           # Max context for generation
+video:
+  whisper_model: medium.en           # tiny.en | base.en | small.en | medium.en | large-v2
+  whisper_device: cpu                # cuda | cpu | mps
+  whisper_compute_type: int8         # float32 | float16 | int8
+  whisper_language: en               # ISO 639-1 code, or "auto" to auto-detect
+  models_dir: ./models/whisper       # Cache directory for downloaded models
+  clean_model: gemma4:26b-a4b-it-q4_K_M   # Model used for transcript cleaning
+  output_format: markdown            # markdown | text | json
+  include_timestamps: false          # Include timestamps in transcript output
+  collection_prefix: videos          # Collection name prefix (e.g. videos_BIOL101)
+  auto_ingest: true                  # Ingest transcripts into RAG after processing
+  supported_extensions:              # Recognized video file extensions
+    - .mp4
+    - .mkv
+    - .mov
+    - .avi
+    - .webm
+    - .m4v
+    - .zoom
 ```
 
 ### Summaries Configuration
 
 ```yaml
 summaries:
-  default_length: medium             # short | medium | long | custom
-  include_keywords: true             # Include keyword extraction
-  max_context_chars: 15000           # Max context for generation
-  collection_prefix: "summaries"     # Collection name prefix
+  summary_length: medium             # short | medium | long
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.3
+    max_tokens: 500
+  prompt_template: |                 # Variables: {length}, {text}
+    Generate a {length} summary of the following text:
+    {text}
+```
+
+### Flashcards Configuration
+
+```yaml
+flashcards:
+  difficulty: intermediate           # beginner | intermediate | advanced
+  count: 15                          # Number of flashcards to generate
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.5
+  format: markdown                   # markdown | json | csv
+  prompt_template: |                 # Variables: {count}, {difficulty}, {text}
+    Generate {count} flashcards at {difficulty} difficulty level from the following text:
+    {text}
 ```
 
 ### Quizzes Configuration
 
 ```yaml
 quizzes:
+  count: 10                          # Number of questions to generate
+  format: markdown                   # markdown | json | csv
+  difficulty: intermediate           # beginner | intermediate | advanced
+  llm:
+    model: gemma4:26b-a4b-it-q4_K_M
+    temperature: 0.4
   question_types:                    # Available question types
     - multiple_choice
     - true_false
     - short_answer
-    - essay
-  default_count: 10                  # Default questions to generate
-  format: plain                      # Output format
-  collection_prefix: "quizzes"       # Collection name prefix
-  max_context_chars: 12000           # Max context for generation
-```
-
-### Video Configuration
-
-```yaml
-video:
-  transcription:
-    model: base                      # Whisper model: tiny | base | small | medium | large
-    language: auto                   # Language code or 'auto'
-  processing:
-    chunk_size: 30                   # Seconds per chunk for processing
-  collection_prefix: "video"         # Collection name prefix
+  prompt_template: |                 # Variables: {count}, {difficulty}, {question_types}, {text}
+    Generate a quiz with {count} questions at {difficulty} difficulty level.
+    Include a mix of question types: {question_types}.
+    {text}
 ```
 
 ## Environment Variable Overrides
@@ -291,15 +322,15 @@ Any configuration value can be overridden using environment variables with the `
 
 Convert YAML paths to environment variables:
 - Nested keys: `llm.model` → `CC_LLM_MODEL`
+- Deeper nesting: `rag.chunking.child_chunk_size` → `CC_RAG_CHUNKING_CHILD_CHUNK_SIZE`
 - Array indices: Not directly supported
-- Underscores: Use for nested access
 
 ### Common Environment Variables
 
 ```bash
 # LLM Configuration
 export CC_LLM_ENDPOINT=http://localhost:11434
-export CC_LLM_MODEL=llama3
+export CC_LLM_MODEL=mistral
 export CC_LLM_BACKEND=ollama
 export CC_LLM_TEMPERATURE=0.7
 export CC_LLM_API_KEY=your-api-key
@@ -307,15 +338,15 @@ export CC_LLM_API_KEY=your-api-key
 # Database Configuration
 export CC_DATABASE_MODE=http
 export CC_DATABASE_HOST=chromadb
-export CC_DATABASE_PORT=8001
+export CC_DATABASE_PORT=8000
 
 # Paths Configuration
 export CC_PATHS_VAULT=/path/to/documents
 export CC_PATHS_OUTPUT_DIR=/path/to/output
 
 # Tool-specific Configuration
-export CC_RAG_CHUNKING_SIZE=1000
-export CC_FLASHCARDS_CARDS_PER_TOPIC=20
+export CC_RAG_CHUNKING_CHILD_CHUNK_SIZE=800
+export CC_FLASHCARDS_COUNT=20
 ```
 
 ### Docker Environment Variables
@@ -325,13 +356,13 @@ For Docker deployments, you can set environment variables in your compose file:
 ```yaml
 services:
   corpus-mcp:
-    image: corpus-callosum:latest
+    image: corpusrag:latest
     environment:
       - CC_DATABASE_MODE=http
       - CC_DATABASE_HOST=chromadb
       - CC_DATABASE_PORT=8000
       - CC_LLM_ENDPOINT=http://ollama:11434
-      - CC_LLM_MODEL=llama3
+      - CC_LLM_MODEL=gemma4:26b-a4b-it-q4_K_M
 ```
 
 ## Configuration Examples
@@ -342,7 +373,7 @@ services:
 # configs/minimal.yaml
 llm:
   endpoint: http://localhost:11434
-  model: llama3
+  model: gemma4:26b-a4b-it-q4_K_M
 
 database:
   mode: persistent
@@ -355,7 +386,7 @@ database:
 # configs/production.yaml
 llm:
   endpoint: http://ollama:11434
-  model: llama3
+  model: gemma4:26b-a4b-it-q4_K_M
   timeout_seconds: 180.0
 
 database:
@@ -376,8 +407,8 @@ paths:
 llm:
   backend: openai_compatible
   endpoint: https://api.openai.com/v1
-  model: gpt-4
-  api_key: ${OPENAI_API_KEY}  # Use environment variable
+  model: gpt-4o
+  api_key: null              # Set via CC_LLM_API_KEY environment variable
   temperature: 0.3
   max_tokens: 4000
 
@@ -398,14 +429,14 @@ database:
 # configs/advanced-rag.yaml
 llm:
   endpoint: http://localhost:11434
-  model: llama3
+  model: gemma4:26b-a4b-it-q4_K_M
   fallback_models:
-    - llama3.1
-    - qwen2
+    - mistral:latest
+    - neural-chat:latest
 
 embedding:
   backend: ollama
-  model: nomic-embed-text
+  model: embeddinggemma
 
 database:
   mode: persistent
@@ -413,13 +444,13 @@ database:
 
 rag:
   chunking:
-    size: 1000
-    overlap: 100
+    child_chunk_size: 800
+    child_chunk_overlap: 100
   retrieval:
-    top_k_semantic: 15
-    top_k_bm25: 15
-    top_k_final: 8
-    rrf_k: 60
+    top_k_semantic: 50
+    top_k_bm25: 25
+    top_k_final: 10
+    rrf_k: 80
 
 paths:
   vault: ~/Documents/research-papers
@@ -428,23 +459,13 @@ paths:
 
 ## Configuration Validation
 
-CorpusCallosum validates configuration at startup and provides clear error messages for invalid settings.
+CorpusRAG validates configuration at startup and provides clear error messages for invalid settings.
 
 ### Common Validation Errors
-
-**Missing Required Fields**:
-```
-Error: Missing required field 'llm.model' in configuration
-```
 
 **Invalid Backend**:
 ```
 Error: Invalid LLM backend 'invalid_backend'. Must be one of: ollama, openai_compatible, anthropic_compatible
-```
-
-**Invalid Path**:
-```
-Error: Database persist_directory '/invalid/path' does not exist and cannot be created
 ```
 
 **Type Mismatch**:
@@ -461,9 +482,9 @@ Always start with a base configuration and override only what you need:
 ```yaml
 # Good: Minimal overrides
 llm:
-  model: llama3.1  # Only override what's different
+  model: mistral:latest  # Only override what's different
 
-# Avoid: Repeating entire configuration
+# Avoid: Repeating the entire configuration
 ```
 
 ### 2. Environment-Specific Configs
@@ -495,6 +516,8 @@ For production deployments, use absolute paths:
 paths:
   vault: /app/data/vault
   output_dir: /app/data/output
+
+database:
   persist_directory: /app/data/chroma
 ```
 
@@ -509,39 +532,12 @@ llm:
 
 rag:
   chunking:
-    size: 1000            # Larger chunks for better context
+    child_chunk_size: 800   # Larger chunks for better context
   retrieval:
-    top_k_final: 10       # More results for better recall
-```
-
-### 6. Monitoring and Logging
-
-In production, consider adding observability configuration:
-
-```yaml
-# Additional configuration for monitoring
-observability:
-  telemetry_endpoint: http://jaeger:14268/api/traces
-  metrics_enabled: true
-  log_level: info
+    top_k_final: 10         # More results for better recall
 ```
 
 ## Troubleshooting Configuration
-
-### Check Current Configuration
-
-Use the configuration inspection commands:
-
-```bash
-# Check effective configuration
-corpus-config show
-
-# Validate configuration
-corpus-config validate
-
-# Show configuration sources
-corpus-config sources
-```
 
 ### Common Issues
 
@@ -552,8 +548,8 @@ corpus-config sources
 
 **LLM Connection Failed**:
 - Verify `llm.endpoint` is correct and accessible
-- Check if API key is set (for cloud providers)
-- Confirm model is available
+- Check if `api_key` is set (for cloud providers)
+- Confirm the model is available
 
 **Path Issues**:
 - Ensure directories exist and are writable
@@ -562,35 +558,49 @@ corpus-config sources
 
 **Environment Variable Not Applied**:
 - Verify variable name format (`CC_SECTION_FIELD`)
-- Check variable is exported in shell
+- Check the variable is exported in your shell
 - Confirm no typos in variable names
+
+## Command-Line Entry Points
+
+CorpusRAG installs two entry points:
+
+- `corpus` - the main CLI for ingestion, querying, generation, and orchestration
+- `corpus-mcp-server` - the MCP server for tool integrations
+
+You can pass a config file to the main CLI with the `--config` flag:
+
+```bash
+corpus --config my-config.yaml rag ingest ./vault --collection notes
+```
 
 ## Advanced Configuration
 
 ### Custom Configuration Classes
 
-For advanced use cases, you can extend the configuration system:
+For advanced use cases, you can extend the configuration system by subclassing `BaseConfig`:
 
 ```python
-from corpus_callosum.config.base import BaseConfig
+from config.base import BaseConfig
 from dataclasses import dataclass, field
 
 @dataclass
 class MyCustomConfig(BaseConfig):
-    """Custom configuration for specialized tool."""
-    
+    """Custom configuration for a specialized tool."""
+
     custom_setting: str = "default_value"
     advanced_options: dict = field(default_factory=dict)
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "MyCustomConfig":
         # Custom loading logic
         base_config = super().from_dict(data)
         return cls(
             llm=base_config.llm,
+            embedding=base_config.embedding,
             database=base_config.database,
-            # ... other fields
-            custom_setting=data.get("custom_setting", "default_value")
+            paths=base_config.paths,
+            custom_setting=data.get("custom_setting", "default_value"),
         )
 ```
 
@@ -601,9 +611,9 @@ You can add configuration validation hooks:
 ```python
 def validate_config(config: BaseConfig) -> None:
     """Custom configuration validation."""
-    if config.llm.temperature > 1.0:
-        raise ValueError("Temperature must be <= 1.0")
-    
+    if config.llm.temperature > 2.0:
+        raise ValueError("Temperature must be <= 2.0")
+
     if not config.paths.vault.exists():
         config.paths.vault.mkdir(parents=True, exist_ok=True)
 ```

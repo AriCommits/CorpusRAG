@@ -38,7 +38,9 @@ corpus
 │   ├── delete         # Delete collection
 │   ├── update-path    # Update stored ingest path
 │   └── manage         # TUI collection manager
-└── dev                # Development tools
+├── dev                # Development tools
+└── orchestrate
+    └── lecture-pipeline  # Video → transcript → study materials
 ```
 
 ## Top-Level Commands
@@ -185,6 +187,29 @@ corpus dev test --cov
 corpus dev lint
 corpus dev fmt
 ```
+
+## Orchestrate
+
+High-level pipelines that chain multiple tools together. These workflows are
+config-driven: you supply only the essential inputs on the command line, and all
+other behavior (counts, summary length, cleaning, etc.) comes from configuration.
+
+### Lecture Pipeline
+
+Process a lecture video into a complete set of study materials (transcript,
+summary, flashcards, and quizzes) in one command.
+
+```bash
+corpus orchestrate lecture-pipeline <video> --course <id> --lecture <n>
+
+# Example
+corpus orchestrate lecture-pipeline lecture01.mp4 --course BIOL101 --lecture 1
+corpus orchestrate lecture-pipeline lecture01.mp4 -c BIOL101 -l 1 -o materials.md
+```
+
+Only the video path, `--course`, and `--lecture` are required. Everything else is
+driven by configuration; supply a flag only when you want to override the
+configured value for a single run.
 
 ## Configuration
 

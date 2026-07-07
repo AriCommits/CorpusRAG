@@ -3,9 +3,10 @@
 from pathlib import Path
 
 import pytest
-from src.tools.handwriting.chunker import HandwritingChildChunk, build_child_chunks
-from src.tools.handwriting.postprocessor import ProcessedPage, build_page
-from src.tools.handwriting.walker import DiscoveredImage
+
+from tools.handwriting.chunker import HandwritingChildChunk, build_child_chunks
+from tools.handwriting.postprocessor import ProcessedPage, build_page
+from tools.handwriting.walker import DiscoveredImage
 
 
 @pytest.fixture
@@ -349,7 +350,7 @@ def test_build_child_chunks_blank_at_boundaries(sample_pages_with_blanks):
     # Pages: [content, blank, content, blank, content]
     chunks = build_child_chunks(sample_pages_with_blanks, "parent_1", context_window=1)
 
-    # Page 2 (index 2) with window 1: [1:4] = [blank, content, blank] → filtered to [content]
+    # Page 2 (index 2) with window 1: [1:4] = [blank, content, blank] â†’ filtered to [content]
     assert chunks[1].content == "Content of page 2"
 
 
