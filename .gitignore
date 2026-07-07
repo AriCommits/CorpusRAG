@@ -229,3 +229,14 @@ scratch/
 output/
 parent_store/
 models/
+
+# Local setup marker and runtime state (should never be committed)
+.corpus_setup_complete
+.sessions/
+/backup
+/backups/
+scratch/
+output/
+vault/
+parent_store/
+cache/
