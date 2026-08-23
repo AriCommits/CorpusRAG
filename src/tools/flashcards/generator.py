@@ -5,7 +5,7 @@ import re
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
-from tools.rag.pipeline import EmbeddingClient
+from tools.generation import sample_documents
 
 from .config import FlashcardConfig
 
@@ -46,37 +46,14 @@ class FlashcardGenerator:
         if count is None:
             count = self.config.cards_per_topic
 
-        # Get full collection name with prefix
-        full_collection = f"{self.config.collection_prefix}_{collection}"
-
-        # Check if collection exists
-        if not self.db.collection_exists(full_collection):
-            raise ValueError(f"Collection '{full_collection}' does not exist")
-
-        # Retrieve documents from the collection
-        # Get a sample of documents from the collection
-        # Using semantic search with a general query embedding
-        embedder = EmbeddingClient(self.config)
-        query_text = "main concepts key ideas important information"
-        query_embedding = embedder.embed_query(query_text)
-
-        sample_docs = self.db.query(
-            collection=full_collection,
-            query_embedding=query_embedding,
+        document_texts = sample_documents(
+            self.db,
+            self.config,
+            collection,
+            query_text="main concepts key ideas important information",
             n_results=10,
         )
 
-        # Extract document texts. ChromaDB returns {"documents": [[]]} for an
-        # existing-but-empty collection, so inspect the inner list rather than
-        # the (always-truthy) outer wrapper before deciding it is empty.
-        document_texts = (sample_docs.get("documents") or [[]])[0] if sample_docs else []
-        if not document_texts:
-            raise ValueError(
-                f"No documents found in '{full_collection}'. "
-                f"Run: corpus rag ingest --collection {collection}"
-            )
-
-        # Generate flashcards using LLM
         flashcards = self._generate_with_llm(
             document_texts, difficulty=difficulty, count=count, topic=collection
         )
@@ -124,25 +101,10 @@ class FlashcardGenerator:
 
             # Parse the response into flashcards
             flashcards = self._parse_flashcard_response(response.text)
-
-            # Ensure we have the right number of flashcards
-            if len(flashcards) < count:
-                logger.warning(
-                    f"Generated {len(flashcards)} flashcards, expected {count}. "
-                    "Padding with placeholders."
-                )
-                # Pad with placeholders if needed
-                for i in range(len(flashcards), count):
-                    flashcards.append(
-                        {
-                            "front": f"Additional Question {i + 1 - len(flashcards)} ({difficulty})",
-                            "back": f"Additional Answer {i + 1 - len(flashcards)}",
-                        }
-                    )
-            elif len(flashcards) > count:
-                # Trim to requested count
+            if len(flashcards) > count:
                 flashcards = flashcards[:count]
-
+            elif len(flashcards) < count:
+                logger.warning("Generated %s flashcards, expected %s.", len(flashcards), count)
             return flashcards
 
         except Exception as e:

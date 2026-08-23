@@ -109,14 +109,8 @@ class RAGAgent:
 
             # 2. Generate
             start_gen = time.perf_counter()
-            # Generate response using LLM
-            if stream:
-                # TODO: Implement streaming response
-                response = self.llm_backend.complete(prompt)
-                result_text = response.text
-            else:
-                response = self.llm_backend.complete(prompt)
-                result_text = response.text
+            response = self.llm_backend.complete(prompt)
+            result_text = response.text
             gen_time = time.perf_counter() - start_gen
 
             total_time = time.perf_counter() - start_total

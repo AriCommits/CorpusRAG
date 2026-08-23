@@ -200,7 +200,6 @@ Tags:
             output_dir=temp_dir / "output",
         ),
         parent_store=ParentStoreConfig(
-            type="local_file",
             path=temp_dir / "parent_store",
         ),
     )
@@ -247,7 +246,7 @@ class TestFlashcardGenerator:
             )
         )
 
-        with patch("tools.flashcards.generator.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -279,7 +278,7 @@ class TestFlashcardGenerator:
         full_collection = f"{flashcard_config.collection_prefix}_empty_collection"
         db_backend.create_collection(full_collection)
 
-        with patch("tools.flashcards.generator.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -315,7 +314,7 @@ class TestSummaryGenerator:
             )
         )
 
-        with patch("tools.summaries.generator.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -347,8 +346,12 @@ class TestSummaryGenerator:
         full_collection = f"{summary_config.collection_prefix}_empty_summary"
         db_backend.create_collection(full_collection)
 
-        with pytest.raises(ValueError, match="No documents found"):
-            generator.generate("empty_summary")
+        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
+            mock_embedder = MagicMock()
+            mock_embedder_class.return_value = mock_embedder
+            mock_embedder.embed_query.return_value = [0.1] * 384
+            with pytest.raises(ValueError, match="No documents found"):
+                generator.generate("empty_summary")
 
     def test_nonexistent_collection_raises_valueerror(
         self, summary_config: SummaryConfig, db_backend: ChromaDBBackend
@@ -394,7 +397,7 @@ class TestQuizGenerator:
             )
         )
 
-        with patch("tools.quizzes.generator.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -424,7 +427,7 @@ class TestQuizGenerator:
         full_collection = f"{quiz_config.collection_prefix}_empty_quiz"
         db_backend.create_collection(full_collection)
 
-        with patch("tools.quizzes.generator.EmbeddingClient") as mock_embedder_class:
+        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384

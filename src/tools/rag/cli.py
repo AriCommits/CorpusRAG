@@ -184,11 +184,9 @@ def query(
 
     click.echo(f"Querying collection '{collection}'...\n")
     response = agent.query(query, collection, top_k=top_k, where=where)
-    docs = agent.retrieve(query, collection, top_k=top_k, where=where)
 
     click.echo("Response:")
     click.echo(response)
-    click.echo(f"\n(Retrieved {len(docs)} documents)")
 
 
 @rag.command()

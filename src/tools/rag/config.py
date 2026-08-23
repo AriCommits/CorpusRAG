@@ -35,19 +35,9 @@ class RerankingConfig:
 
 
 @dataclass
-class VectorStoreConfig:
-    """VectorStore backend configuration."""
-
-    backend: str = "chromadb"  # chromadb | langchain
-    langchain_class: str | None = None  # e.g., "langchain_qdrant.QdrantVectorStore"
-    langchain_kwargs: dict = field(default_factory=dict)
-
-
-@dataclass
 class ParentStoreConfig:
     """Parent document store configuration."""
 
-    type: str = "local_file"  # local_file | in_memory
     path: Path = field(default_factory=lambda: Path("./parent_store"))
 
 
@@ -60,7 +50,6 @@ class RAGConfig(BaseConfig):
     retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
     reranking: RerankingConfig = field(default_factory=RerankingConfig)
     parent_store: ParentStoreConfig = field(default_factory=ParentStoreConfig)
-    vectorstore: VectorStoreConfig = field(default_factory=VectorStoreConfig)
     collection_prefix: str = "rag"
 
     @classmethod
@@ -82,11 +71,11 @@ class RAGConfig(BaseConfig):
         chunking_data = rag_data.get("chunking", {})
         retrieval_data = rag_data.get("retrieval", {})
         reranking_data = rag_data.get("reranking", {})
-        parent_store_data = rag_data.get("parent_store", {})
-        vectorstore_data = rag_data.get("vectorstore", {})
+        parent_store_data = dict(rag_data.get("parent_store", {}) or {})
         collection_prefix = rag_data.get("collection_prefix", "rag")
 
-        # Handle parent_store path conversion
+        # Ignore removed knobs so older YAML still loads.
+        parent_store_data.pop("type", None)
         if "path" in parent_store_data and isinstance(parent_store_data["path"], str):
             parent_store_data["path"] = Path(parent_store_data["path"])
 
@@ -101,9 +90,6 @@ class RAGConfig(BaseConfig):
             reranking=(RerankingConfig(**reranking_data) if reranking_data else RerankingConfig()),
             parent_store=(
                 ParentStoreConfig(**parent_store_data) if parent_store_data else ParentStoreConfig()
-            ),
-            vectorstore=(
-                VectorStoreConfig(**vectorstore_data) if vectorstore_data else VectorStoreConfig()
             ),
             collection_prefix=collection_prefix,
         )

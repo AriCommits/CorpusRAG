@@ -8,6 +8,12 @@ from langchain_core.documents import Document
 from utils.security import sanitize_filename
 
 
+def parent_store_for(config, collection: str) -> "LocalFileStore":
+    """Return a parent-document store namespaced to one user collection."""
+    safe = sanitize_filename(collection) or "default"
+    return LocalFileStore(Path(config.parent_store.path) / safe)
+
+
 class LocalFileStore:
     """Simple local file-based document store for parent documents.
 

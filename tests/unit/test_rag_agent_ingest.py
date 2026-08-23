@@ -61,7 +61,7 @@ def test_ingest_text_parent_only_when_doc_id_set(tmp_path):
     assert result.files_indexed == 1
     assert result.chunks_indexed == 0
     db.add_documents.assert_not_called()
-    stored = list((tmp_path / "parents").glob("*.json"))
+    stored = list((tmp_path / "parents").rglob("*.json"))
     assert stored
 
 

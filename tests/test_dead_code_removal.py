@@ -22,6 +22,8 @@ def test_plan21_unused_layers_deleted() -> None:
     """Sprint 1 D1/D3: unused adapters, shims, utils, and models are gone."""
     removed = [
         "src/tools/rag/vectorstores/langchain_adapter.py",
+        "src/tools/rag/vectorstores/chroma_adapter.py",
+        "src/tools/rag/vectorstores/base.py",
         "src/tools/rag/embeddings.py",
         "src/tools/rag/storage.py",
         "src/tools/rag/markdown_parser.py",

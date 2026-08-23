@@ -9,7 +9,7 @@ from .parsers import (
     parse_hierarchical_tags,
     split_markdown_semantic,
 )
-from .storage import LocalFileStore
+from .storage import LocalFileStore, parent_store_for
 
 __all__ = [
     "EmbeddingClient",
@@ -19,6 +19,7 @@ __all__ = [
     "parse_hierarchical_tags",
     "split_markdown_semantic",
     "LocalFileStore",
+    "parent_store_for",
     "adaptive_split",
     "classify_content",
 ]

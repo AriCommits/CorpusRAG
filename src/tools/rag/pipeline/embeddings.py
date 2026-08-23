@@ -10,6 +10,8 @@ from ..config import RAGConfig
 class EmbeddingClient:
     """Generate embeddings using the configured backend."""
 
+    _st_models: dict = {}
+
     def __init__(self, config: RAGConfig):
         self.config = config
 
@@ -113,6 +115,10 @@ class EmbeddingClient:
                 "sentence-transformers is required for this embedding backend"
             ) from exc
 
-        model = SentenceTransformer(self.config.embedding.model)
+        model_name = self.config.embedding.model
+        model = self._st_models.get(model_name)
+        if model is None:
+            model = SentenceTransformer(model_name)
+            self._st_models[model_name] = model
         vectors = model.encode(texts)
         return [vector.tolist() for vector in vectors]

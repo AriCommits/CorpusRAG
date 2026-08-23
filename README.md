@@ -52,7 +52,7 @@ corpus tools video ingest-url "https://youtube.com/watch?v=..." -c notes
 
 | Feature | Description |
 |---------|-------------|
-| **RAG Pipeline** | Hybrid search (vector + BM25 + reranking), parent-child chunking, incremental sync |
+| **RAG Pipeline** | Hybrid / semantic / keyword retrieval (one staged pipeline: vector, BM25, RRF, rerank), parent-child chunking, incremental sync |
 | **MCP Server** | Expose RAG tools to Claude, Kiro, Neovim, OpenCode, or any MCP-compatible editor |
 | **store_text** | Let AI agents push plans, summaries, and context into your knowledge base |
 | **TUI** | Rich terminal chat with slash commands, collection management, context controls |

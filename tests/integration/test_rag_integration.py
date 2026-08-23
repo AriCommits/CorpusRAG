@@ -49,7 +49,6 @@ def rag_config(temp_rag_dir: Path) -> RAGConfig:
     )
 
     parent_store_config = ParentStoreConfig(
-        type="local_file",
         path=temp_rag_dir / "parent_store",
     )
 

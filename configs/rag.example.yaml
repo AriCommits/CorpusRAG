@@ -11,20 +11,22 @@ rag:
 
   # Retrieval settings.
   retrieval:
-    # Number of child chunks retrieved from vector search.
+    # Child chunks fetched from vector search before parent collapse.
     top_k_semantic: 25
-    # BM25 keyword search results (reserved for future use).
+    # BM25 keyword hits before fusion.
     top_k_bm25: 25
     # Final number of parent documents returned to the LLM.
     top_k_final: 10
-    # Reciprocal Rank Fusion parameter (reserved for future use).
+    # Reciprocal Rank Fusion parameter.
     rrf_k: 80
 
+  reranking:
+    enabled: true
+    model: cross-encoder/ms-marco-MiniLM-L-6-v2
+
   # Parent document storage (full context retrieval).
+  # Files are stored under parent_store/<collection>/.
   parent_store:
-    # Storage type: local_file (persistent) | in_memory (lost on restart).
-    type: local_file
-    # Directory path for parent document storage (local_file only).
     path: ./parent_store
 
   # Prefix for RAG collection names in the database (rag_<name>).

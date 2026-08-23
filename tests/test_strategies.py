@@ -157,8 +157,56 @@ class TestStrategyConfiguration:
         assert config.reranking.enabled is True
         assert "cross-encoder" in config.reranking.model
 
-    def test_vectorstore_config_defaults(self):
-        """VectorStoreConfig has correct defaults."""
+    def test_reranking_can_be_disabled(self):
+        """reranking.enabled is honored by StagedStrategy."""
+        from unittest.mock import Mock
+
         config = RAGConfig()
-        assert config.vectorstore.backend == "chromadb"
-        assert config.vectorstore.langchain_class is None
+        config.reranking.enabled = False
+        doc = RetrievedDocument(id="1", text="t", metadata={}, rank=1, score=1.0)
+        strategy = HybridStrategy(
+            vectorstore=Mock(),
+            embedder=Mock(),
+            parent_store=Mock(),
+            config=config,
+        )
+        strategy._vector_search = Mock(return_value=[doc])  # type: ignore[method-assign]
+        strategy._keyword_search = Mock(return_value=[doc])  # type: ignore[method-assign]
+        strategy._rerank = Mock()  # type: ignore[method-assign]
+        out = strategy.retrieve("q", "notes", 3)
+        strategy._rerank.assert_not_called()
+        assert out[0].id == "1"
+
+    def test_bm25_ignores_other_collections_and_missing_name(self):
+        """Parents without this collection_name must not enter BM25."""
+        from unittest.mock import Mock
+
+        from langchain_core.documents import Document
+
+        other = Document(page_content="alpha beta", metadata={"collection_name": "other"})
+        missing = Document(page_content="alpha beta", metadata={})
+        mine = Document(
+            page_content="alpha unique token", metadata={"collection_name": "notes"}
+        )
+        filler = Document(
+            page_content="unrelated words here", metadata={"collection_name": "notes"}
+        )
+        filler2 = Document(
+            page_content="more filler text", metadata={"collection_name": "notes"}
+        )
+        parent_store = Mock()
+        parent_store.mget_all.return_value = [
+            ("a", other),
+            ("b", missing),
+            ("c", mine),
+            ("d", filler),
+            ("e", filler2),
+        ]
+        strategy = KeywordStrategy(
+            vectorstore=Mock(),
+            embedder=Mock(),
+            parent_store=parent_store,
+            config=RAGConfig(),
+        )
+        docs = strategy.retrieve("unique", "notes", top_k=10)
+        assert [d.id for d in docs] == ["c"]

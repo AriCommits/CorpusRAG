@@ -27,13 +27,9 @@ class FlashcardConfig(BaseConfig):
         Returns:
             FlashcardConfig instance
         """
-        # Get base config
-        base_config = super().from_dict(data)
+        base_config, flashcard_data = BaseConfig.split_section(data, "flashcards")
 
-        # Get flashcard-specific config
-        flashcard_data = data.get("flashcards", {})
-
-        return cls(
+        inst = cls(
             llm=base_config.llm,
             embedding=base_config.embedding,
             database=base_config.database,
@@ -46,3 +42,5 @@ class FlashcardConfig(BaseConfig):
             collection_prefix=flashcard_data.get("collection_prefix", "rag"),
             max_context_chars=flashcard_data.get("max_context_chars", 12000),
         )
+        inst.raw = data
+        return inst

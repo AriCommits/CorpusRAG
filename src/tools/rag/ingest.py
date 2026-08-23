@@ -12,7 +12,7 @@ from db import DatabaseBackend
 from utils.security import sanitize_filename
 
 from .config import RAGConfig
-from .pipeline import EmbeddingClient, LocalFileStore, split_markdown_semantic
+from .pipeline import EmbeddingClient, parent_store_for, split_markdown_semantic
 
 
 @dataclass(frozen=True)
@@ -42,7 +42,6 @@ class RAGIngester:
 
         # Initialize parent document store
         self.config.parent_store.path.mkdir(parents=True, exist_ok=True)
-        self.parent_store = LocalFileStore(str(self.config.parent_store.path))
         self.use_adaptive = getattr(self.config.chunking, "adaptive", True)
 
         # Initialize child text splitter
@@ -51,6 +50,10 @@ class RAGIngester:
             chunk_overlap=self.config.chunking.child_chunk_overlap,
             separators=["\n\n", "\n", " ", ""],
         )
+
+    def parent_store_for(self, collection: str):
+        """Parent JSON store namespaced to one user-facing collection."""
+        return parent_store_for(self.config, collection)
 
     def ingest_path(
         self, path: Path | str, collection: str, max_file_size_mb: int = 1000
@@ -161,7 +164,7 @@ class RAGIngester:
                     self.db.delete_by_metadata(
                         full_collection, where={"source_file": relative_path}
                     )
-                    self.parent_store.delete_by_metadata(
+                    self.parent_store_for(collection).delete_by_metadata(
                         lambda m: m.get("source_file") == relative_path
                     )
 
@@ -178,13 +181,14 @@ class RAGIngester:
                 parent_metadata["source_file_name"] = sanitize_filename(file_path.name)
                 parent_metadata["parent_index"] = parent_idx
                 parent_metadata["file_hash"] = file_hash
+                parent_metadata["collection_name"] = collection
 
                 # Store parent document in document store
                 parent_langchain_doc = Document(
                     page_content=parent_doc.page_content,
                     metadata=parent_metadata,
                 )
-                self.parent_store.mset([(parent_id, parent_langchain_doc)])
+                self.parent_store_for(collection).mset([(parent_id, parent_langchain_doc)])
 
                 # Split parent into children for vector search
                 if self.use_adaptive:
@@ -274,7 +278,7 @@ class RAGIngester:
 
         parent_id = doc_id or str(uuid4())
         parent_doc = Document(page_content=text, metadata=dict(extra))
-        self.parent_store.mset([(parent_id, parent_doc)])
+        self.parent_store_for(collection).mset([(parent_id, parent_doc)])
 
         if doc_id:
             return IngestResult(collection=collection, files_indexed=1, chunks_indexed=0)

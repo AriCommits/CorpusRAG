@@ -196,6 +196,8 @@ DEP002 = [
   "traceloop-sdk",
   "torch", "torchvision", "torchaudio",
   "pytest", "pytest-cov", "hypothesis", "ruff", "deptry",
+  # Optional extra marker; generators no longer import tiktoken at runtime.
+  "tiktoken",
 ]
 # DEP003 'transitive': starlette is provided by fastapi and imported directly
 # in the MCP middleware; it is guaranteed present wherever fastapi is installed.
