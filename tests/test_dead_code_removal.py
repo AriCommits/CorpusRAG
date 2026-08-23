@@ -32,9 +32,41 @@ def test_plan21_unused_layers_deleted() -> None:
         "src/utils/secrets.py",
         "src/utils/tokens.py",
         "src/db/models.py",
+        "src/orchestrations/study_session.py",
+        "src/orchestrations/knowledge_base.py",
     ]
     for path in removed:
         assert not Path(path).exists(), f"{path} should be deleted"
+
+
+def test_plan21_forbidden_source_strings_absent() -> None:
+    """Lock the sprint-4 grep list so deleted APIs cannot sneak back into src/."""
+    forbidden = (
+        "LangChainVectorStoreAdapter",
+        "SecretManager",
+        "utils.secrets",
+        "utils.tokens",
+        "tools.rag.message",
+        "tools.rag.context",
+        "VideoTranscriber(self.video_config, self.db)",
+        "corpus rag ui",
+        "Additional Question",
+    )
+    hits: list[str] = []
+    for py_file in Path("src").rglob("*.py"):
+        text = py_file.read_text(encoding="utf-8", errors="ignore")
+        for pattern in forbidden:
+            if pattern in text:
+                hits.append(f"{py_file.as_posix()}: {pattern!r}")
+    mcp_dir = Path("src/mcp_server")
+    for py_file in mcp_dir.rglob("*.py"):
+        text = py_file.read_text(encoding="utf-8", errors="ignore")
+        if "from_dict(config.to_dict())" in text and "config.raw or" not in text:
+            hits.append(f"{py_file.as_posix()}: from_dict(config.to_dict()) without raw")
+    summaries_cli = Path("src/tools/summaries/cli.py").read_text(encoding="utf-8")
+    if "summary.text" in summaries_cli:
+        hits.append("src/tools/summaries/cli.py: summary.text")
+    assert not hits, "Forbidden source strings still present:\n  " + "\n  ".join(hits)
 
 
 def test_bulk_export_removed_from_cli() -> None:
