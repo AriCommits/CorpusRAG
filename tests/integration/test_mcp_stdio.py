@@ -119,7 +119,7 @@ class TestStoreTextRoundTrip:
         config = load_config(stdio_config)
         db = ChromaDBBackend(config.database)
 
-        with patch("mcp_server.tools.dev.EmbeddingClient") as MockEmbedder:
+        with patch("tools.rag.ingest.EmbeddingClient") as MockEmbedder:
             MockEmbedder.return_value.embed_texts.return_value = [[0.1] * 384]
             result = store_text(
                 "This is a test document about machine learning and neural networks.",

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from tools.flashcards.config import FlashcardConfig
-from tools.generation import full_collection_name, sample_documents
+from tools.generation import complete_prompt, full_collection_name, sample_documents
 from tools.quizzes.generator import QuizGenerator
 
 
@@ -45,3 +45,12 @@ def test_quiz_generator_does_not_pad_placeholders():
         questions = gen.generate("notes", count=5)
     assert len(questions) == 1
     assert "Additional Question" not in questions[0]["question"]
+
+
+def test_complete_prompt_returns_stripped_text():
+    cfg = FlashcardConfig()
+    fake_backend = MagicMock()
+    fake_backend.complete.return_value = MagicMock(text="  hello  ")
+    with patch("tools.generation.create_backend", return_value=fake_backend):
+        assert complete_prompt(cfg, "prompt") == "hello"
+    fake_backend.complete.assert_called_once_with("prompt")

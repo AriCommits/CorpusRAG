@@ -68,26 +68,24 @@ class TestCollectionInfo:
 
 class TestStoreText:
     def test_stores_and_returns_chunk_count(self, config, mock_db):
-        with patch("mcp_server.tools.dev.EmbeddingClient") as MockEmbedder:
-            instance = MockEmbedder.return_value
-            instance.embed_texts.return_value = [[0.1] * 384]
-
+        fake = MagicMock()
+        fake.ingest_text.return_value = MagicMock(chunks_indexed=2)
+        with patch("kernel.Corpus.from_loaded", return_value=fake):
             result = store_text("Hello world. This is a test.", "notes", config, mock_db)
 
         assert isinstance(result, dict)
         assert result["status"] == "success"
         assert result["collection"] == "notes"
-        assert result["chunks_created"] >= 1
-        mock_db.add_documents.assert_called_once()
+        assert result["chunks_created"] == 2
+        fake.ingest_text.assert_called_once()
 
     def test_creates_collection_if_not_exists(self, config, mock_db):
-        mock_db.collection_exists.return_value = False
-        with patch("mcp_server.tools.dev.EmbeddingClient") as MockEmbedder:
-            instance = MockEmbedder.return_value
-            instance.embed_texts.return_value = [[0.1] * 384]
+        fake = MagicMock()
+        fake.ingest_text.return_value = MagicMock(chunks_indexed=1)
+        with patch("kernel.Corpus.from_loaded", return_value=fake):
             store_text("Some text.", "new_col", config, mock_db)
 
-        mock_db.create_collection.assert_called_once()
+        assert fake.ingest_text.call_args.args[1] == "new_col"
 
 
 class TestRagIngest:
@@ -100,14 +98,15 @@ class TestRagIngest:
         doc = tmp_path / "doc.md"
         doc.write_text("# Hello\nSome content.")
 
-        with patch("mcp_server.tools.dev.RAGIngester") as MockIngester:
-            instance = MockIngester.return_value
-            instance.ingest_path.return_value = MagicMock(files_indexed=1, chunks_indexed=3)
+        fake = MagicMock()
+        fake.ingest_path.return_value = MagicMock(files_indexed=1, chunks_indexed=3)
+        with patch("kernel.Corpus.from_loaded", return_value=fake):
             result = rag_ingest(str(tmp_path), "notes", config, mock_db)
 
         assert result["status"] == "success"
         assert result["files_indexed"] == 1
         assert result["chunks_indexed"] == 3
+        fake.ingest_path.assert_called_once()
 
 
 class TestSecurityHardening:
@@ -143,25 +142,19 @@ class TestSecurityHardening:
             "rag": {},
         }
         db = MagicMock()
-        db.collection_exists.return_value = True
+        fake = MagicMock()
+        fake.ingest_text.return_value = MagicMock(chunks_indexed=1)
+        with patch("kernel.Corpus.from_loaded", return_value=fake):
+            result = store_text(
+                "safe text",
+                "test",
+                config,
+                db,
+                metadata={"topic": "math", "parent_id": "evil", "file_hash": "spoofed"},
+            )
 
-        with patch("mcp_server.tools.dev.EmbeddingClient") as mock_embed:
-            mock_embed.return_value.embed_texts.return_value = [[0.1] * 10]
-            with patch(
-                "tools.rag.pipeline.adaptive_splitter.adaptive_split", return_value=["chunk1"]
-            ):
-                result = store_text(
-                    "safe text",
-                    "test",
-                    config,
-                    db,
-                    metadata={"topic": "math", "parent_id": "evil", "file_hash": "spoofed"},
-                )
-
-        if result["status"] == "success":
-            # Verify the metadata passed to db.add_documents doesn't contain blocked keys
-            call_args = db.add_documents.call_args
-            stored_meta = call_args[0][3][0]  # metadatas[0]
-            assert "parent_id" not in stored_meta
-            assert "file_hash" not in stored_meta
-            assert stored_meta.get("topic") == "math"
+        assert result["status"] == "success"
+        stored_meta = fake.ingest_text.call_args.kwargs["metadata"]
+        assert "parent_id" not in stored_meta
+        assert "file_hash" not in stored_meta
+        assert stored_meta.get("topic") == "math"

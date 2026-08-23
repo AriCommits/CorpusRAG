@@ -45,6 +45,5 @@ rag/
 ├── doctor.py        # Health check diagnostics
 ├── config.py        # RAG-specific configuration
 ├── strategies/      # Retrieval strategies (hybrid, semantic, keyword)
-├── pipeline/        # Embedding client, parsers, storage
-└── vectorstores/    # Vector store adapters
+└── pipeline/        # Embedding client, parsers, storage
 ```

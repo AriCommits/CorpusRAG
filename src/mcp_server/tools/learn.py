@@ -65,7 +65,7 @@ def generate_summary(
 ) -> dict:
     """Generate a summary from a collection."""
     try:
-        from tools.summaries import GENERATORS_AVAILABLE, SummaryConfig, SummaryGenerator
+        from tools.summaries import GENERATORS_AVAILABLE
     except ImportError:
         return {"status": "error", "error": _SUMMARY_ERROR}
 
@@ -73,11 +73,10 @@ def generate_summary(
         return {"status": "error", "error": _SUMMARY_ERROR}
 
     try:
-        summary_config = SummaryConfig.from_dict(config.raw or config.to_dict())
-        summary_config.summary_length = length
+        from kernel import Corpus
 
-        generator = SummaryGenerator(summary_config, db)
-        summary = generator.generate(collection, topic)
+        corpus = Corpus.from_loaded(config, db)
+        summary = corpus.summarize(collection, topic=topic, length=length)
 
         return {
             "status": "success",

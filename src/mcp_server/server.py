@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 
 def create_mcp_server(
     config_path: str | None = None,
-    profile: str = "full",
+    profile: str = "simple",
 ) -> FastMCP:
     """Create and configure the MCP server.
 
     Args:
         config_path: Path to config YAML. Defaults to configs/base.yaml.
-        profile: Tool profile - 'dev', 'learn', or 'full'.
+        profile: Tool profile - 'simple', 'dev', 'learn', or 'full'.
 
     Returns:
         Configured FastMCP server instance.
@@ -49,8 +49,8 @@ def main() -> None:
     parser.add_argument(
         "--profile",
         choices=list(VALID_PROFILES),
-        default="full",
-        help="Tool profile (default: full)",
+        default="simple",
+        help="Tool profile (default: simple)",
     )
     parser.add_argument(
         "--transport",

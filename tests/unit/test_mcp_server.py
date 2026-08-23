@@ -44,8 +44,15 @@ class TestCreateMcpServer:
         assert "rag_query" in names
         assert "generate_flashcards" in names
 
-    def test_default_profile_is_full(self, config_file):
+    def test_default_profile_is_simple(self, config_file):
         server = create_mcp_server(config_file)
         names = [t.name for t in asyncio.run(server.list_tools())]
         assert "rag_query" in names
-        assert "generate_flashcards" in names
+        assert "generate_summary" in names
+        assert "generate_flashcards" not in names
+
+    def test_simple_profile(self, config_file):
+        server = create_mcp_server(config_file, profile="simple")
+        names = [t.name for t in asyncio.run(server.list_tools())]
+        assert "store_text" in names
+        assert "video_ingest_local" not in names

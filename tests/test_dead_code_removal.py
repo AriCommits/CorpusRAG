@@ -34,6 +34,7 @@ def test_plan21_unused_layers_deleted() -> None:
         "src/db/models.py",
         "src/orchestrations/study_session.py",
         "src/orchestrations/knowledge_base.py",
+        "src/tools/rag/vectorstores",
     ]
     for path in removed:
         assert not Path(path).exists(), f"{path} should be deleted"

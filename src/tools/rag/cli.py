@@ -9,7 +9,6 @@ from cli_common import load_cli_db
 
 from .agent import RAGAgent
 from .config import RAGConfig
-from .ingest import RAGIngester
 from .tui import RAGApp
 
 
@@ -54,11 +53,11 @@ def rag():
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def ingest(path: str, collection: str, config: str):
     """Ingest documents into a RAG collection."""
-    cfg, db = load_cli_db(config, RAGConfig)
-    ingester = RAGIngester(cfg, db)
+    from kernel import Corpus
 
+    corpus_app = Corpus.from_config_path(config)
     click.echo(f"Ingesting documents from {path} into collection '{collection}'...")
-    result = ingester.ingest_path(Path(path), collection)
+    result = corpus_app.ingest_path(path, collection)
     click.echo(f"Indexed {result.files_indexed} files, {result.chunks_indexed} chunks")
 
 
@@ -183,7 +182,12 @@ def query(
             where = section_filter
 
     click.echo(f"Querying collection '{collection}'...\n")
-    response = agent.query(query, collection, top_k=top_k, where=where)
+    if where is None and strategy is None:
+        from kernel import Corpus
+
+        response = Corpus(cfg, db).ask(query, collection, top_k=top_k)
+    else:
+        response = agent.query(query, collection, top_k=top_k, where=where)
 
     click.echo("Response:")
     click.echo(response)

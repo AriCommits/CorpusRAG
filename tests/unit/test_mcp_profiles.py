@@ -35,6 +35,24 @@ def _get_tool_names(mcp):
 
 
 class TestRegisterProfile:
+    def test_simple_profile_has_query_and_summarize_only(self, profile_config):
+        from config import load_config
+        from db import ChromaDBBackend
+        from mcp_server.profiles import register_profile
+
+        config = load_config(profile_config)
+        db = ChromaDBBackend(config.database)
+        mcp = FastMCP("test")
+        register_profile(mcp, "simple", config, db)
+        names = set(_get_tool_names(mcp))
+        assert names == {
+            "rag_ingest",
+            "rag_query",
+            "store_text",
+            "list_collections",
+            "generate_summary",
+        }
+
     def test_dev_profile_has_rag_tools(self, profile_config):
         from config import load_config
         from db import ChromaDBBackend

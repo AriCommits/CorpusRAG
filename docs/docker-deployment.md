@@ -77,7 +77,7 @@ Use the nested `corpus tools …` / `corpus db …` commands — there is no
 ## Health
 
 ```bash
-curl http://localhost:8001/api/v1/heartbeat   # ChromaDB
+curl http://localhost:8001/api/v2/heartbeat   # ChromaDB
 curl http://localhost:11434/api/tags          # Ollama, if started
 corpus doctor                                 # local CLI against your config
 ```

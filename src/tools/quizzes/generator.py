@@ -6,8 +6,8 @@ import re
 from typing import Any
 
 from db import DatabaseBackend
-from llm import PromptTemplates, create_backend
-from tools.generation import sample_documents
+from llm import PromptTemplates
+from tools.generation import complete_prompt, sample_documents
 
 from .config import QuizConfig
 
@@ -26,8 +26,6 @@ class QuizGenerator:
         """
         self.config = config
         self.db = db
-        # Create LLM backend for generation
-        self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def generate(
         self,
@@ -97,11 +95,8 @@ class QuizGenerator:
         )
 
         try:
-            # Generate content using LLM
-            response = self.llm_backend.complete(prompt)
-
-            # Parse the response into questions
-            questions = self._parse_quiz_response(response.text)
+            response_text = complete_prompt(self.config, prompt)
+            questions = self._parse_quiz_response(response_text)
 
             return questions
 

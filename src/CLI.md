@@ -12,6 +12,9 @@ corpus --help
 corpus
 ├── setup              # Interactive setup wizard
 ├── doctor             # Health checks (DB, LLM, embeddings)
+├── ingest             # Ingest documents
+├── ask                # Ask a collection
+├── summarize          # Summarize a collection
 ├── benchmark          # Performance benchmarks
 ├── tools
 │   ├── rag            # RAG pipeline
@@ -58,6 +61,20 @@ corpus setup --reset   # Re-run wizard
 corpus doctor                    # Check DB, LLM, embedding connectivity
 corpus doctor --config alt.yaml  # Use alternate config
 ```
+
+Persistent Chroma does not need Docker. HTTP mode talks to host port **8001**
+(Compose publishes `8001:8000`).
+
+### Ingest / ask / summarize
+
+```bash
+corpus ingest ./documents --collection notes
+corpus ask "What is gradient descent?" -c notes
+corpus summarize -c notes --length short
+```
+
+These call the same `Corpus` kernel as `corpus tools rag ingest` /
+`corpus tools rag query`. Nested commands remain.
 
 ### Benchmark
 

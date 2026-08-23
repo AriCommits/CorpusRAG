@@ -1,6 +1,7 @@
 """Tests for setup wizard config generation."""
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -79,16 +80,23 @@ class TestSaveConfig:
         assert "persist_directory" in db
         assert db["backend"] == "chromadb"
 
+    def test_http_default_port_is_8001(self, wizard):
+        assert wizard.wizard_config.chroma_port == 8001
+        wizard.wizard_config.chroma_mode = "http"
+        wizard.save_config()
+        config = yaml.safe_load(open("configs/base.yaml"))
+        assert config["database"]["port"] == 8001
+
     def test_http_mode_generates_docker_compose(self, wizard):
         """HTTP mode should generate a docker-compose.yml."""
         wizard.wizard_config.chroma_mode = "http"
-        wizard.wizard_config.chroma_port = 8001
         wizard.save_config()
         compose_file = Path(".docker/docker-compose.yml")
         assert compose_file.exists(), "docker-compose.yml not generated for HTTP mode"
         config = yaml.safe_load(open(compose_file))
         assert "services" in config
         assert "chromadb" in config["services"]
+        assert "8001:8000" in config["services"]["chromadb"]["ports"]
 
     def test_persistent_mode_no_docker_compose(self, wizard):
         """Persistent mode should NOT generate docker-compose.yml."""
@@ -96,3 +104,35 @@ class TestSaveConfig:
         wizard.save_config()
         compose_file = Path(".docker/docker-compose.yml")
         assert not compose_file.exists()
+
+
+def test_launch_rag_tui_passes_agent_and_collection(tmp_path, monkeypatch):
+    """Launch helper must construct RAGApp(agent, collection), not RAGApp()."""
+    monkeypatch.chdir(tmp_path)
+    cfg_file = tmp_path / "base.yaml"
+    cfg_file.write_text(
+        yaml.dump(
+            {
+                "llm": {"model": "m"},
+                "database": {"mode": "persistent", "persist_directory": str(tmp_path / "c")},
+            }
+        ),
+        encoding="utf-8",
+    )
+    fake_app = MagicMock()
+    with (
+        patch("tools.rag.tui.RAGApp", return_value=fake_app) as mock_app_cls,
+        patch("tools.rag.agent.RAGAgent") as mock_agent_cls,
+        patch("cli_common.load_cli_db") as mock_load,
+    ):
+        mock_cfg = MagicMock()
+        mock_db = MagicMock()
+        mock_load.return_value = (mock_cfg, mock_db)
+        mock_agent = MagicMock()
+        mock_agent_cls.return_value = mock_agent
+        from setup_wizard import launch_rag_tui
+
+        launch_rag_tui(str(cfg_file), collection="notes")
+
+    mock_app_cls.assert_called_once_with(mock_agent, "notes")
+    fake_app.run.assert_called_once()
