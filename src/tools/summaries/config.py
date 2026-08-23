@@ -12,7 +12,7 @@ class SummaryConfig(BaseConfig):
     summary_length: str = "medium"  # short | medium | long
     include_keywords: bool = True
     include_outline: bool = True
-    collection_prefix: str = "summaries"
+    collection_prefix: str = "rag"
     max_context_chars: int = 15000
 
     @classmethod
@@ -25,13 +25,9 @@ class SummaryConfig(BaseConfig):
         Returns:
             SummaryConfig instance
         """
-        # Get base config
-        base_config = super().from_dict(data)
+        base_config, summary_data = BaseConfig.split_section(data, "summaries")
 
-        # Get summary-specific config
-        summary_data = data.get("summaries", {})
-
-        return cls(
+        inst = cls(
             llm=base_config.llm,
             embedding=base_config.embedding,
             database=base_config.database,
@@ -39,6 +35,8 @@ class SummaryConfig(BaseConfig):
             summary_length=summary_data.get("summary_length", "medium"),
             include_keywords=summary_data.get("include_keywords", True),
             include_outline=summary_data.get("include_outline", True),
-            collection_prefix=summary_data.get("collection_prefix", "summaries"),
+            collection_prefix=summary_data.get("collection_prefix", "rag"),
             max_context_chars=summary_data.get("max_context_chars", 15000),
         )
+        inst.raw = data
+        return inst

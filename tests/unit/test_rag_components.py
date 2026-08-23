@@ -5,13 +5,13 @@ from unittest.mock import MagicMock, patch
 
 from tools.rag.config import RAGConfig
 from tools.rag.ingest import RAGIngester
-from tools.rag.markdown_parser import (
+from tools.rag.pipeline import (
+    LocalFileStore,
     extract_tags_from_text,
     parse_and_split,
     split_markdown_semantic,
 )
 from tools.rag.retriever import RAGRetriever, RetrievedDocument
-from tools.rag.storage import LocalFileStore
 
 
 class TestMarkdownParser:

@@ -113,8 +113,8 @@ class LecturePipelineOrchestrator:
         do_quiz = bool(self._resolve(generate_quiz, "generate_quiz", True))
 
         # Step 1: Transcribe
-        transcriber = VideoTranscriber(self.video_config, self.db)
-        transcript = transcriber.transcribe_file(video_path, collection_name)
+        transcriber = VideoTranscriber(self.video_config)
+        transcript = transcriber.transcribe_file(video_path)
 
         # Step 2: Clean (optional)
         if not resolved_skip_clean:

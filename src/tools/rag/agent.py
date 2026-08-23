@@ -109,14 +109,8 @@ class RAGAgent:
 
             # 2. Generate
             start_gen = time.perf_counter()
-            # Generate response using LLM
-            if stream:
-                # TODO: Implement streaming response
-                response = self.llm_backend.complete(prompt)
-                result_text = response.text
-            else:
-                response = self.llm_backend.complete(prompt)
-                result_text = response.text
+            response = self.llm_backend.complete(prompt)
+            result_text = response.text
             gen_time = time.perf_counter() - start_gen
 
             total_time = time.perf_counter() - start_total
@@ -188,3 +182,23 @@ class RAGAgent:
             List of retrieved parent documents
         """
         return self.retriever.retrieve(query, collection, top_k, where=where)
+
+    def ingest_text(
+        self,
+        text: str,
+        collection: str,
+        doc_id: str | None = None,
+        metadata: dict | None = None,
+    ):
+        """Ingest raw text into a RAG collection (used by handwriting ingest)."""
+        from .ingest import RAGIngester
+
+        return RAGIngester(self.config, self.db).ingest_text(
+            text, collection, doc_id=doc_id, metadata=metadata
+        )
+
+    def get_ingested_hashes(self, collection: str) -> set[str]:
+        """Return content hashes already stored for a collection, or empty if missing."""
+        from .ingest import RAGIngester
+
+        return RAGIngester(self.config, self.db).get_ingested_hashes(collection)

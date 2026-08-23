@@ -7,7 +7,7 @@ from typing import Any
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
-from tools.rag.embeddings import EmbeddingClient
+from tools.generation import sample_documents
 
 from .config import QuizConfig
 
@@ -48,100 +48,27 @@ class QuizGenerator:
         if count is None:
             count = self.config.questions_per_topic
 
-        # Get full collection name with prefix
-        full_collection = f"{self.config.collection_prefix}_{collection}"
+        document_texts = sample_documents(
+            self.db,
+            self.config,
+            collection,
+            query_text="key concepts topics main ideas",
+            n_results=15,
+        )
 
-        # Check if collection exists
-        if not self.db.collection_exists(full_collection):
-            raise ValueError(f"Collection '{full_collection}' does not exist")
-
-        # Get document count to determine sampling strategy
-        doc_count = self.db.count_documents(full_collection)
-
-        if doc_count == 0:
-            raise ValueError(
-                f"No documents found in '{full_collection}'. "
-                f"Run: corpus rag ingest --collection {collection}"
-            )
-
-        # Get a representative sample of documents
-        sample_size = min(15, max(5, doc_count // 8))  # Smaller sample than summary
-
-        # Get documents (placeholder implementation)
-        document_texts = self._get_representative_documents(full_collection, sample_size)
-
-        if not document_texts:
-            raise ValueError(
-                f"Could not retrieve documents from '{full_collection}'. "
-                f"Run: corpus rag ingest --collection {collection}"
-            )
-
-        # Generate quiz using LLM
         questions = self._generate_with_llm(
             document_texts, difficulty=difficulty, count=count, topic=collection
         )
 
-        # Add metadata to each question
         for question in questions:
             question["collection"] = collection
 
-        # Ensure we have the right number of questions
-        if len(questions) < count:
-            logger.warning(
-                f"Generated {len(questions)} questions, expected {count}. "
-                "Padding with placeholders."
-            )
-            # Pad with placeholders if needed
-            for i in range(len(questions), count):
-                q_type = self.config.question_types[(i - 1) % len(self.config.question_types)]
-                pad_question: dict[str, Any] = {
-                    "question": f"Additional Question {i + 1 - len(questions)}",
-                    "type": q_type,
-                    "collection": collection,
-                }
-                if q_type == "multiple_choice":
-                    pad_question["options"] = ["A", "B", "C", "D"]
-                    pad_question["answer"] = "A"
-                elif q_type == "true_false":
-                    pad_question["options"] = ["True", "False"]
-                    pad_question["answer"] = "True"
-                else:
-                    pad_question["answer"] = ""
-                questions.append(pad_question)
-        elif len(questions) > count:
-            # Trim to requested count
+        if len(questions) > count:
             questions = questions[:count]
+        elif len(questions) < count:
+            logger.warning("Generated %s questions, expected %s.", len(questions), count)
 
         return questions
-
-    def _get_representative_documents(self, full_collection: str, sample_size: int) -> list[str]:
-        """Get representative documents from collection.
-
-        Args:
-            full_collection: Full collection name with prefix
-            sample_size: Number of documents to sample
-
-        Returns:
-            List of document texts
-        """
-        try:
-            # Use semantic search to get relevant documents
-            embedder = EmbeddingClient(self.config)
-            query_text = "key concepts topics main ideas"
-            query_embedding = embedder.embed_query(query_text)
-
-            results = self.db.query(
-                collection=full_collection,
-                query_embedding=query_embedding,
-                n_results=sample_size,
-            )
-
-            documents = results.get("documents", [[]])[0]
-            return documents if documents else []
-
-        except Exception as e:
-            logger.error(f"Error getting documents: {e}")
-            return []
 
     def _generate_with_llm(
         self,

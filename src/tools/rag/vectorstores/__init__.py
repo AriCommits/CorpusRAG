@@ -1,11 +1,3 @@
-"""VectorStore adapters for pluggable backends."""
+"""Legacy package; retrieval now uses DatabaseBackend directly."""
 
-from .base import VectorStoreAdapter
-from .chroma_adapter import ChromaVectorStore
-from .langchain_adapter import LangChainVectorStoreAdapter
-
-__all__ = [
-    "VectorStoreAdapter",
-    "ChromaVectorStore",
-    "LangChainVectorStoreAdapter",
-]
+__all__: list[str] = []

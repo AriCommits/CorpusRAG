@@ -121,6 +121,11 @@ class BaseConfig:
 
         return inst
 
+    @classmethod
+    def split_section(cls, data: dict, section: str) -> tuple["BaseConfig", dict]:
+        """Return ``(base, section_dict)`` for tool config ``from_dict`` helpers."""
+        return cls.from_dict(data), dict(data.get(section) or {})
+
     def to_dict(self) -> dict:
         """Convert config to dictionary.
 

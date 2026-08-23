@@ -5,9 +5,8 @@ from typing import Any
 from db import DatabaseBackend
 
 from .config import RAGConfig
-from .pipeline import EmbeddingClient, LocalFileStore
+from .pipeline import EmbeddingClient, parent_store_for
 from .strategies import RetrievedDocument, get_strategy, list_strategies
-from .vectorstores import ChromaVectorStore
 
 
 class RAGRetriever:
@@ -31,21 +30,14 @@ class RAGRetriever:
         self.config = config
         self.db = db
         self.embedder = EmbeddingClient(config)
-
-        # Initialize parent document store
         self.config.parent_store.path.mkdir(parents=True, exist_ok=True)
-        self.parent_store = LocalFileStore(str(self.config.parent_store.path))
 
-        # Initialize vectorstore adapter
-        self.vectorstore = ChromaVectorStore(db)
-
-        # Initialize strategy
         strategy_name = getattr(config, "strategy", "hybrid")
         self.strategy = get_strategy(
             strategy_name,
-            vectorstore=self.vectorstore,
+            vectorstore=db,
             embedder=self.embedder,
-            parent_store=self.parent_store,
+            parent_store=parent_store_for(config, "_init"),
             config=config,
         )
 
@@ -70,6 +62,7 @@ class RAGRetriever:
         if top_k is None:
             top_k = self.config.retrieval.top_k_final
 
+        self.strategy.parent_store = parent_store_for(self.config, collection)
         return self.strategy.retrieve(query, collection, top_k, where)
 
     def set_strategy(self, strategy_name: str) -> None:
@@ -83,9 +76,9 @@ class RAGRetriever:
         """
         self.strategy = get_strategy(
             strategy_name,
-            vectorstore=self.vectorstore,
+            vectorstore=self.db,
             embedder=self.embedder,
-            parent_store=self.parent_store,
+            parent_store=parent_store_for(self.config, "_init"),
             config=self.config,
         )
 

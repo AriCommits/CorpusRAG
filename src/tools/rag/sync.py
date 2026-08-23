@@ -102,7 +102,7 @@ class RAGSyncer:
                     except Exception:
                         pass
                 try:
-                    self.ingester.parent_store.delete_by_metadata(
+                    self.ingester.parent_store_for(collection).delete_by_metadata(
                         lambda m: m.get("source_file") == rel_path
                     )
                 except Exception:
@@ -120,7 +120,7 @@ class RAGSyncer:
                     except Exception:
                         pass
                 try:
-                    self.ingester.parent_store.delete_by_metadata(
+                    self.ingester.parent_store_for(collection).delete_by_metadata(
                         lambda m: m.get("source_file") == rel_path
                     )
                 except Exception:

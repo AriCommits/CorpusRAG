@@ -68,6 +68,13 @@ def test_flashcards_config_creation():
     assert config.cards_per_topic == 20
     assert config.format == "anki"
     assert config.llm.model == "qwen3:8b"
+    assert config.collection_prefix == "rag"
+
+
+def test_flashcards_config_default_prefix_is_rag():
+    from tools.flashcards import FlashcardConfig
+
+    assert FlashcardConfig().collection_prefix == "rag"
 
 
 def test_quiz_config_creation():
@@ -83,6 +90,26 @@ def test_quiz_config_creation():
     config = QuizConfig.from_dict(data)
     assert config.questions_per_topic == 20
     assert config.format == "json"
+    assert config.collection_prefix == "rag"
+
+
+def test_quiz_config_default_prefix_is_rag():
+    from tools.quizzes import QuizConfig
+
+    assert QuizConfig().collection_prefix == "rag"
+
+
+def test_summary_config_default_prefix_is_rag():
+    from tools.summaries import SummaryConfig
+
+    data = {
+        "llm": {"backend": "ollama", "model": "qwen3:8b"},
+        "database": {"backend": "chroma", "persist_directory": "./data/chroma"},
+        "summaries": {"summary_length": "short"},
+    }
+    config = SummaryConfig.from_dict(data)
+    assert config.collection_prefix == "rag"
+    assert SummaryConfig().collection_prefix == "rag"
 
 
 def test_video_config_creation():

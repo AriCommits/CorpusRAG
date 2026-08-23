@@ -12,7 +12,7 @@ from db import DatabaseBackend
 from utils.security import sanitize_filename
 
 from .config import RAGConfig
-from .pipeline import EmbeddingClient, LocalFileStore, split_markdown_semantic
+from .pipeline import EmbeddingClient, parent_store_for, split_markdown_semantic
 
 
 @dataclass(frozen=True)
@@ -42,7 +42,6 @@ class RAGIngester:
 
         # Initialize parent document store
         self.config.parent_store.path.mkdir(parents=True, exist_ok=True)
-        self.parent_store = LocalFileStore(str(self.config.parent_store.path))
         self.use_adaptive = getattr(self.config.chunking, "adaptive", True)
 
         # Initialize child text splitter
@@ -51,6 +50,10 @@ class RAGIngester:
             chunk_overlap=self.config.chunking.child_chunk_overlap,
             separators=["\n\n", "\n", " ", ""],
         )
+
+    def parent_store_for(self, collection: str):
+        """Parent JSON store namespaced to one user-facing collection."""
+        return parent_store_for(self.config, collection)
 
     def ingest_path(
         self, path: Path | str, collection: str, max_file_size_mb: int = 1000
@@ -161,7 +164,7 @@ class RAGIngester:
                     self.db.delete_by_metadata(
                         full_collection, where={"source_file": relative_path}
                     )
-                    self.parent_store.delete_by_metadata(
+                    self.parent_store_for(collection).delete_by_metadata(
                         lambda m: m.get("source_file") == relative_path
                     )
 
@@ -178,13 +181,14 @@ class RAGIngester:
                 parent_metadata["source_file_name"] = sanitize_filename(file_path.name)
                 parent_metadata["parent_index"] = parent_idx
                 parent_metadata["file_hash"] = file_hash
+                parent_metadata["collection_name"] = collection
 
                 # Store parent document in document store
                 parent_langchain_doc = Document(
                     page_content=parent_doc.page_content,
                     metadata=parent_metadata,
                 )
-                self.parent_store.mset([(parent_id, parent_langchain_doc)])
+                self.parent_store_for(collection).mset([(parent_id, parent_langchain_doc)])
 
                 # Split parent into children for vector search
                 if self.use_adaptive:
@@ -230,6 +234,107 @@ class RAGIngester:
             files_indexed=files_indexed,
             chunks_indexed=chunks_indexed,
         )
+
+    def ingest_text(
+        self,
+        text: str,
+        collection: str,
+        doc_id: str | None = None,
+        metadata: dict | None = None,
+    ) -> IngestResult:
+        """Ingest raw text into a RAG collection.
+
+        Two call shapes, matching handwriting ingest:
+
+        * Parent: ``doc_id`` set, no ``parent_id`` in metadata — stored in the
+          parent document store only. Child chunks arrive as later calls.
+        * Child: ``metadata['parent_id']`` set, no ``doc_id`` — one vector
+          chunk is added.
+        * Standalone (neither): parent-child split of ``text``, same as
+          ingesting a markdown file.
+        """
+        extra = dict(metadata or {})
+        full_collection = f"{self.config.collection_prefix}_{collection}"
+        if not self.db.collection_exists(full_collection):
+            self.db.create_collection(full_collection)
+
+        file_hash = extra.get("file_hash") or sha256(text.encode("utf-8")).hexdigest()
+        extra.setdefault("file_hash", file_hash)
+        extra.setdefault("collection_name", collection)
+
+        parent_id_from_child = extra.get("parent_id")
+        if parent_id_from_child and not doc_id:
+            child_index = extra.get("child_index", 0)
+            child_id = self._build_chunk_id(full_collection, str(parent_id_from_child), child_index)
+            embeddings = self.embedder.embed_texts([text])
+            self.db.add_documents(
+                full_collection,
+                documents=[text],
+                embeddings=embeddings,
+                metadata=[extra],
+                ids=[child_id],
+            )
+            return IngestResult(collection=collection, files_indexed=0, chunks_indexed=1)
+
+        parent_id = doc_id or str(uuid4())
+        parent_doc = Document(page_content=text, metadata=dict(extra))
+        self.parent_store_for(collection).mset([(parent_id, parent_doc)])
+
+        if doc_id:
+            return IngestResult(collection=collection, files_indexed=1, chunks_indexed=0)
+
+        if self.use_adaptive:
+            from .pipeline.adaptive_splitter import adaptive_split
+
+            child_docs = adaptive_split(
+                text,
+                base_chunk_size=self.config.chunking.child_chunk_size,
+                base_overlap=self.config.chunking.child_chunk_overlap,
+            )
+        else:
+            child_docs = self.child_splitter.split_text(text)
+
+        child_documents: list[str] = []
+        child_metadata: list[dict[str, object]] = []
+        child_ids: list[str] = []
+        for child_idx, child_text in enumerate(child_docs):
+            if not child_text.strip():
+                continue
+            meta = dict(extra)
+            meta["parent_id"] = parent_id
+            meta["child_index"] = child_idx
+            child_documents.append(child_text)
+            child_metadata.append(meta)
+            child_ids.append(self._build_chunk_id(full_collection, parent_id, child_idx))
+
+        if child_documents:
+            embeddings = self.embedder.embed_texts(child_documents)
+            self.db.add_documents(
+                full_collection,
+                documents=child_documents,
+                embeddings=embeddings,
+                metadata=child_metadata,
+                ids=child_ids,
+            )
+
+        return IngestResult(
+            collection=collection,
+            files_indexed=1,
+            chunks_indexed=len(child_documents),
+        )
+
+    def get_ingested_hashes(self, collection: str) -> set[str]:
+        """Return ``file_hash`` values already stored on documents in a collection."""
+        full_collection = f"{self.config.collection_prefix}_{collection}"
+        if not self.db.collection_exists(full_collection):
+            return set()
+        col = self.db.get_collection(full_collection)
+        results = col.get(include=["metadatas"])
+        hashes: set[str] = set()
+        for meta in results.get("metadatas") or []:
+            if meta and meta.get("file_hash"):
+                hashes.add(meta["file_hash"])
+        return hashes
 
     def _iter_source_files(self, path: Path) -> list[Path]:
         """Iterate over source files to ingest.

@@ -1,9 +1,8 @@
 """Vision OCR pass for handwritten documents."""
 
-import base64
 from pathlib import Path
 
-import ollama
+from tools.ocr_client import ocr_image
 
 HANDWRITING_PROMPT = """
 You are transcribing a handwritten document page to markdown.
@@ -43,17 +42,4 @@ def ocr_handwriting(
     Returns:
         Raw transcribed markdown as a string.
     """
-    with open(image_path, "rb") as f:
-        image_b64 = base64.b64encode(f.read()).decode()
-
-    response = ollama.chat(
-        model=model,
-        messages=[
-            {
-                "role": "user",
-                "content": HANDWRITING_PROMPT,
-                "images": [image_b64],
-            }
-        ],
-    )
-    return response["message"]["content"].strip()
+    return ocr_image(image_path, HANDWRITING_PROMPT, model=model)

@@ -52,12 +52,12 @@ corpus tools video ingest-url "https://youtube.com/watch?v=..." -c notes
 
 | Feature | Description |
 |---------|-------------|
-| **RAG Pipeline** | Hybrid search (vector + BM25 + reranking), parent-child chunking, incremental sync |
+| **RAG Pipeline** | Hybrid / semantic / keyword retrieval (one staged pipeline: vector, BM25, RRF, rerank), parent-child chunking, incremental sync |
 | **MCP Server** | Expose RAG tools to Claude, Kiro, Neovim, OpenCode, or any MCP-compatible editor |
 | **store_text** | Let AI agents push plans, summaries, and context into your knowledge base |
 | **TUI** | Rich terminal chat with slash commands, collection management, context controls |
-| **Flashcards** | Generate study cards with Anki export |
-| **Summaries** | Multi-length summaries with Markdown export |
+| **Flashcards** | Generate study cards with Anki export from the same `rag_<collection>` store as ingest |
+| **Summaries** | Multi-length summaries with Markdown export from ingested RAG collections |
 | **Quizzes** | Multiple choice, true/false, short answer — export to JSON/CSV |
 | **Video** | Transcribe lectures with Whisper, extract slide/chalkboard text with vision OCR, auto-ingest |
 | **Handwriting** | OCR handwritten notes via vision models, chunk and ingest into RAG |

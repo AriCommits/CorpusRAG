@@ -370,12 +370,12 @@ Your CorpusRAG is now configured and ready to use.
 ### Next Steps:
 
 1. **Add documents** to your vault directory
-2. **Run**: `corpus rag ingest --path ./vault --collection notes`
-3. **Query**: `corpus rag ui`
+2. **Run**: `corpus tools rag ingest --path ./vault --collection notes`
+3. **Query**: `corpus tools rag ui`
 
 Or use the unified CLI:
-- `corpus rag query "your question"` for command-line queries
-- `corpus rag ui` for the interactive TUI
+- `corpus tools rag query "your question"` for command-line queries
+- `corpus tools rag ui` for the interactive TUI
 
 If you selected HTTP mode, start ChromaDB with:
   `docker compose -f .docker/docker-compose.yml up -d`
@@ -614,7 +614,7 @@ def run_setup_wizard() -> int:
             app.run()
         except Exception as e:
             logger.error(f"Failed to launch TUI: {e}")
-            print("You can launch the TUI manually with: corpus rag ui")
+            print("You can launch the TUI manually with: corpus tools rag ui")
 
     return 0
 

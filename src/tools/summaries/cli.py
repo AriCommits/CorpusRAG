@@ -45,7 +45,7 @@ def summaries(collection: str, output: str, export: str, config: str, length: st
         from .export import MarkdownSummaryExporter
 
         exporter = MarkdownSummaryExporter()
-        exporter.export(summary.text, collection, f"Summary of {collection}", output)
+        exporter.export(summary["summary"], collection, f"Summary of {collection}", output)
         click.echo(f"✓ Exported summary to Markdown: {output}")
         return
 

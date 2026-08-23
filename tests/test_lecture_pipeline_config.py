@@ -173,6 +173,11 @@ def test_configured_counts_and_length_applied(flashcard_count, quiz_count, summa
             lecture_num=1,
         )
 
+        MockTranscriber.assert_called_once()
+        assert len(MockTranscriber.call_args.args) == 1
+        MockTranscriber.return_value.transcribe_file.assert_called_once()
+        assert len(MockTranscriber.return_value.transcribe_file.call_args.args) == 1
+
         # Counts are routed through the generators' `count` parameter.
         flash_kwargs = MockFlashcard.return_value.generate.call_args.kwargs
         quiz_kwargs = MockQuiz.return_value.generate.call_args.kwargs

@@ -20,13 +20,7 @@ dependencies = [
   "click>=8.1.0",
   "ollama>=0.4.0",
   "mcp[cli]>=1.20.0",
-  # LangChain dependencies for RAG pipeline
-  "langchain>=0.3.0",
-  "langchain-community>=0.3.0",
-  "langchain-chroma>=0.2.0",
-  # Security dependencies
-  "keyring>=25.0.0",
-  "cryptography>=41.0.0",
+  # LangChain splitters / Document (not the full RAG stack)
   "rank_bm25>=0.2.2",
   "rich>=13.7.0",
   "textual>=0.50.0",
@@ -59,11 +53,6 @@ server = [
   "click>=8.1.0",
   "ollama>=0.4.0",
   "mcp[cli]>=1.20.0",
-  "langchain>=0.3.0",
-  "langchain-community>=0.3.0",
-  "langchain-chroma>=0.2.0",
-  "keyring>=25.0.0",
-  "cryptography>=41.0.0",
   "rank_bm25>=0.2.2",
   "rich>=13.7.0",
   "langchain-core>=0.3.0",
@@ -201,13 +190,14 @@ known_first_party = [
 # ML backends that are used transitively (torch via sentence-transformers /
 # faster-whisper) or only at runtime rather than imported directly in src.
 DEP002 = [
-  "uvicorn", "python-dotenv", "ollama", "langchain",
+  "uvicorn", "python-dotenv", "ollama",
   "opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp",
   "opentelemetry-instrumentation-fastapi", "opentelemetry-instrumentation-httpx",
   "traceloop-sdk",
-  "langchain-community", "langchain-chroma",
   "torch", "torchvision", "torchaudio",
   "pytest", "pytest-cov", "hypothesis", "ruff", "deptry",
+  # Optional extra marker; generators no longer import tiktoken at runtime.
+  "tiktoken",
 ]
 # DEP003 'transitive': starlette is provided by fastapi and imported directly
 # in the MCP middleware; it is guaranteed present wherever fastapi is installed.

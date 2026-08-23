@@ -22,7 +22,7 @@ class TestFlashcardConfig:
         assert config.cards_per_topic == 10
         assert config.difficulty_levels == ["basic", "intermediate", "advanced"]
         assert config.format == "anki"
-        assert config.collection_prefix == "flashcards"
+        assert config.collection_prefix == "rag"
         assert config.max_context_chars == 12000
 
     def test_custom_values(self) -> None:
@@ -52,6 +52,7 @@ class TestFlashcardConfig:
         config = FlashcardConfig.from_dict(data)
         assert config.cards_per_topic == 25
         assert config.format == "plain"
+        assert config.collection_prefix == "rag"
 
     def test_prompt_template_formatting(self) -> None:
         """Test flashcard prompt template renders with config values."""

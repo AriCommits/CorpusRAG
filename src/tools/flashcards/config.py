@@ -14,7 +14,7 @@ class FlashcardConfig(BaseConfig):
         default_factory=lambda: ["basic", "intermediate", "advanced"]
     )
     format: str = "anki"  # anki | quizlet | plain
-    collection_prefix: str = "flashcards"
+    collection_prefix: str = "rag"
     max_context_chars: int = 12000
 
     @classmethod
@@ -27,13 +27,9 @@ class FlashcardConfig(BaseConfig):
         Returns:
             FlashcardConfig instance
         """
-        # Get base config
-        base_config = super().from_dict(data)
+        base_config, flashcard_data = BaseConfig.split_section(data, "flashcards")
 
-        # Get flashcard-specific config
-        flashcard_data = data.get("flashcards", {})
-
-        return cls(
+        inst = cls(
             llm=base_config.llm,
             embedding=base_config.embedding,
             database=base_config.database,
@@ -43,6 +39,8 @@ class FlashcardConfig(BaseConfig):
                 "difficulty_levels", ["basic", "intermediate", "advanced"]
             ),
             format=flashcard_data.get("format", "anki"),
-            collection_prefix=flashcard_data.get("collection_prefix", "flashcards"),
+            collection_prefix=flashcard_data.get("collection_prefix", "rag"),
             max_context_chars=flashcard_data.get("max_context_chars", 12000),
         )
+        inst.raw = data
+        return inst

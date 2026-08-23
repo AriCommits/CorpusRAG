@@ -5,7 +5,7 @@ from typing import Any
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
-from tools.rag.embeddings import EmbeddingClient
+from tools.generation import sample_documents
 
 from .config import SummaryConfig
 
@@ -37,34 +37,14 @@ class SummaryGenerator:
         Returns:
             Summary dict with 'summary', 'keywords', and 'outline' keys
         """
-        # Get full collection name with prefix
-        full_collection = f"{self.config.collection_prefix}_{collection}"
-
-        # Check if collection exists
-        if not self.db.collection_exists(full_collection):
-            raise ValueError(f"Collection '{full_collection}' does not exist")
-
-        # Get document count to determine sampling strategy
-        doc_count = self.db.count_documents(full_collection)
-
-        if doc_count == 0:
-            raise ValueError(
-                f"No documents found in '{full_collection}'. "
-                f"Run: corpus rag ingest --collection {collection}"
-            )
-
-        # Get a representative sample of documents
-        # For summary, we want broader coverage than specific search
-        sample_size = min(20, max(5, doc_count // 10))  # 10% of docs, between 5-20
-
-        # Get documents by querying for general terms or using pagination
-        document_texts = self._get_representative_documents(full_collection, sample_size, topic)
-
-        if not document_texts:
-            raise ValueError(
-                f"Could not retrieve documents from '{full_collection}'. "
-                f"Run: corpus rag ingest --collection {collection}"
-            )
+        query_text = topic or "overview summary main points key concepts"
+        document_texts = sample_documents(
+            self.db,
+            self.config,
+            collection,
+            query_text=query_text,
+            n_results=20,
+        )
 
         # Generate summary using LLM
         summary_text = self._generate_with_llm(
@@ -85,44 +65,6 @@ class SummaryGenerator:
             result["outline"] = self._generate_outline(summary_text)
 
         return result
-
-    def _get_representative_documents(
-        self, full_collection: str, sample_size: int, topic: str | None = None
-    ) -> list[str]:
-        """Get representative documents from collection.
-
-        Args:
-            full_collection: Full collection name with prefix
-            sample_size: Number of documents to sample
-            topic: Optional topic to focus on
-
-        Returns:
-            List of document texts
-        """
-        try:
-            # Use semantic search to get relevant documents
-            embedder = EmbeddingClient(self.config)
-
-            # Use topic if provided, otherwise use general query
-            if topic:
-                query_text = topic
-            else:
-                query_text = "overview summary main points key concepts"
-
-            query_embedding = embedder.embed_query(query_text)
-
-            results = self.db.query(
-                collection=full_collection,
-                query_embedding=query_embedding,
-                n_results=sample_size,
-            )
-
-            documents = results.get("documents", [[]])[0]
-            return documents if documents else []
-
-        except Exception as e:
-            logger.error(f"Error getting documents: {e}")
-            return []
 
     def _generate_with_llm(
         self,

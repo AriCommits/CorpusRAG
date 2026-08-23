@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from config import BaseConfig
 from db import DatabaseBackend
 
@@ -38,12 +40,11 @@ def generate_flashcards(
         validator = get_validator()
         validated_collection = validator.validate_collection_name(collection)
 
-        flashcard_config = FlashcardConfig.from_dict(config.to_dict())
+        flashcard_config = FlashcardConfig.from_dict(config.raw or config.to_dict())
         flashcard_config.cards_per_topic = count
-        flashcard_config.difficulty_levels = [difficulty]
 
         generator = FlashcardGenerator(flashcard_config, db)
-        flashcards = generator.generate(validated_collection)
+        flashcards = generator.generate(validated_collection, difficulty=difficulty, count=count)
 
         return {
             "status": "success",
@@ -72,7 +73,7 @@ def generate_summary(
         return {"status": "error", "error": _SUMMARY_ERROR}
 
     try:
-        summary_config = SummaryConfig.from_dict(config.to_dict())
+        summary_config = SummaryConfig.from_dict(config.raw or config.to_dict())
         summary_config.summary_length = length
 
         generator = SummaryGenerator(summary_config, db)
@@ -105,13 +106,13 @@ def generate_quiz(
         return {"status": "error", "error": _QUIZ_ERROR}
 
     try:
-        quiz_config = QuizConfig.from_dict(config.to_dict())
+        quiz_config = QuizConfig.from_dict(config.raw or config.to_dict())
         quiz_config.questions_per_topic = count
         if question_types:
             quiz_config.question_types = question_types
 
         generator = QuizGenerator(quiz_config, db)
-        quiz = generator.generate(collection)
+        quiz = generator.generate(collection, count=count)
 
         return {
             "status": "success",
@@ -134,11 +135,11 @@ def transcribe_video(
     try:
         from tools.video import VideoConfig, VideoTranscriber
 
-        video_config = VideoConfig.from_dict(config.to_dict())
+        video_config = VideoConfig.from_dict(config.raw or config.to_dict())
         video_config.whisper_model = model
 
-        transcriber = VideoTranscriber(video_config, db)
-        transcript = transcriber.transcribe_file(video_path, collection)
+        transcriber = VideoTranscriber(video_config)
+        transcript = transcriber.transcribe_file(Path(video_path))
 
         return {
             "status": "success",
@@ -159,7 +160,7 @@ def clean_transcript(
     try:
         from tools.video import TranscriptCleaner, VideoConfig
 
-        video_config = VideoConfig.from_dict(config.to_dict())
+        video_config = VideoConfig.from_dict(config.raw or config.to_dict())
         if model:
             video_config.clean_model = model
 

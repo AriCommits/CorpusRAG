@@ -32,7 +32,7 @@ def create_mcp_server(
 
     from utils.telemetry import init_telemetry
 
-    telemetry_cfg = config.to_dict().get("telemetry", {})
+    telemetry_cfg = (config.raw or config.to_dict()).get("telemetry", {})
     store = init_telemetry(enabled=telemetry_cfg.get("enabled", False))
 
     mcp = FastMCP("CorpusRAG", json_response=True)

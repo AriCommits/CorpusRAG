@@ -90,6 +90,12 @@ def _parse_cli_txt_top_level() -> set[str]:
 _DOC_FILES = [
     ("README.md", ROOT / "README.md"),
     ("src/CLI.md", ROOT / "src" / "CLI.md"),
+    ("docs/architecture.md", ROOT / "docs" / "architecture.md"),
+    ("docs/tools-usage.md", ROOT / "docs" / "tools-usage.md"),
+    ("docs/mcp-integration.md", ROOT / "docs" / "mcp-integration.md"),
+    ("docs/docker-deployment.md", ROOT / "docs" / "docker-deployment.md"),
+    ("docs/troubleshooting.md", ROOT / "docs" / "troubleshooting.md"),
+    ("docs/configuration.md", ROOT / "docs" / "configuration.md"),
 ]
 
 
@@ -200,3 +206,37 @@ def test_documented_command_examples_resolve() -> None:
         raise AssertionError(
             "Documented command examples that do not resolve to a real command:\n" + detail
         )
+
+
+_STALE_DOC_FILES = [
+    ROOT / "docs" / "architecture.md",
+    ROOT / "docs" / "tools-usage.md",
+    ROOT / "docs" / "mcp-integration.md",
+    ROOT / "docs" / "docker-deployment.md",
+    ROOT / "docs" / "troubleshooting.md",
+    ROOT / "docs" / "configuration.md",
+]
+
+_STALE_PATTERNS = (
+    "CorpusCallosum",
+    "corpus-rag ",
+    "corpus-flashcards",
+    "corpus-db ",
+    "corpus-orchestrate",
+    "schema.py",
+    "StudySessionOrchestrator",
+    "KnowledgeBaseOrchestrator",
+    "lecture_processing_prompt",
+    "automatically available via MCP",
+)
+
+
+def test_plan21_docs_drop_stale_product_and_cli_names() -> None:
+    """User-facing docs must not describe the pre-CorpusRAG / standalone CLI."""
+    failures: list[str] = []
+    for path in _STALE_DOC_FILES:
+        text = path.read_text(encoding="utf-8")
+        for pattern in _STALE_PATTERNS:
+            if pattern in text:
+                failures.append(f"{path.relative_to(ROOT)}: {pattern!r}")
+    assert not failures, "Stale documentation strings still present:\n  " + "\n  ".join(failures)

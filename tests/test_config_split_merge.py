@@ -33,11 +33,12 @@ def _clear_cc_env(monkeypatch: pytest.MonkeyPatch) -> None:
 # ---------------------------------------------------------------------------
 
 # Safe text: letters/digits/space only, so YAML round-trips cleanly and never
-# collides with the loader's dangerous-pattern scan.
+# collides with the loader's dangerous-pattern scan. ``subprocess`` is the
+# only letter-only pattern in that scan (the rest need punctuation).
 _safe_text = st.text(
     alphabet="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ",
     max_size=12,
-)
+).filter(lambda s: "subprocess" not in s.lower())
 _scalars = st.one_of(
     st.integers(min_value=-1000, max_value=1000),
     st.booleans(),

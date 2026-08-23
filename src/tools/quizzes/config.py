@@ -18,7 +18,7 @@ class QuizConfig(BaseConfig):
     )
     format: str = "markdown"  # markdown | json | csv
     include_explanations: bool = True
-    collection_prefix: str = "quizzes"
+    collection_prefix: str = "rag"
     max_context_chars: int = 12000
 
     @classmethod
@@ -31,18 +31,14 @@ class QuizConfig(BaseConfig):
         Returns:
             QuizConfig instance
         """
-        # Get base config
-        base_config = super().from_dict(data)
-
-        # Get quiz-specific config
-        quiz_data = data.get("quizzes", {})
+        base_config, quiz_data = BaseConfig.split_section(data, "quizzes")
 
         # Build difficulty distribution with defaults
         difficulty_dist = quiz_data.get("difficulty_distribution")
         if difficulty_dist is None:
             difficulty_dist = {"easy": 0.3, "medium": 0.5, "hard": 0.2}
 
-        return cls(
+        inst = cls(
             llm=base_config.llm,
             embedding=base_config.embedding,
             database=base_config.database,
@@ -54,6 +50,8 @@ class QuizConfig(BaseConfig):
             difficulty_distribution=difficulty_dist,
             format=quiz_data.get("format", "markdown"),
             include_explanations=quiz_data.get("include_explanations", True),
-            collection_prefix=quiz_data.get("collection_prefix", "quizzes"),
+            collection_prefix=quiz_data.get("collection_prefix", "rag"),
             max_context_chars=quiz_data.get("max_context_chars", 12000),
         )
+        inst.raw = data
+        return inst

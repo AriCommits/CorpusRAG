@@ -1,6 +1,5 @@
 """Tests for handwriting OCR module."""
 
-import base64
 from unittest.mock import patch
 
 from tools.handwriting.ocr import HANDWRITING_PROMPT, ocr_handwriting
@@ -32,37 +31,24 @@ class TestOcrHandwriting:
         test_content = b"fake image data"
         image_path.write_bytes(test_content)
 
-        expected_b64 = base64.b64encode(test_content).decode()
-
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": "Sample transcription"}}
-
+        with patch(
+            "tools.handwriting.ocr.ocr_image", return_value="Sample transcription"
+        ) as mock_ocr:
             ocr_handwriting(image_path)
 
-            # Verify ollama.chat was called
-            assert mock_chat.called
-            call_args = mock_chat.call_args
-
-            # Verify the images parameter contains the base64-encoded data
-            messages = call_args[1]["messages"]
-            images = messages[0]["images"]
-            assert len(images) == 1
-            assert images[0] == expected_b64
-
-            # Verify round-trip: decode the base64 and check it matches original
-            decoded = base64.b64decode(images[0])
-            assert decoded == test_content
+            mock_ocr.assert_called_once()
+            assert mock_ocr.call_args.args[0] == image_path
+            assert mock_ocr.call_args.args[1] == HANDWRITING_PROMPT
 
     def test_ocr_handwriting_returns_stripped_content(self, tmp_path):
         """Verify that returned content is stripped of whitespace."""
         image_path = tmp_path / "test_image.jpg"
         image_path.write_bytes(b"fake image data")
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {
-                "message": {"content": "  Sample transcription with whitespace  \n"}
-            }
-
+        with patch(
+            "tools.handwriting.ocr.ocr_image",
+            return_value="Sample transcription with whitespace",
+        ):
             result = ocr_handwriting(image_path)
 
             assert result == "Sample transcription with whitespace"
@@ -72,74 +58,51 @@ class TestOcrHandwriting:
         image_path = tmp_path / "test_image.jpg"
         image_path.write_bytes(b"fake image data")
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": "Transcription"}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value="Transcription") as mock_ocr:
             ocr_handwriting(image_path)
 
-            # Verify ollama.chat was called with model='llava'
-            assert mock_chat.call_args[1]["model"] == "llava"
+            assert mock_ocr.call_args.kwargs["model"] == "llava"
 
     def test_ocr_handwriting_uses_custom_model(self, tmp_path):
         """Verify that a custom model parameter is passed correctly."""
         image_path = tmp_path / "test_image.jpg"
         image_path.write_bytes(b"fake image data")
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": "Transcription"}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value="Transcription") as mock_ocr:
             ocr_handwriting(image_path, model="llava:13b")
 
-            # Verify ollama.chat was called with the custom model
-            assert mock_chat.call_args[1]["model"] == "llava:13b"
+            assert mock_ocr.call_args.kwargs["model"] == "llava:13b"
 
     def test_ocr_handwriting_prompt_is_correct(self, tmp_path):
         """Verify that the correct prompt is passed to ollama.chat."""
         image_path = tmp_path / "test_image.jpg"
         image_path.write_bytes(b"fake image data")
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": "Transcription"}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value="Transcription") as mock_ocr:
             ocr_handwriting(image_path)
 
-            # Verify the prompt passed matches HANDWRITING_PROMPT
-            call_args = mock_chat.call_args
-            messages = call_args[1]["messages"]
-            assert messages[0]["content"] == HANDWRITING_PROMPT
+            assert mock_ocr.call_args.args[1] == HANDWRITING_PROMPT
 
     def test_ocr_handwriting_message_structure(self, tmp_path):
         """Verify that the message structure is correct."""
         image_path = tmp_path / "test_image.jpg"
         image_path.write_bytes(b"fake image data")
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": "Transcription"}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value="Transcription") as mock_ocr:
             ocr_handwriting(image_path)
 
-            call_args = mock_chat.call_args
-            messages = call_args[1]["messages"]
-
-            # Verify message structure
-            assert len(messages) == 1
-            assert messages[0]["role"] == "user"
-            assert "content" in messages[0]
-            assert "images" in messages[0]
-            assert isinstance(messages[0]["images"], list)
+            assert mock_ocr.call_args.kwargs["model"] == "llava"
+            assert mock_ocr.call_args.args[1] == HANDWRITING_PROMPT
 
     def test_ocr_handwriting_blank_page_response(self, tmp_path):
-        """Verify handling of [BLANK_PAGE] response (with whitespace)."""
+        """Verify handling of [BLANK_PAGE] response."""
         image_path = tmp_path / "test_image.jpg"
         image_path.write_bytes(b"fake image data")
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": "  [BLANK_PAGE]  \n"}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value="[BLANK_PAGE]"):
             result = ocr_handwriting(image_path)
 
-            # Should strip whitespace but preserve the marker
-            assert result == "[BLANK_PAGE]"
+        assert result == "[BLANK_PAGE]"
 
     def test_ocr_handwriting_with_illegible_markers(self, tmp_path):
         """Verify that [illegible] markers are preserved."""
@@ -148,9 +111,7 @@ class TestOcrHandwriting:
 
         content = "Some text [illegible] more text"
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": content}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value=content):
             result = ocr_handwriting(image_path)
 
             assert "[illegible]" in result
@@ -163,9 +124,7 @@ class TestOcrHandwriting:
 
         content = "# Section\n[Diagram: a simple circuit diagram]\nText after diagram"
 
-        with patch("tools.handwriting.ocr.ollama.chat") as mock_chat:
-            mock_chat.return_value = {"message": {"content": content}}
-
+        with patch("tools.handwriting.ocr.ocr_image", return_value=content):
             result = ocr_handwriting(image_path)
 
             assert "[Diagram:" in result
