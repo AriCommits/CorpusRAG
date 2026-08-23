@@ -1,14 +1,11 @@
 """Developer-focused MCP tool functions for CorpusRAG."""
 
-import hashlib
-from datetime import datetime
 from typing import Any
 
 from config.base import BaseConfig
 from db.base import DatabaseBackend
-from tools.rag import RAGAgent, RAGIngester, RAGRetriever
+from tools.rag import RAGRetriever
 from tools.rag.config import RAGConfig
-from tools.rag.pipeline import EmbeddingClient
 from utils.security import validate_file_path
 from utils.validation import get_validator
 
@@ -25,9 +22,10 @@ def rag_ingest(
         return {"status": "error", "error": str(e)}
 
     try:
-        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
-        ingester = RAGIngester(rag_config, db)
-        result = ingester.ingest_path(str(validated_path), collection)
+        from kernel import Corpus
+
+        corpus = Corpus.from_loaded(config, db)
+        result = corpus.ingest_path(str(validated_path), collection)
         return {
             "status": "success",
             "collection": collection,
@@ -50,9 +48,10 @@ def rag_query(
         return {"status": "error", "error": str(e)}
 
     try:
-        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
-        agent = RAGAgent(rag_config, db)
-        response = agent.query(validated_query, collection, top_k=validated_top_k)
+        from kernel import Corpus
+
+        corpus = Corpus.from_loaded(config, db)
+        response = corpus.ask(validated_query, collection, top_k=validated_top_k)
         return {"status": "success", "query": query, "response": response}
     except Exception as e:
         return {"status": "error", "error": str(e)}
@@ -100,43 +99,19 @@ def store_text(
     try:
         if len(text) > 100_000:
             return {"status": "error", "error": "Text too large (max 100KB)"}
-        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
-        full_collection = f"{rag_config.collection_prefix}_{collection}"
-
-        if not db.collection_exists(full_collection):
-            db.create_collection(full_collection)
-
-        from tools.rag.pipeline.adaptive_splitter import adaptive_split
-
-        chunks = adaptive_split(
-            text,
-            base_chunk_size=rag_config.chunking.child_chunk_size,
-            base_overlap=rag_config.chunking.child_chunk_overlap,
-        )
-
-        embeddings = EmbeddingClient(rag_config).embed_texts(chunks)
-
-        base_meta = {
-            "source_type": "agent_text",
-            "timestamp": datetime.now().isoformat(),
-            "collection_name": collection,
-        }
         _ALLOWED_META = {"topic", "tags", "author", "date", "notes", "source"}
+        safe_meta = {"source_type": "agent_text"}
         if metadata:
-            safe_meta = {k: v for k, v in metadata.items() if k in _ALLOWED_META}
-            base_meta.update(safe_meta)
+            safe_meta.update({k: v for k, v in metadata.items() if k in _ALLOWED_META})
 
-        metadatas = [dict(base_meta) for _ in chunks]
-        ids = [
-            hashlib.sha256(f"{full_collection}::{i}::{chunk}".encode()).hexdigest()[:16]
-            for i, chunk in enumerate(chunks)
-        ]
+        from kernel import Corpus
 
-        db.add_documents(full_collection, chunks, embeddings, metadatas, ids)
+        corpus = Corpus.from_loaded(config, db)
+        result = corpus.ingest_text(text, collection, metadata=safe_meta)
         return {
             "status": "success",
             "collection": collection,
-            "chunks_created": len(chunks),
+            "chunks_created": result.chunks_indexed,
         }
     except Exception as e:
         return {"status": "error", "error": str(e)}

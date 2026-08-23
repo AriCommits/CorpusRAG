@@ -84,6 +84,55 @@ def benchmark(collection: str, queries: int, config: str) -> None:
 
 
 @corpus.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def ingest(path: str, collection: str, config: str) -> None:
+    """Ingest documents into a RAG collection."""
+    from kernel import Corpus
+
+    corpus_app = Corpus.from_config_path(config)
+    click.echo(f"Ingesting documents from {path} into collection '{collection}'...")
+    result = corpus_app.ingest_path(path, collection)
+    click.echo(f"Indexed {result.files_indexed} files, {result.chunks_indexed} chunks")
+
+
+@corpus.command()
+@click.argument("query")
+@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--top-k", "-k", default=None, type=int, help="Number of results")
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def ask(query: str, collection: str, top_k: int | None, config: str) -> None:
+    """Ask a question against a RAG collection."""
+    from kernel import Corpus
+
+    corpus_app = Corpus.from_config_path(config)
+    click.echo(f"Querying collection '{collection}'...\n")
+    click.echo("Response:")
+    click.echo(corpus_app.ask(query, collection, top_k=top_k))
+
+
+@corpus.command()
+@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--topic", default=None, help="Optional topic to focus the summary")
+@click.option(
+    "--length",
+    type=click.Choice(["short", "medium", "long"]),
+    default="medium",
+    help="Summary length",
+)
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def summarize(collection: str, topic: str | None, length: str, config: str) -> None:
+    """Summarize a RAG collection."""
+    from kernel import Corpus
+
+    corpus_app = Corpus.from_config_path(config)
+    result = corpus_app.summarize(collection, topic=topic, length=length)
+    text = result.get("summary", result) if isinstance(result, dict) else result
+    click.echo(text)
+
+
+@corpus.command()
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def doctor(config: str) -> None:
     """Run health checks against configured services."""

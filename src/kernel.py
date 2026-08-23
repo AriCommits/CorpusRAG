@@ -21,6 +21,17 @@ class Corpus:
         self.db = db
 
     @classmethod
+    def from_loaded(cls, config: Any, db: DatabaseBackend) -> Corpus:
+        """Build a kernel from an already-loaded config object and db."""
+        if isinstance(config, RAGConfig):
+            if not config.raw:
+                config.raw = config.to_dict()
+            return cls(config, db)
+        rag = RAGConfig.from_dict(config.raw or config.to_dict())
+        rag.raw = config.raw or config.to_dict()
+        return cls(rag, db)
+
+    @classmethod
     def from_config_path(cls, path: str | Path = "configs/base.yaml") -> Corpus:
         """Load YAML, build a RAG config and Chroma backend."""
         from cli_common import load_cli_db

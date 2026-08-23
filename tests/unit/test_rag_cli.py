@@ -89,17 +89,12 @@ rag:
         help_text = result.output
         assert "section" in help_text.lower() or "filter" in help_text.lower()
 
-    @patch("tools.rag.cli.load_cli_db")
-    @patch("tools.rag.cli.RAGIngester")
     def test_ingest_missing_collection(
         self,
-        mock_ingester_class: MagicMock,
-        mock_load_db: MagicMock,
         runner: CliRunner,
         tmp_path: Path,
     ) -> None:
         """Test ingest fails without collection parameter."""
-        mock_load_db.return_value = (MagicMock(), MagicMock())
         result = runner.invoke(rag, ["ingest", str(tmp_path)])
         assert result.exit_code != 0
         assert "collection" in result.output.lower() or "required" in result.output.lower()

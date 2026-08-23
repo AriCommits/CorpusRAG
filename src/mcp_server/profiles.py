@@ -10,7 +10,58 @@ from .tools import dev as dev_tools
 from .tools import learn as learn_tools
 from .tools import video as video_tools
 
-VALID_PROFILES = ("dev", "learn", "full")
+VALID_PROFILES = ("simple", "dev", "learn", "full")
+
+
+def register_simple_tools(
+    mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None
+) -> None:
+    """Query/summarize face: ingest, store, ask, summarize, list collections."""
+
+    @mcp.tool()
+    def rag_ingest(path: str, collection: str) -> dict:
+        """Ingest documents into a RAG collection."""
+        return log_tool(
+            store,
+            "rag_ingest",
+            lambda: dev_tools.rag_ingest(path, collection, config, db),
+            input_size=len(path),
+        )
+
+    @mcp.tool()
+    def rag_query(collection: str, query: str, top_k: int = 5) -> dict:
+        """Query a RAG collection and generate a response."""
+        return log_tool(
+            store,
+            "rag_query",
+            lambda: dev_tools.rag_query(collection, query, top_k, config, db),
+            input_size=len(query),
+        )
+
+    @mcp.tool()
+    def store_text(text: str, collection: str, metadata: dict | None = None) -> dict:
+        """Store text directly into a RAG collection for later retrieval."""
+        return log_tool(
+            store,
+            "store_text",
+            lambda: dev_tools.store_text(text, collection, config, db, metadata),
+            input_size=len(text),
+        )
+
+    @mcp.tool()
+    def list_collections() -> dict:
+        """List all available RAG collections."""
+        return log_tool(store, "list_collections", lambda: dev_tools.list_collections(db))
+
+    @mcp.tool()
+    def generate_summary(collection: str, topic: str | None = None, length: str = "medium") -> dict:
+        """Generate a summary from a collection."""
+        return log_tool(
+            store,
+            "generate_summary",
+            lambda: learn_tools.generate_summary(collection, topic, length, config, db),
+            input_size=len(collection),
+        )
 
 
 def register_dev_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, store=None) -> None:
@@ -235,6 +286,9 @@ def register_profile(
 ) -> None:
     if profile not in VALID_PROFILES:
         raise ValueError(f"Unknown profile '{profile}'. Valid: {VALID_PROFILES}")
+    if profile == "simple":
+        register_simple_tools(mcp, config, db, store)
+        return
     if profile in ("dev", "full"):
         register_dev_tools(mcp, config, db, store)
     if profile in ("learn", "full"):

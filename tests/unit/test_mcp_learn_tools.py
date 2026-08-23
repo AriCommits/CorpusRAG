@@ -6,7 +6,7 @@ import ast
 import importlib.util
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -147,9 +147,12 @@ class TestGenerateSummary:
         sys.modules["tools.summaries"] = fake_sm_module
         try:
             learn = _load_learn_module()
-            result = learn.generate_summary(
-                "notes", "machine learning", "medium", tmp_config, mock_db
-            )
+            fake_corpus = MagicMock()
+            fake_corpus.summarize.return_value = fake_summary
+            with patch("kernel.Corpus.from_loaded", return_value=fake_corpus):
+                result = learn.generate_summary(
+                    "notes", "machine learning", "medium", tmp_config, mock_db
+                )
         finally:
             if saved is None:
                 sys.modules.pop("tools.summaries", None)
