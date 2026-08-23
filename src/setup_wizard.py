@@ -39,7 +39,7 @@ class WizardConfig:
     # Database
     chroma_mode: str = "persistent"
     chroma_host: str | None = None
-    chroma_port: int = 8000
+    chroma_port: int = 8001
     # Paths
     vault_path: str = "./vault"
     # RAG
@@ -129,6 +129,18 @@ class BackendScreen(Screen):
                     id="backend_select",
                     value="ollama",
                 )
+                yield Label("LLM model:")
+                yield Input(
+                    value=self.app.wizard_config.llm_model,
+                    id="llm_model_input",
+                    placeholder="model name",
+                )
+                yield Label("Embedding model:")
+                yield Input(
+                    value=self.app.wizard_config.embedding_model,
+                    id="embedding_model_input",
+                    placeholder="embeddinggemma",
+                )
 
             yield Static()  # Spacer
             yield Button("Back", id="back", variant="default")
@@ -141,6 +153,12 @@ class BackendScreen(Screen):
             select = self.query_one("#backend_select", Select)
             backend = select.value
             self.app.wizard_config.llm_backend = backend
+            llm_model = self.query_one("#llm_model_input", Input).value
+            if llm_model.strip():
+                self.app.wizard_config.llm_model = llm_model.strip()
+            embed_model = self.query_one("#embedding_model_input", Input).value
+            if embed_model.strip():
+                self.app.wizard_config.embedding_model = embed_model.strip()
             # Set endpoint and embedding backend based on selection
             if backend == "ollama":
                 self.app.wizard_config.llm_endpoint = "http://localhost:11434"
@@ -227,13 +245,22 @@ class ChromaHostScreen(Screen):
         with Container(id="content"):
             yield Label("ChromaDB Server Configuration")
             yield Static()  # Spacer
-            yield Markdown("## Enter ChromaDB server hostname (or leave blank for localhost)")
+            yield Markdown(
+                "## Enter ChromaDB server hostname and host port "
+                "(Compose publishes Chroma on **8001**)"
+            )
 
             with Vertical(id="host-input"):
                 yield Input(
                     value="localhost",
                     id="chroma_host_input",
                     placeholder="localhost",
+                )
+                yield Label("Port:")
+                yield Input(
+                    value=str(self.app.wizard_config.chroma_port),
+                    id="chroma_port_input",
+                    placeholder="8001",
                 )
 
             yield Static()  # Spacer
@@ -247,6 +274,14 @@ class ChromaHostScreen(Screen):
             host_input = self.query_one("#chroma_host_input", Input)
             host = host_input.value or "localhost"
             self.app.wizard_config.chroma_host = host
+            port_raw = self.query_one("#chroma_port_input", Input).value or "8001"
+            try:
+                port = int(port_raw.strip())
+            except ValueError:
+                port = 8001
+            if not (1 <= port <= 65535):
+                port = 8001
+            self.app.wizard_config.chroma_port = port
             self.app.push_screen("vault")
 
 
@@ -370,11 +405,11 @@ Your CorpusRAG is now configured and ready to use.
 ### Next Steps:
 
 1. **Add documents** to your vault directory
-2. **Run**: `corpus tools rag ingest --path ./vault --collection notes`
-3. **Query**: `corpus tools rag ui`
+2. **Run**: `corpus tools rag ingest ./vault --collection notes`
+3. **Query**: `corpus tools rag query "your question" -c notes`
 
 Or use the unified CLI:
-- `corpus tools rag query "your question"` for command-line queries
+- `corpus tools rag query "your question" -c notes` for command-line queries
 - `corpus tools rag ui` for the interactive TUI
 
 If you selected HTTP mode, start ChromaDB with:
@@ -538,7 +573,7 @@ class SetupWizardApp:
             logger.info(f"{compose_file} already exists, skipping generation")
             return
 
-        port = getattr(wc, "chroma_port", 8000)
+        port = getattr(wc, "chroma_port", 8001)
         compose_content = {
             "services": {
                 "chromadb": {
@@ -570,6 +605,18 @@ class SetupWizardApp:
         except Exception as e:
             logger.error(f"Failed to create setup marker: {e}")
             return False
+
+
+def launch_rag_tui(config_path: str = "configs/base.yaml", collection: str | None = None) -> None:
+    """Start the RAG TUI the same way ``corpus tools rag ui`` does."""
+    from cli_common import load_cli_db
+    from tools.rag.agent import RAGAgent
+    from tools.rag.config import RAGConfig
+    from tools.rag.tui import RAGApp
+
+    cfg, db = load_cli_db(config_path, RAGConfig)
+    agent = RAGAgent(cfg, db)
+    RAGApp(agent, collection).run()
 
 
 def run_setup_wizard() -> int:
@@ -608,10 +655,7 @@ def run_setup_wizard() -> int:
     if wizard.should_launch_tui:
         print("\nLaunching TUI...")
         try:
-            from tools.rag.tui import RAGApp
-
-            app = RAGApp()
-            app.run()
+            launch_rag_tui()
         except Exception as e:
             logger.error(f"Failed to launch TUI: {e}")
             print("You can launch the TUI manually with: corpus tools rag ui")

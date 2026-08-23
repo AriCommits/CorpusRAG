@@ -231,22 +231,21 @@ class TestFlashcardGenerator:
     ) -> None:
         """Test generating flashcards from real ingested documents."""
         generator = FlashcardGenerator(flashcard_config, db_backend)
-        # Mock the LLM backend so generation is deterministic and offline.
-        generator.llm_backend = MagicMock()
-        generator.llm_backend.complete.return_value = MagicMock(
-            text=(
-                "Q: What is machine learning?\n"
-                "A: A subset of AI that learns from data.\n\n"
-                "---\n\n"
-                "Q: What is supervised learning?\n"
-                "A: Learning from labeled training data.\n\n"
-                "---\n\n"
-                "Q: What is Python?\n"
-                "A: A high-level programming language.\n"
-            )
+        llm_text = (
+            "Q: What is machine learning?\n"
+            "A: A subset of AI that learns from data.\n\n"
+            "---\n\n"
+            "Q: What is supervised learning?\n"
+            "A: Learning from labeled training data.\n\n"
+            "---\n\n"
+            "Q: What is Python?\n"
+            "A: A high-level programming language.\n"
         )
 
-        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
+        with (
+            patch("tools.generation.EmbeddingClient") as mock_embedder_class,
+            patch("tools.flashcards.generator.complete_prompt", return_value=llm_text),
+        ):
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -304,17 +303,16 @@ class TestSummaryGenerator:
     ) -> None:
         """Test generating summary from real ingested documents."""
         generator = SummaryGenerator(summary_config, db_backend)
-        # Mock the LLM backend so generation is deterministic and offline.
-        generator.llm_backend = MagicMock()
-        generator.llm_backend.complete.return_value = MagicMock(
-            text=(
-                "Machine learning is a subset of AI. Python is a popular language "
-                "for data science.\n\nKeywords: machine learning, python, data science\n\n"
-                "- Introduction\n- Core concepts\n- Conclusion"
-            )
+        llm_text = (
+            "Machine learning is a subset of AI. Python is a popular language "
+            "for data science.\n\nKeywords: machine learning, python, data science\n\n"
+            "- Introduction\n- Core concepts\n- Conclusion"
         )
 
-        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
+        with (
+            patch("tools.generation.EmbeddingClient") as mock_embedder_class,
+            patch("tools.summaries.generator.complete_prompt", return_value=llm_text),
+        ):
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384
@@ -371,33 +369,32 @@ class TestQuizGenerator:
     ) -> None:
         """Test generating quiz from real ingested documents."""
         generator = QuizGenerator(quiz_config, db_backend)
-        # Mock the LLM backend so generation is deterministic and offline.
-        generator.llm_backend = MagicMock()
-        generator.llm_backend.complete.return_value = MagicMock(
-            text=(
-                "Question 1:\n"
-                "What is machine learning?\n"
-                "Type: Multiple Choice\n"
-                "A) A subset of AI\n"
-                "B) A database\n"
-                "C) A language\n"
-                "D) A framework\n"
-                "Correct Answer: A\n"
-                "Explanation: ML is a subset of AI.\n\n"
-                "Question 2:\n"
-                "Python is a programming language.\n"
-                "Type: True-False\n"
-                "Correct Answer: True\n"
-                "Explanation: Python is indeed a language.\n\n"
-                "Question 3:\n"
-                "Define data science.\n"
-                "Type: Short Answer\n"
-                "Correct Answer: The study of extracting insights from data.\n"
-                "Explanation: It combines statistics and programming.\n"
-            )
+        llm_text = (
+            "Question 1:\n"
+            "What is machine learning?\n"
+            "Type: Multiple Choice\n"
+            "A) A subset of AI\n"
+            "B) A database\n"
+            "C) A language\n"
+            "D) A framework\n"
+            "Correct Answer: A\n"
+            "Explanation: ML is a subset of AI.\n\n"
+            "Question 2:\n"
+            "Python is a programming language.\n"
+            "Type: True-False\n"
+            "Correct Answer: True\n"
+            "Explanation: Python is indeed a language.\n\n"
+            "Question 3:\n"
+            "Define data science.\n"
+            "Type: Short Answer\n"
+            "Correct Answer: The study of extracting insights from data.\n"
+            "Explanation: It combines statistics and programming.\n"
         )
 
-        with patch("tools.generation.EmbeddingClient") as mock_embedder_class:
+        with (
+            patch("tools.generation.EmbeddingClient") as mock_embedder_class,
+            patch("tools.quizzes.generator.complete_prompt", return_value=llm_text),
+        ):
             mock_embedder = MagicMock()
             mock_embedder_class.return_value = mock_embedder
             mock_embedder.embed_query.return_value = [0.1] * 384

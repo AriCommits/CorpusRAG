@@ -108,7 +108,7 @@ export = [
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-py-modules = ["cli", "cli_common", "cli_dev", "setup_wizard"]
+py-modules = ["cli", "cli_common", "cli_dev", "setup_wizard", "kernel"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -4,8 +4,8 @@ import logging
 from typing import Any
 
 from db import DatabaseBackend
-from llm import PromptTemplates, create_backend
-from tools.generation import sample_documents
+from llm import PromptTemplates
+from tools.generation import complete_prompt, sample_documents
 
 from .config import SummaryConfig
 
@@ -24,8 +24,6 @@ class SummaryGenerator:
         """
         self.config = config
         self.db = db
-        # Create LLM backend for generation
-        self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def generate(self, collection: str, topic: str | None = None) -> dict[str, Any]:
         """Generate summary from collection.
@@ -90,9 +88,7 @@ class SummaryGenerator:
         )
 
         try:
-            # Generate content using LLM
-            response = self.llm_backend.complete(prompt)
-            return response.text.strip()
+            return complete_prompt(self.config, prompt)
 
         except Exception as e:
             logger.error(f"LLM generation failed: {e}")
@@ -123,10 +119,7 @@ INSTRUCTIONS:
 
 KEYWORDS:"""
 
-            response = self.llm_backend.complete(keyword_prompt)
-
-            # Parse comma-separated keywords
-            keywords_text = response.text.strip()
+            keywords_text = complete_prompt(self.config, keyword_prompt)
             keywords = [kw.strip() for kw in keywords_text.split(",")]
 
             # Clean and filter keywords
@@ -163,10 +156,10 @@ INSTRUCTIONS:
 
 OUTLINE:"""
 
-            response = self.llm_backend.complete(outline_prompt)
+            outline_text = complete_prompt(self.config, outline_prompt)
 
             # Split into lines and clean up
-            outline_lines = [line.strip() for line in response.text.split("\n")]
+            outline_lines = [line.strip() for line in outline_text.split("\n")]
             outline_lines = [
                 line for line in outline_lines if line and not line.lower().startswith("outline")
             ]

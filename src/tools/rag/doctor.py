@@ -2,6 +2,8 @@
 
 import httpx
 
+from db import ChromaDBBackend
+
 
 def run_doctor(config) -> list[tuple[bool, str]]:
     """Run all health checks. Returns list of (passed, message)."""
@@ -9,20 +11,34 @@ def run_doctor(config) -> list[tuple[bool, str]]:
 
     results.append((True, "Config loaded: configs/base.yaml"))
 
-    # ChromaDB
+    mode = getattr(config.database, "mode", "persistent")
     host, port = config.database.host, config.database.port
-    try:
-        r = httpx.get(f"http://{host}:{port}/api/v2/heartbeat", timeout=5)
-        if r.status_code == 200:
-            from db import ChromaDBBackend
 
+    if mode == "persistent":
+        try:
             db = ChromaDBBackend(config.database)
             cols = db.list_collections()
-            results.append((True, f"ChromaDB reachable: {host}:{port} ({len(cols)} collections)"))
-        else:
-            results.append((False, f"ChromaDB unhealthy: {host}:{port} (status {r.status_code})"))
-    except Exception as e:
-        results.append((False, f"ChromaDB unreachable: {host}:{port} - {e}"))
+            persist = config.database.persist_directory
+            results.append(
+                (True, f"ChromaDB persistent store: {persist} ({len(cols)} collections)")
+            )
+        except Exception as e:
+            results.append((False, f"ChromaDB persistent store failed: {e}"))
+    else:
+        try:
+            r = httpx.get(f"http://{host}:{port}/api/v2/heartbeat", timeout=5)
+            if r.status_code == 200:
+                db = ChromaDBBackend(config.database)
+                cols = db.list_collections()
+                results.append(
+                    (True, f"ChromaDB reachable: {host}:{port} ({len(cols)} collections)")
+                )
+            else:
+                results.append(
+                    (False, f"ChromaDB unhealthy: {host}:{port} (status {r.status_code})")
+                )
+        except Exception as e:
+            results.append((False, f"ChromaDB unreachable: {host}:{port} - {e}"))
 
     # Ollama
     endpoint = config.llm.endpoint
@@ -53,7 +69,8 @@ def run_doctor(config) -> list[tuple[bool, str]]:
                 results.append(
                     (
                         False,
-                        f"Embedding model NOT found: {config.embedding.model} (available: {', '.join(models)})",
+                        f"Embedding model NOT found: {config.embedding.model} "
+                        f"(available: {', '.join(models)})",
                     )
                 )
 

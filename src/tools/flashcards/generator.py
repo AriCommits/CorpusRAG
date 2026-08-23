@@ -4,8 +4,8 @@ import logging
 import re
 
 from db import DatabaseBackend
-from llm import PromptTemplates, create_backend
-from tools.generation import sample_documents
+from llm import PromptTemplates
+from tools.generation import complete_prompt, sample_documents
 
 from .config import FlashcardConfig
 
@@ -24,8 +24,6 @@ class FlashcardGenerator:
         """
         self.config = config
         self.db = db
-        # Create LLM backend for generation
-        self.llm_backend = create_backend(config.llm.to_backend_config())
 
     def generate(
         self,
@@ -96,11 +94,10 @@ class FlashcardGenerator:
         )
 
         try:
-            # Generate content using LLM
-            response = self.llm_backend.complete(prompt)
+            response_text = complete_prompt(self.config, prompt)
 
             # Parse the response into flashcards
-            flashcards = self._parse_flashcard_response(response.text)
+            flashcards = self._parse_flashcard_response(response_text)
             if len(flashcards) > count:
                 flashcards = flashcards[:count]
             elif len(flashcards) < count:

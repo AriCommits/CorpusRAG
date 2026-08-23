@@ -45,4 +45,4 @@ def sample_documents(
 def complete_prompt(config, prompt: str) -> str:
     """Run a one-shot LLM completion and return stripped text."""
     backend = create_backend(config.llm.to_backend_config())
-    return backend.complete(prompt).text
+    return backend.complete(prompt).text.strip()
