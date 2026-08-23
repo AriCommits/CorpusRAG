@@ -69,6 +69,23 @@ paths:
   output_dir: ./output               # Generated content
 ```
 
+## Collection names
+
+Ingest, query, flashcards, summaries, and quizzes share one prefix. The
+user-facing name `notes` is stored as `rag_notes`.
+
+| Tool | Chroma name | Example flag |
+|------|-------------|--------------|
+| RAG ingest / query / TUI | `rag_<name>` | `--collection notes` |
+| Flashcards / summaries / quizzes | `rag_<name>` | `-c notes` |
+
+Do not create separate `flashcards_*` / `summaries_*` / `quizzes_*` stores.
+Parent documents for retrieval live under `parent_store/<collection>/`.
+
+Video OCR writes markdown files; the lecture pipeline indexes transcripts
+through RAG ingest (still `rag_<course>_LectureNN`). The `video.collection_prefix`
+setting is unused for Chroma.
+
 ## Configuration Sections
 
 ### LLM Configuration
@@ -229,13 +246,15 @@ rag:
     child_chunk_size: 400            # Size of each child chunk in characters
     child_chunk_overlap: 50          # Overlap between consecutive child chunks
   retrieval:
-    top_k_semantic: 25               # Child chunks to retrieve from vector search
-    top_k_bm25: 25                   # BM25 keyword results (reserved for future use)
+    top_k_semantic: 25               # Child chunks from vector search before parent collapse
+    top_k_bm25: 25                   # BM25 keyword hits before fusion
     top_k_final: 10                  # Final parent documents returned to the LLM
-    rrf_k: 80                        # Reciprocal Rank Fusion parameter (reserved)
+    rrf_k: 80                        # Reciprocal Rank Fusion parameter
+  reranking:
+    enabled: true
+    model: cross-encoder/ms-marco-MiniLM-L-6-v2
   parent_store:
-    type: local_file                 # local_file | in_memory
-    path: ./parent_store             # Directory for parent document storage
+    path: ./parent_store             # Parents stored under parent_store/<collection>/
   collection_prefix: rag             # Collection name prefix (e.g. rag_notes)
 ```
 
@@ -253,7 +272,7 @@ video:
   clean_model: gemma4:26b-a4b-it-q4_K_M   # Model used for transcript cleaning
   output_format: markdown            # markdown | text | json
   include_timestamps: false          # Include timestamps in transcript output
-  collection_prefix: videos          # Collection name prefix (e.g. videos_BIOL101)
+  collection_prefix: videos          # Unused for Chroma; lecture pipeline uses rag_
   auto_ingest: true                  # Ingest transcripts into RAG after processing
   supported_extensions:              # Recognized video file extensions
     - .mp4
@@ -269,6 +288,7 @@ video:
 
 ```yaml
 summaries:
+  collection_prefix: rag             # Same store as RAG ingest (rag_<name>)
   summary_length: medium             # short | medium | long
   llm:
     model: gemma4:26b-a4b-it-q4_K_M
@@ -283,6 +303,7 @@ summaries:
 
 ```yaml
 flashcards:
+  collection_prefix: rag             # Same store as RAG ingest (rag_<name>)
   difficulty: intermediate           # beginner | intermediate | advanced
   count: 15                          # Number of flashcards to generate
   llm:
@@ -298,6 +319,7 @@ flashcards:
 
 ```yaml
 quizzes:
+  collection_prefix: rag             # Same store as RAG ingest (rag_<name>)
   count: 10                          # Number of questions to generate
   format: markdown                   # markdown | json | csv
   difficulty: intermediate           # beginner | intermediate | advanced

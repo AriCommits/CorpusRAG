@@ -185,15 +185,11 @@ class TestStrategyConfiguration:
 
         other = Document(page_content="alpha beta", metadata={"collection_name": "other"})
         missing = Document(page_content="alpha beta", metadata={})
-        mine = Document(
-            page_content="alpha unique token", metadata={"collection_name": "notes"}
-        )
+        mine = Document(page_content="alpha unique token", metadata={"collection_name": "notes"})
         filler = Document(
             page_content="unrelated words here", metadata={"collection_name": "notes"}
         )
-        filler2 = Document(
-            page_content="more filler text", metadata={"collection_name": "notes"}
-        )
+        filler2 = Document(page_content="more filler text", metadata={"collection_name": "notes"})
         parent_store = Mock()
         parent_store.mget_all.return_value = [
             ("a", other),
