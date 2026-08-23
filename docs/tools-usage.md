@@ -47,7 +47,7 @@ corpus benchmark --collection notes --queries 10
 ## RAG
 
 ```bash
-corpus tools rag ingest ./documents --collection notes
+corpus ingest ./documents --collection notes
 corpus tools rag ingest ./lecture.pdf --collection cs101
 
 corpus tools rag query "What is gradient descent?" --collection notes
@@ -135,7 +135,7 @@ override them with flags.
 ## MCP
 
 ```bash
-corpus-mcp-server --profile dev
+corpus-mcp-server --profile simple
 ```
 
 MCP is a **manual subset** of the CLI. See [`mcp-integration.md`](mcp-integration.md).

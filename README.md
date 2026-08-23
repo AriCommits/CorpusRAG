@@ -22,26 +22,26 @@ If the terms below are unfamiliar, start here. Plain-language definitions of the
 ## Quick Start
 
 ```bash
-# 1. Install
-pip install corpusrag
+# 1. Install (from a clone until the package is on PyPI)
+pip install .
 
-# 2. Run the setup wizard (configures LLM, database, vault path)
+# 2. Run the setup wizard (LLM, database, vault path)
 corpus setup
 
-# 3. Start ChromaDB
-cd .docker && docker compose up -d
+# 3. Optional: HTTP Chroma on host port 8001 (skip if you chose Persistent)
+docker compose -f .docker/docker-compose.yml up -d chromadb
 
 # 4. Verify services are healthy
 corpus doctor
 
-# 5. Ingest your documents
-corpus tools rag ingest ./my-docs --collection notes
+# 5. Ingest and ask (same collection name everywhere)
+corpus ingest ./my-docs --collection notes
+corpus ask "What is X?" -c notes
+corpus summarize -c notes
 
-# 6. Start using it
-corpus tools rag ui                          # TUI chat (picks collection)
-corpus tools rag ui -c notes                 # TUI with specific collection
-corpus tools rag query "What is X?" -c notes # CLI query
-corpus-mcp-server --profile dev              # MCP server for editors
+# 6. Also available
+corpus tools rag ui -c notes                 # TUI
+corpus-mcp-server --profile simple           # MCP for editors (this is the default)
 
 # 7. Process video content
 corpus tools video ingest lecture.mp4 -c notes
@@ -68,6 +68,9 @@ corpus tools video ingest-url "https://youtube.com/watch?v=..." -c notes
 corpus
 ├── setup              # Interactive setup wizard
 ├── doctor             # Health checks (DB, LLM, embeddings)
+├── ingest             # Ingest documents (alias of tools rag ingest)
+├── ask                # Ask a collection (alias of tools rag query)
+├── summarize          # Summarize a collection
 ├── benchmark          # Performance benchmarks
 ├── tools
 │   ├── rag            # RAG pipeline (ingest, sync, query, chat, ui)

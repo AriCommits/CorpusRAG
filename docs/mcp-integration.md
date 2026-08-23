@@ -7,6 +7,7 @@ auto-exposed. If a capability is missing from the table below, use the CLI.
 ## Start the server
 
 ```bash
+corpus-mcp-server --profile simple
 corpus-mcp-server --profile dev
 corpus-mcp-server --profile learn
 corpus-mcp-server --profile full
@@ -17,6 +18,7 @@ Profiles:
 
 | Profile | Tools |
 |---------|--------|
+| `simple` (default) | `list_collections`, `rag_ingest`, `store_text`, `rag_query`, `generate_summary` |
 | `dev` | RAG ingest/query/retrieve, `store_text`, collections, telemetry |
 | `learn` | flashcards/summary/quiz, transcribe/clean, video OCR jobs |
 | `full` | `dev` + `learn` |
@@ -35,7 +37,7 @@ Tool configs are built from `config.raw` so YAML `rag:` / `flashcards:` /
   "mcpServers": {
     "corpusrag": {
       "command": "corpus-mcp-server",
-      "args": ["--profile", "dev", "--transport", "stdio"]
+      "args": ["--profile", "simple", "--transport", "stdio"]
     }
   }
 }
@@ -45,7 +47,7 @@ Tool configs are built from `config.raw` so YAML `rag:` / `flashcards:` /
 
 | Capability | CLI | MCP |
 |---|---|---|
-| ingest / query / retrieve | `corpus tools rag …` | `rag_ingest`, `rag_query`, `rag_retrieve` |
+| ingest / query / retrieve | `corpus ingest` / `corpus ask` / `corpus tools rag …` | `rag_ingest`, `rag_query`, `rag_retrieve` |
 | store raw text | — | `store_text` |
 | flashcards / summary / quiz | `corpus tools learning …` / `corpus tools summaries` | `generate_flashcards`, `generate_summary`, `generate_quiz` |
 | video OCR jobs | `corpus tools video ingest` / `ingest-url` | `video_ingest_local`, `video_ingest_url`, `video_combined_pipeline`, `video_job_status`, `video_list_jobs` |
@@ -71,8 +73,7 @@ There is no per-collection resource URI and no lecture-pipeline prompt.
 ## Tool notes
 
 - `rag_ingest` only allows paths under the configured vault.
-- `store_text` writes child chunks without going through the full parent-child
-  ingest path; prefer CLI ingest for documents.
+- `store_text` goes through `Corpus.ingest_text` (same collection as CLI ingest).
 - `transcribe_video` uses Whisper on a local path; `collection` is returned in
   the JSON result but is not passed into Whisper.
 - Video OCR ingest tools return a `job_id`; poll with `video_job_status`.

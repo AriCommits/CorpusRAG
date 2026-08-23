@@ -5,16 +5,30 @@ Expose your RAG knowledge base to AI agents via the [Model Context Protocol](htt
 ## Quick Start
 
 ```bash
-# For editor integration (Claude, Kiro, Neovim, OpenCode)
+# Recommended: query + summarize (this is the default)
+corpus-mcp-server --profile simple --transport stdio
+
+# Broader RAG tools (retrieve, collection_info, telemetry)
 corpus-mcp-server --profile dev --transport stdio
 
-# For HTTP access (remote/cloud)
+# HTTP access with every tool
 corpus-mcp-server --profile full --transport streamable-http --port 8000
 ```
 
 ## Profiles
 
 Profiles control which tools are available. Use `--profile` to select one.
+Default is **`simple`**.
+
+### `simple` — query and summarize (default)
+
+| Tool | Description |
+|------|-------------|
+| `list_collections` | List all collections |
+| `rag_ingest` | Ingest documents from a file or directory |
+| `store_text` | Store arbitrary text into a collection |
+| `rag_query` | Ask a collection (LLM-generated answer) |
+| `generate_summary` | Summarize a collection |
 
 ### `dev` — for coding agents
 
@@ -76,7 +90,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "corpusrag": {
       "command": "corpus-mcp-server",
-      "args": ["--profile", "dev", "--transport", "stdio"]
+      "args": ["--profile", "simple", "--transport", "stdio"]
     }
   }
 }
@@ -91,7 +105,7 @@ Add to `.kiro/settings.json` or your workspace MCP config:
   "mcpServers": {
     "corpusrag": {
       "command": "corpus-mcp-server",
-      "args": ["--profile", "dev", "--transport", "stdio"]
+      "args": ["--profile", "simple", "--transport", "stdio"]
     }
   }
 }
@@ -120,7 +134,7 @@ Add to `.opencode.json`:
   "mcpServers": {
     "corpusrag": {
       "command": "corpus-mcp-server",
-      "args": ["--profile", "dev", "--transport", "stdio"]
+      "args": ["--profile", "simple", "--transport", "stdio"]
     }
   }
 }

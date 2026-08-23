@@ -7,10 +7,13 @@ MCP subset — MCP is not an automatic projection of every CLI command.
 
 ## Design principles
 
-1. **Layered layout** — config, database, LLM backends, tools, one orchestrator.
+1. **Kernel first** — `src/kernel.py` (`Corpus`) is ingest / ask / summarize /
+   sample / complete. New utilities should call `sample` + `complete`, not add
+   a new MCP/CLI tree by default.
 2. **One collection namespace** — user-facing name `notes` is stored as `rag_notes`.
    Flashcards, summaries, and quizzes read that same collection.
-3. **CLI is the full product** — MCP exposes a thinner adapter for agents.
+3. **CLI is the full product** — MCP exposes a hand-picked subset. Default
+   profile is `simple` (list, ingest, store_text, query, summarize).
 4. **YAML configuration** — `configs/base.yaml` plus optional per-tool files,
    `CC_*` env overrides, then CLI flags.
 5. **Pluggable LLM backends** — Ollama, OpenAI-compatible, Anthropic-compatible.
@@ -24,8 +27,10 @@ MCP subset — MCP is not an automatic projection of every CLI command.
 │  Access                                                         │
 │  ┌──────────────────────┐     ┌──────────────────────────────┐  │
 │  │  corpus CLI          │     │  corpus-mcp-server           │  │
-│  │  (full command tree) │     │  (manual tool subset)        │  │
+│  │  ingest/ask/summarize│     │  profile simple (default)    │  │
+│  │  + nested tools      │     │  (manual tool subset)        │  │
 │  └──────────────────────┘     └──────────────────────────────┘  │
+│  Python: from kernel import Corpus                              │
 ├─────────────────────────────────────────────────────────────────┤
 │  Orchestration                                                  │
 │  corpus orchestrate lecture-pipeline                            │
@@ -41,6 +46,16 @@ MCP subset — MCP is not an automatic projection of every CLI command.
 ```
 
 ## Modules (`src/`)
+
+### Kernel (`kernel.py`)
+
+`Corpus.from_config_path(...)` / `Corpus.from_loaded(config, db)`:
+
+- `ingest_path` / `ingest_text`
+- `ask` / `summarize`
+- `sample` / `complete` — the extension point for new study utilities
+
+CLI `corpus ingest|ask|summarize` and MCP `simple` call this object.
 
 ### Configuration (`config/`)
 
@@ -93,8 +108,9 @@ RRF fusion, optional cross-encoder rerank. Stages are enabled/disabled per name.
 
 ### MCP (`mcp_server/`)
 
-FastMCP server. Tools are registered by hand in `profiles.py` (`dev`, `learn`,
-`full`). Telemetry uses `log_tool()`. Transports: stdio (default) and
+FastMCP server. Tools are registered by hand in `profiles.py` (`simple`,
+`dev`, `learn`, `full`). Default profile is `simple`. Telemetry uses
+`log_tool()`. Transports: stdio (default) and
 `streamable-http`. Resource: `collections://list`. Prompt: `study_session_prompt`.
 
 ### Orchestrations (`orchestrations/`)
@@ -109,7 +125,7 @@ RAG ingest → summary / flashcards / quiz. CLI:
 
 ```
 corpus
-├── setup | doctor | benchmark
+├── setup | doctor | ingest | ask | summarize | benchmark
 ├── tools
 │   ├── rag (ingest, sync, query, chat, ui)
 │   ├── video | handwriting | summaries

@@ -1,7 +1,9 @@
 # CorpusRAG Troubleshooting Guide
 
 Start with `corpus doctor`. It checks the database, LLM, and embedding backends
-against your config.
+against your config. Persistent mode opens the local Chroma store (no Docker).
+HTTP mode probes `http://<host>:<port>/api/v2/heartbeat` — from the host that
+is port **8001** when using the repo Compose file.
 
 ## Quick checks
 
@@ -22,7 +24,7 @@ docker compose -f .docker/docker-compose.yml logs -f chromadb
 Connectivity:
 
 ```bash
-curl http://localhost:8001/api/v1/heartbeat    # ChromaDB published port
+curl http://localhost:8001/api/v2/heartbeat    # ChromaDB published port
 curl http://localhost:11434/api/tags           # Ollama
 ```
 
