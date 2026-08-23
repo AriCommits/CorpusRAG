@@ -6,6 +6,7 @@
 summaries:
   # Default summary length: short | medium | long
   summary_length: medium
+  collection_prefix: rag
   # LLM overrides for summarization.
   llm:
     model: gemma4:26b-a4b-it-q4_K_M
@@ -20,6 +21,7 @@ summaries:
 
 # Flashcards Configuration
 flashcards:
+  collection_prefix: rag
   # Default difficulty: beginner | intermediate | advanced
   difficulty: intermediate
   # Default number of flashcards to generate.
@@ -40,6 +42,7 @@ flashcards:
 
 # Quizzes Configuration
 quizzes:
+  collection_prefix: rag
   # Default number of questions to generate.
   count: 10
   # Output format: markdown | json | csv

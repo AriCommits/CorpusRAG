@@ -473,6 +473,14 @@ class TestIngestHandwritingBasic:
             assert result.pages_ingested > 0
 
 
+def test_rag_agent_exposes_handwriting_ingest_methods():
+    """RAGAgent must implement the methods handwriting ingest calls."""
+    from tools.rag.agent import RAGAgent
+
+    assert callable(getattr(RAGAgent, "ingest_text", None))
+    assert callable(getattr(RAGAgent, "get_ingested_hashes", None))
+
+
 class TestIngestHandwritingAgent:
     """Tests specifically for agent interaction."""
 

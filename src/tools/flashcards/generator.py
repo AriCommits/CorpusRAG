@@ -5,7 +5,7 @@ import re
 
 from db import DatabaseBackend
 from llm import PromptTemplates, create_backend
-from tools.rag.embeddings import EmbeddingClient
+from tools.rag.pipeline import EmbeddingClient
 
 from .config import FlashcardConfig
 

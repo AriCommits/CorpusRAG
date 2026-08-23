@@ -148,10 +148,8 @@ def ingest_cmd(
     click.echo(f"  Blank pages (skip):       {result.skipped_blank}")
     click.echo(f"  Pages ingested:           {result.pages_ingested}")
     if result.low_confidence_pages > 0:
-        click.echo(
-            f"  ⚠ Low confidence pages:  {result.low_confidence_pages} "
-            f"(run `corpus handwriting review --collection {collection}` to inspect)"
-        )
+        extra = f" (see {result.warnings_file})" if result.warnings_file else ""
+        click.echo(f"  ⚠ Low confidence pages:  {result.low_confidence_pages}{extra}")
     if result.failed_pages > 0:
         click.echo(f"  ⚠ Failed pages:           {result.failed_pages}")
     if result.warnings_file:

@@ -34,7 +34,7 @@ def setup(reset: bool) -> None:
     if marker_file.exists() and not reset:
         click.echo(
             "Setup already completed. Use --reset to run wizard again or "
-            "'corpus rag ui' to start using CorpusRAG."
+            "'corpus tools rag ui' to start using CorpusRAG."
         )
         return
 

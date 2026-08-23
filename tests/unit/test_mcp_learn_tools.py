@@ -113,6 +113,12 @@ class TestGenerateFlashcards:
         assert "flashcards" in result
         assert "collection" in result
         assert "count" in result
+        fake_generator_instance.generate.assert_called_once_with(
+            "notes", difficulty="medium", count=10
+        )
+        fake_config_cls.from_dict.assert_called_once()
+        passed = fake_config_cls.from_dict.call_args.args[0]
+        assert passed == (tmp_config.raw or tmp_config.to_dict())
 
 
 # ---------------------------------------------------------------------------
@@ -195,11 +201,48 @@ class TestGenerateQuiz:
         assert "quiz" in result
         assert "collection" in result
         assert "count" in result
+        fake_generator_instance.generate.assert_called_once_with("notes", count=5)
 
 
 # ---------------------------------------------------------------------------
 # TestCleanTranscript
 # ---------------------------------------------------------------------------
+
+
+class TestTranscribeVideo:
+    def test_uses_real_transcriber_signature(self, tmp_config, mock_db, tmp_path):
+        video_file = tmp_path / "lecture.mp4"
+        video_file.write_bytes(b"fake")
+
+        fake_video_config_instance = MagicMock()
+        fake_video_config_cls = MagicMock()
+        fake_video_config_cls.from_dict = MagicMock(return_value=fake_video_config_instance)
+
+        fake_transcriber_instance = MagicMock()
+        fake_transcriber_instance.transcribe_file.return_value = "hello world"
+        fake_transcriber_cls = MagicMock(return_value=fake_transcriber_instance)
+
+        fake_video_module = MagicMock()
+        fake_video_module.VideoConfig = fake_video_config_cls
+        fake_video_module.VideoTranscriber = fake_transcriber_cls
+
+        saved = sys.modules.get("tools.video")
+        sys.modules["tools.video"] = fake_video_module
+        try:
+            learn = _load_learn_module()
+            result = learn.transcribe_video(str(video_file), "notes", "base", tmp_config, mock_db)
+        finally:
+            if saved is None:
+                sys.modules.pop("tools.video", None)
+            else:
+                sys.modules["tools.video"] = saved
+
+        assert result["status"] == "success"
+        assert result["transcript"] == "hello world"
+        fake_transcriber_cls.assert_called_once_with(fake_video_config_instance)
+        transcribe_args = fake_transcriber_instance.transcribe_file.call_args.args
+        assert len(transcribe_args) == 1
+        assert Path(transcribe_args[0]) == video_file
 
 
 class TestCleanTranscript:

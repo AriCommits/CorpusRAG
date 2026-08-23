@@ -18,6 +18,23 @@ def test_schema_py_deleted() -> None:
     assert not Path("src/config/schema.py").exists(), "schema.py should be deleted"
 
 
+def test_plan21_unused_layers_deleted() -> None:
+    """Sprint 1 D1/D3: unused adapters, shims, utils, and models are gone."""
+    removed = [
+        "src/tools/rag/vectorstores/langchain_adapter.py",
+        "src/tools/rag/embeddings.py",
+        "src/tools/rag/storage.py",
+        "src/tools/rag/markdown_parser.py",
+        "src/tools/rag/message.py",
+        "src/tools/rag/context.py",
+        "src/utils/secrets.py",
+        "src/utils/tokens.py",
+        "src/db/models.py",
+    ]
+    for path in removed:
+        assert not Path(path).exists(), f"{path} should be deleted"
+
+
 def test_bulk_export_removed_from_cli() -> None:
     """Verify bulk_export function was removed from cli.py."""
     cli_path = Path("src/cli.py")

@@ -215,7 +215,7 @@ def register_video_tools(mcp: FastMCP, config: BaseConfig, db: DatabaseBackend, 
     from tools.video.config import VideoConfig
     from tools.video.jobs import get_job_manager
 
-    video_config = VideoConfig.from_dict(config.to_dict())
+    video_config = VideoConfig.from_dict(config.raw or config.to_dict())
     job_mgr = get_job_manager(
         max_workers=video_config.max_concurrent_jobs,
         expiry_seconds=video_config.job_expiry_seconds,

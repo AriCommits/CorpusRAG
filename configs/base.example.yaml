@@ -342,6 +342,9 @@ summaries:
   # long = 500-800 words (comprehensive)
   summary_length: medium
 
+  # Prefix shared with RAG ingest so `corpus tools summaries -c notes` reads rag_notes
+  collection_prefix: rag
+
   # LLM settings for summarization
   # Can override global llm settings for different model/temperature
   llm:
@@ -373,6 +376,9 @@ flashcards:
   # Default number of flashcards to generate
   count: 15
 
+  # Prefix shared with RAG ingest so flashcards read rag_<collection>
+  collection_prefix: rag
+
   # LLM settings for flashcard generation
   llm:
     model: gemma4:26b-a4b-it-q4_K_M
@@ -400,6 +406,9 @@ flashcards:
 quizzes:
   # Default number of questions to generate
   count: 10
+
+  # Prefix shared with RAG ingest so quizzes read rag_<collection>
+  collection_prefix: rag
 
   # Output format
   # markdown = readable format with answers

@@ -1,10 +1,9 @@
 """Vision OCR via Ollama multimodal models."""
 
-import base64
 import logging
 from pathlib import Path
 
-import httpx
+from tools.ocr_client import ocr_image
 
 from .classifier import FrameType
 
@@ -36,24 +35,10 @@ def ocr_frame(
     endpoint: str = "http://localhost:11434",
 ) -> tuple[str, bool]:
     prompt = SLIDE_PROMPT if frame_type == FrameType.SLIDE else CHALKBOARD_PROMPT
-    MAX_FRAME_SIZE = 50 * 1024 * 1024  # 50MB
-    if frame_path.stat().st_size > MAX_FRAME_SIZE:
-        logger.warning("Frame too large, skipping: %s", frame_path)
+    text = ocr_image(frame_path, prompt, model=model, endpoint=endpoint)
+    if not text:
+        logger.warning("Frame too large or empty OCR result, skipping: %s", frame_path)
         return "[NO_CONTENT]", False
-    image_b64 = base64.b64encode(frame_path.read_bytes()).decode()
-
-    with httpx.Client(timeout=120.0) as client:
-        resp = client.post(
-            f"{endpoint}/api/chat",
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt, "images": [image_b64]}],
-                "stream": False,
-            },
-        )
-        resp.raise_for_status()
-
-    text = resp.json()["message"]["content"].strip()
     latex_chars = text.count("$") + text.count("\\")
     is_math_heavy = (latex_chars / max(len(text), 1)) > 0.25
     return text, is_math_heavy

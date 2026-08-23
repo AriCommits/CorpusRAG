@@ -5,6 +5,7 @@ from .embeddings import EmbeddingClient
 from .parsers import (
     ParsedTag,
     extract_tags_from_text,
+    parse_and_split,
     parse_hierarchical_tags,
     split_markdown_semantic,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "EmbeddingClient",
     "ParsedTag",
     "extract_tags_from_text",
+    "parse_and_split",
     "parse_hierarchical_tags",
     "split_markdown_semantic",
     "LocalFileStore",

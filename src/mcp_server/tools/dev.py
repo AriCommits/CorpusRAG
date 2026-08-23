@@ -25,7 +25,7 @@ def rag_ingest(
         return {"status": "error", "error": str(e)}
 
     try:
-        rag_config = RAGConfig.from_dict(config.to_dict())
+        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
         ingester = RAGIngester(rag_config, db)
         result = ingester.ingest_path(str(validated_path), collection)
         return {
@@ -50,7 +50,7 @@ def rag_query(
         return {"status": "error", "error": str(e)}
 
     try:
-        rag_config = RAGConfig.from_dict(config.to_dict())
+        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
         agent = RAGAgent(rag_config, db)
         response = agent.query(validated_query, collection, top_k=validated_top_k)
         return {"status": "success", "query": query, "response": response}
@@ -70,7 +70,7 @@ def rag_retrieve(
         return {"status": "error", "error": str(e)}
 
     try:
-        rag_config = RAGConfig.from_dict(config.to_dict())
+        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
         retriever = RAGRetriever(rag_config, db)
         chunks = retriever.retrieve(validated_query, collection, top_k=validated_top_k)
         return {
@@ -100,7 +100,7 @@ def store_text(
     try:
         if len(text) > 100_000:
             return {"status": "error", "error": "Text too large (max 100KB)"}
-        rag_config = RAGConfig.from_dict(config.to_dict())
+        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
         full_collection = f"{rag_config.collection_prefix}_{collection}"
 
         if not db.collection_exists(full_collection):

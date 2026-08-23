@@ -25,7 +25,7 @@ def video_ingest_local(
     if not video_path.exists():
         return {"status": "error", "error": f"File not found: {path}"}
 
-    video_config = VideoConfig.from_dict(config.to_dict())
+    video_config = VideoConfig.from_dict(config.raw or config.to_dict())
     output_dir = video_config.paths.output_dir / "video_ocr"
 
     def _run(progress_cb):
@@ -65,7 +65,7 @@ def video_ingest_url(
     from tools.video.download import download_video
     from tools.video.ingest import ingest_video
 
-    video_config = VideoConfig.from_dict(config.to_dict())
+    video_config = VideoConfig.from_dict(config.raw or config.to_dict())
     output_dir = video_config.paths.output_dir / "video_ocr"
     dl_dir = video_config.paths.scratch_dir / "downloads"
 
@@ -114,7 +114,7 @@ def video_combined_pipeline(
     from tools.video.download import download_video, is_url
     from tools.video.ingest import ingest_video
 
-    video_config = VideoConfig.from_dict(config.to_dict())
+    video_config = VideoConfig.from_dict(config.raw or config.to_dict())
     output_dir = video_config.paths.output_dir / "video_combined"
 
     def _run(progress_cb):

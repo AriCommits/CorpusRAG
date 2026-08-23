@@ -18,7 +18,7 @@ class QuizConfig(BaseConfig):
     )
     format: str = "markdown"  # markdown | json | csv
     include_explanations: bool = True
-    collection_prefix: str = "quizzes"
+    collection_prefix: str = "rag"
     max_context_chars: int = 12000
 
     @classmethod
@@ -54,6 +54,6 @@ class QuizConfig(BaseConfig):
             difficulty_distribution=difficulty_dist,
             format=quiz_data.get("format", "markdown"),
             include_explanations=quiz_data.get("include_explanations", True),
-            collection_prefix=quiz_data.get("collection_prefix", "quizzes"),
+            collection_prefix=quiz_data.get("collection_prefix", "rag"),
             max_context_chars=quiz_data.get("max_context_chars", 12000),
         )
