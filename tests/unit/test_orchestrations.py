@@ -7,6 +7,7 @@ import pytest
 from config import BaseConfig, DatabaseConfig
 from db import ChromaDBBackend
 from orchestrations import LecturePipelineOrchestrator
+from orchestrations.lecture_pipeline import CourseTranscriptionError
 
 
 @pytest.fixture
@@ -138,6 +139,7 @@ def test_process_course_discovers_nested_and_queues(tmp_path):
     assert q_kwargs["transcriber"] is MockTranscriber.return_value
     assert q_kwargs["cleaner"] is MockCleaner.return_value
     assert q_kwargs["gates"] is MockGates.return_value
+    assert q_kwargs["max_workers"] == 2
     # Exactly one Whisper load and one cleaner for the whole course.
     MockTranscriber.assert_called_once()
     MockCleaner.assert_called_once()
@@ -235,7 +237,7 @@ def test_process_course_needs_both_discovery_outputs(tmp_path):
 
 
 def test_process_course_skips_failed_jobs_and_numbers_by_sorted_source(tmp_path):
-    """Failures are dropped; lecture numbers follow sorted successful source order."""
+    """Failures raise after successes; lecture numbers follow sorted source order."""
     config = _course_config(tmp_path)
     db = MagicMock()
     root = tmp_path / "course"
@@ -266,8 +268,12 @@ def test_process_course_skips_failed_jobs_and_numbers_by_sorted_source(tmp_path)
         MockIngester.return_value.ingest_path.return_value.chunks_indexed = 1
 
         orch = LecturePipelineOrchestrator(config, db)
-        results = orch.process_course(root, course="BIOL101")
+        with pytest.raises(CourseTranscriptionError) as exc:
+            orch.process_course(root, course="BIOL101")
 
+    results = exc.value.results
+    assert len(exc.value.failures) == 1
+    assert exc.value.failures[0].source == b
     # Only a and c succeeded; numbered 1,2 by sorted source (a before c).
     assert len(results) == 2
     assert results[0]["lecture_num"] == 1

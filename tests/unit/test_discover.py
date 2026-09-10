@@ -159,3 +159,43 @@ def test_nonexistent_path_raises(tmp_path):
 
     with pytest.raises(FileNotFoundError):
         discover_media_files(missing, EXTS)
+
+
+def test_skips_symlink_file(tmp_path):
+    outside = tmp_path / "outside.mp4"
+    outside.write_bytes(b"fake")
+    inside = tmp_path / "in"
+    inside.mkdir()
+    link = inside / "alias.mp4"
+    try:
+        link.symlink_to(outside)
+    except OSError:
+        pytest.skip("symlinks not permitted")
+
+    result = discover_media_files(inside, EXTS)
+
+    assert result == []
+
+
+def test_skips_symlink_directory_outside_tree(tmp_path):
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "hidden.mp4").write_bytes(b"fake")
+    root = tmp_path / "root"
+    root.mkdir()
+    link = root / "link"
+    try:
+        link.symlink_to(other)
+    except OSError:
+        pytest.skip("symlinks not permitted")
+
+    with pytest.raises(FileNotFoundError):
+        discover_media_files(root, EXTS)
+
+
+def test_max_files_raises(tmp_path):
+    for name in ("a.mp4", "b.mp4", "c.mp4"):
+        (tmp_path / name).write_bytes(b"fake")
+
+    with pytest.raises(RuntimeError, match="more than 2 media files"):
+        discover_media_files(tmp_path, EXTS, max_files=2)

@@ -37,8 +37,8 @@ class TranscriptCleaner:
         Returns:
             Cleaned transcript text
         """
-        # Format the prompt with the transcript
-        prompt = self.config.clean_prompt.format(transcript=transcript)
+        # Insert the transcript without interpreting other braces in the speech.
+        prompt = self.config.clean_prompt.replace("{transcript}", transcript)
 
         # Call LLM backend (supports any configured backend: Ollama, OpenAI, etc.)
         with self._gates.llm:

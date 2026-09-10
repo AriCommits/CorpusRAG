@@ -50,6 +50,7 @@ Configured under `video:` in your config (see
 | `audio_sample_rate` | `16000` | Extracted WAV sample rate in Hz (Whisper expects 16000) |
 | `audio_channels` | `1` | Extracted WAV channels (1 = mono, 2 = stereo) |
 | `keep_extracted_audio` | `false` | Debug flag: keep WAVs under `scratch_dir/audio` instead of deleting them after transcription |
+| `audio_timeout_seconds` | `1800` | ffmpeg kill deadline for audio extraction |
 
 ffmpeg must be installed and on your `PATH`; extraction fails with a clear
 error otherwise.
@@ -61,7 +62,8 @@ directory (or single file) and process many videos at once.
 
 **Recursive discovery (default).** The directory is scanned recursively for
 supported extensions; directories named `scratch`, `.git`, and `__pycache__`
-are skipped. Pass `--no-recursive` to scan only the top-level folder.
+are skipped, as are symlinks. More than 500 matches is an error. Pass
+`--no-recursive` to scan only the top-level folder.
 
 **Per-parent combine.** Successful transcripts are combined **per parent
 directory**, so a tree like:
@@ -73,12 +75,17 @@ Course/
 ```
 
 produces one transcript for `Course/P1L1` and a separate one for
-`Course/P1L2` — the two lectures are never merged. A single input folder (or a
-single file) keeps the legacy single-output path.
+`Course/P1L2` — the two lectures are never merged. Combined files are written
+under `paths.output_dir/<relative-parent>/` (`transcribe`) or
+`paths.scratch_dir/video/<relative-parent>/` (`pipeline`), not next to the
+MP4s. The cleaned pipeline file is named after the lecture folder
+(`P1L1` → `p1l1_transcript.md`). A single input folder (or a single file)
+keeps the legacy single-output path for the raw file.
 
 **Concurrency (`--workers`).** Files run through a shared queue whose default
 size is the `video.max_concurrent_jobs` config value (**2**). Override with
-`--workers N`; `--workers 1` runs fully serially. Per file the pipeline is:
+`--workers N`; `--workers 1` runs fully serially; the hard cap is **8**. Per
+file the pipeline is:
 
 1. **Extract audio** with ffmpeg — *parallel*, never gated.
 2. **Whisper transcription** — *exclusive*, one file at a time.
@@ -123,7 +130,7 @@ and worker settings.
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--no-recursive` | Scan only the top-level folder | false (recurses) |
-| `--workers` | Concurrent queue workers | `video.max_concurrent_jobs` (2) |
+| `--workers` | Concurrent queue workers (capped at 8) | `video.max_concurrent_jobs` (2) |
 | `--course, -c` | Course identifier (e.g. BIOL101) | none |
 | `--lecture, -l` | Lecture number | none |
 | `--clean` | (`transcribe`) run LLM cleaning after transcription | false |

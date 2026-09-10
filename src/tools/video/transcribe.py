@@ -62,8 +62,12 @@ class VideoTranscriber:
         """
         video_path = Path(video_path)
 
-        audio_dir = self.config.paths.scratch_dir / "audio"
-        wav = audio_dir / f"{video_path.stem}_{uuid.uuid4().hex[:8]}.wav"
+        audio_dir = Path(self.config.paths.scratch_dir) / "audio"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        safe_stem = (
+            video_path.stem.replace("/", "_").replace("\\", "_").replace("..", "_")
+        ) or "audio"
+        wav = audio_dir / f"{safe_stem}_{uuid.uuid4().hex[:8]}.wav"
 
         try:
             audio.extract_audio(
@@ -71,15 +75,18 @@ class VideoTranscriber:
                 wav,
                 sample_rate=self.config.audio_sample_rate,
                 channels=self.config.audio_channels,
+                allowed_root=audio_dir.resolve(),
+                timeout=float(getattr(self.config, "audio_timeout_seconds", 1800)),
             )
 
-            model = self._load_model()
             language = self.config.whisper_language or None
             # faster-whisper yields segments lazily, so the actual compute
-            # happens while iterating. Hold the whisper gate across iteration
-            # (ffmpeg extraction above stays unlocked and can overlap).
+            # happens while iterating. Hold the whisper gate across model load
+            # AND iteration so two workers cannot both construct WhisperModel.
+            # ffmpeg extraction above stays unlocked and can overlap.
             lines = []
             with self._gates.whisper:
+                model = self._load_model()
                 segments, _ = model.transcribe(str(wav), language=language)
                 for segment in segments:
                     text = segment.text.strip()

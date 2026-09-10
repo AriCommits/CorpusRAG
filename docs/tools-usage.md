@@ -86,10 +86,12 @@ corpus tools video pipeline ./Course --skip-clean
 `transcribe` and `pipeline` discover media under a directory **recursively by
 default** (`--no-recursive` scans only the top level) and combine transcripts
 **per parent folder** — `Course/P1L1/*.mp4` and `Course/P1L2/*.mp4` become two
-separate transcripts, never one. Files flow through a shared queue whose size
-defaults to `video.max_concurrent_jobs` (**2**) and is set with `--workers`.
-Per file: ffmpeg audio extraction runs in parallel, Whisper runs exclusively,
-then LLM cleaning runs exclusively; a failed file does not abort the rest.
+separate transcripts, never one. Combined files are written under `output_dir`
+or `scratch_dir/video`, not next to the MP4s. Files flow through a shared queue
+whose size defaults to `video.max_concurrent_jobs` (**2**), is set with
+`--workers`, and is capped at **8**. Per file: ffmpeg audio extraction runs in
+parallel, Whisper runs exclusively, then LLM cleaning runs exclusively; a failed
+file does not abort the rest.
 
 If Whisper (CUDA) and Ollama share one GPU you may hit an out-of-memory error;
 use `--workers 1` or `whisper_device: cpu`.

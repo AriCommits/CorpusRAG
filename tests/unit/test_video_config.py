@@ -13,6 +13,7 @@ def test_from_dict_defaults():
     assert cfg.audio_sample_rate == 16000
     assert cfg.audio_channels == 1
     assert cfg.keep_extracted_audio is False
+    assert cfg.audio_timeout_seconds == 1800.0
 
 
 def test_from_dict_audio_overrides():

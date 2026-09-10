@@ -54,7 +54,55 @@ def _resolve(name: str):
 
 def _default_workers(cfg) -> int:
     """Resolve the default worker count from config (``max_concurrent_jobs``)."""
-    return max(1, int(getattr(cfg, "max_concurrent_jobs", 1) or 1))
+    from tools.video.pipeline_queue import clamp_workers
+
+    return clamp_workers(getattr(cfg, "max_concurrent_jobs", 1) or 1)
+
+
+def _output_subdir(root: Path, parent: Path) -> Path:
+    """Relative path of ``parent`` under the discovery ``root``, without ``..``.
+
+    Used to namespace generated transcripts under configured output/scratch
+    dirs instead of writing into the source lecture folder.
+    """
+    try:
+        rel = parent.resolve().relative_to(root.resolve())
+    except ValueError:
+        rel = Path(parent.name)
+    parts = [p for p in rel.parts if p not in ("", ".", "..")]
+    return Path(*parts) if parts else Path(parent.name)
+
+
+def _ensure_under(path: Path, root: Path) -> Path:
+    """Resolve ``path`` and refuse it if it escapes ``root``."""
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(root.resolve())
+    except ValueError:
+        raise click.ClickException(f"Refusing to write outside {root}: {resolved}")
+    return resolved
+
+
+def _cleaned_transcript_name(lecture_dir: Path) -> str:
+    """Filename for a cleaned transcript, derived from the lecture folder.
+
+    ``P1L1`` → ``p1l1_transcript.md``. Unsafe characters are replaced so the
+    name cannot escape the scratch directory.
+    """
+    raw = lecture_dir.name.strip().lower().replace("..", "_")
+    pieces = []
+    current: list[str] = []
+    for char in raw:
+        if char.isalnum() or char in "-_":
+            current.append(char)
+        else:
+            if current:
+                pieces.append("".join(current))
+                current = []
+    if current:
+        pieces.append("".join(current))
+    stem = "_".join(pieces) or "lecture"
+    return f"{stem}_transcript.md"
 
 
 def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
@@ -70,6 +118,7 @@ def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
     """
     VideoTranscriber = _resolve("VideoTranscriber")
     run_transcription_queue = _resolve("run_transcription_queue")
+    from tools.video.pipeline_queue import clamp_workers
 
     click.echo(f"Queued {len(files)} videos...")
 
@@ -83,7 +132,7 @@ def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
         transcriber=transcriber,
         cleaner=cleaner,
         skip_clean=skip_clean,
-        max_workers=workers,
+        max_workers=clamp_workers(workers),
     )
 
 
@@ -231,8 +280,10 @@ def transcribe(
             else:
                 output_path = cfg.paths.output_dir / "transcript.md"
         else:
-            # Tree mode: one transcript per parent directory.
-            output_path = parent / "transcript.md"
+            # Tree mode: one transcript per parent, under configured output_dir.
+            subdir = _output_subdir(root, parent)
+            output_path = cfg.paths.output_dir / subdir / "transcript.md"
+            _ensure_under(output_path, cfg.paths.output_dir)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(combined, encoding="utf-8")
@@ -367,7 +418,9 @@ def pipeline(
         if single_folder:
             scratch = legacy_scratch
         else:
-            scratch = parent
+            subdir = _output_subdir(root, parent)
+            scratch = cfg.paths.scratch_dir / "video" / subdir
+            _ensure_under(scratch, cfg.paths.scratch_dir)
         scratch.mkdir(parents=True, exist_ok=True)
 
         # Raw transcript always written from the queue's raw payload.
@@ -384,7 +437,7 @@ def pipeline(
             cleaned_combined = _combine_group(
                 combiner, group, use_cleaned=True, course=course, lecture=lecture
             )
-            cleaned_path = scratch / "transcript_cleaned.md"
+            cleaned_path = scratch / _cleaned_transcript_name(parent)
             cleaned_path.write_text(cleaned_combined, encoding="utf-8")
             click.echo(f"✓ Cleaned transcript: {cleaned_path}")
             current_file = cleaned_path

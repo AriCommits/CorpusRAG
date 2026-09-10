@@ -271,6 +271,7 @@ video:
   audio_sample_rate: 16000           # Extracted WAV sample rate in Hz (Whisper expects 16000)
   audio_channels: 1                  # Extracted WAV channels: 1 = mono, 2 = stereo
   keep_extracted_audio: false        # Debug: keep WAVs under scratch_dir/audio instead of deleting
+  audio_timeout_seconds: 1800        # ffmpeg kill deadline for audio extract
   models_dir: ./models/whisper       # Cache directory for downloaded models
   clean_model: gemma4:26b-a4b-it-q4_K_M   # Model used for transcript cleaning
   output_format: markdown            # markdown | text | json
@@ -304,6 +305,9 @@ transcription independent of the container's video stream and produces the
 - `keep_extracted_audio` (default `false`) is a debug flag. When `true`, the
   extracted WAVs are left under `scratch_dir/audio/` after transcription
   instead of being deleted, so you can inspect what Whisper actually received.
+- `audio_timeout_seconds` (default `1800`) is the ffmpeg kill deadline. Sample
+  rate is clamped to 8–48 kHz and channels to 1–2. Extracted WAVs must stay
+  under `scratch_dir/audio`.
 
 Note that `corpus tools video ingest` is a separate, **visual OCR / frame**
 path: it extracts frames and reads slide/chalkboard text with a vision model
@@ -316,16 +320,19 @@ directory and process many videos together:
 
 - **Recursive discovery (default).** The folder is scanned recursively for
   supported extensions (`scratch`, `.git`, `__pycache__` are skipped).
+  Symlinks are ignored. More than 500 matches raises an error.
   `--no-recursive` limits the scan to the top level.
 - **Per-parent combine.** Transcripts are combined **per parent directory**, so
   `Course/P1L1/*.mp4` and `Course/P1L2/*.mp4` yield two separate transcripts
-  rather than one merged document.
+  rather than one merged document. Combined files are written under
+  `paths.output_dir` (transcribe) or `paths.scratch_dir/video` (pipeline), never
+  into the source lecture folder.
 - **Workers.** Files run through a shared queue whose default size is
   `video.max_concurrent_jobs` (**2**); override per run with `--workers N`
-  (`--workers 1` is fully serial). Per file: ffmpeg audio extraction runs in
-  parallel, Whisper transcription is exclusive (one at a time), and LLM cleaning
-  is exclusive (one at a time). A failed file is reported but does not abort the
-  others.
+  (`--workers 1` is fully serial; the hard cap is **8**). Per file: ffmpeg audio
+  extraction runs in parallel, Whisper transcription is exclusive (one at a
+  time), and LLM cleaning is exclusive (one at a time). A failed file is
+  reported but does not abort the others.
 
 > **Same-GPU OOM.** Running Whisper on CUDA while Ollama serves the cleaning
 > model on the **same** GPU can exhaust VRAM. Mitigate by lowering concurrency

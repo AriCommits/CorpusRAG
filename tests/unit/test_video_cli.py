@@ -279,10 +279,14 @@ def test_transcribe_tree_writes_per_parent(wired, tmp_path):
     result = runner.invoke(video, ["transcribe", str(root), "-f", "cfg.yaml"])
 
     assert result.exit_code == 0, result.output
-    assert (p1 / "transcript.md").exists()
-    assert (p2 / "transcript.md").exists()
-    assert "a.mp4:A" in (p1 / "transcript.md").read_text(encoding="utf-8")
-    assert "b.mp4:B" in (p2 / "transcript.md").read_text(encoding="utf-8")
+    out = wired["cfg"].paths.output_dir
+    t1 = out / "L1" / "transcript.md"
+    t2 = out / "L2" / "transcript.md"
+    assert t1.exists() and t2.exists()
+    assert "a.mp4:A" in t1.read_text(encoding="utf-8")
+    assert "b.mp4:B" in t2.read_text(encoding="utf-8")
+    assert not (p1 / "transcript.md").exists()
+    assert not (p2 / "transcript.md").exists()
 
 
 def test_transcribe_partial_failure_exit_1_keeps_success(wired, tmp_path):
@@ -329,7 +333,7 @@ def test_pipeline_default_recursive_workers_and_clean(wired, tmp_path):
 
     scratch = wired["cfg"].paths.scratch_dir / "video" / folder.resolve().name
     raw = scratch / "transcript_raw.md"
-    cleaned = scratch / "transcript_cleaned.md"
+    cleaned = scratch / "vids_transcript.md"
     assert raw.exists() and "a.mp4:RAW" in raw.read_text(encoding="utf-8")
     assert cleaned.exists() and "a.mp4:CLEAN" in cleaned.read_text(encoding="utf-8")
     # Cleaned came from the queue payload; no cleaner clean_file pass happened.
@@ -351,7 +355,7 @@ def test_pipeline_skip_clean(wired, tmp_path):
     assert wired["recorded"]["cleaner_is_none"] is True
     scratch = wired["cfg"].paths.scratch_dir / "video" / folder.resolve().name
     assert (scratch / "transcript_raw.md").exists()
-    assert not (scratch / "transcript_cleaned.md").exists()
+    assert not (scratch / "vids_transcript.md").exists()
 
 
 def test_pipeline_no_recursive_and_workers(wired, tmp_path):
@@ -369,6 +373,28 @@ def test_pipeline_no_recursive_and_workers(wired, tmp_path):
     assert result.exit_code == 0, result.output
     assert wired["recorded"]["recursive"] is False
     assert wired["recorded"]["max_workers"] == 3
+
+
+def test_pipeline_workers_are_capped(wired, tmp_path):
+    folder = tmp_path / "vids"
+    folder.mkdir()
+    wired["files"] = [folder / "a.mp4"]
+    wired["results"] = [make_result(folder / "a.mp4", raw="RAW")]
+
+    runner = CliRunner()
+    result = runner.invoke(
+        video, ["pipeline", str(folder), "--workers", "50000", "-f", "cfg.yaml"]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert wired["recorded"]["max_workers"] == 8
+
+
+def test_cleaned_transcript_name_from_lecture_folder():
+    from tools.video.cli import _cleaned_transcript_name
+
+    assert _cleaned_transcript_name(Path("P1L1")) == "p1l1_transcript.md"
+    assert _cleaned_transcript_name(Path("Life Cycle Models")) == "life_cycle_models_transcript.md"
 
 
 def test_pipeline_nested_multi_job_per_parent(wired, tmp_path):
@@ -390,13 +416,15 @@ def test_pipeline_nested_multi_job_per_parent(wired, tmp_path):
     )
 
     assert result.exit_code == 0, result.output
-    # Tree mode: per-parent scratch is the parent dir itself.
-    raw1 = p1 / "transcript_raw.md"
-    raw2 = p2 / "transcript_raw.md"
+    scratch_root = wired["cfg"].paths.scratch_dir / "video"
+    raw1 = scratch_root / "L1" / "transcript_raw.md"
+    raw2 = scratch_root / "L2" / "transcript_raw.md"
     assert raw1.exists() and raw2.exists()
     text1 = raw1.read_text(encoding="utf-8")
     assert "a.mp4:A" in text1 and "b.mp4:B" in text1
     assert "c.mp4:C" in raw2.read_text(encoding="utf-8")
+    assert not (p1 / "transcript_raw.md").exists()
+    assert not (p2 / "transcript_raw.md").exists()
 
 
 def test_pipeline_partial_failure_exit_1_keeps_success(wired, tmp_path):
@@ -446,7 +474,7 @@ def test_pipeline_augment_serial_per_output(wired, tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     # One augment call, fed the cleaned file (queue payload).
     assert len(calls) == 1
-    assert calls[0][0].name == "transcript_cleaned.md"
+    assert calls[0][0].name == "vids_transcript.md"
     assert calls[0][2] is False
 
 

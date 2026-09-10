@@ -10,10 +10,13 @@ so callers can rely on a consistent message.
 from collections.abc import Iterable
 from pathlib import Path
 
-__all__ = ["discover_media_files"]
+__all__ = ["MAX_DISCOVERED_FILES", "discover_media_files"]
 
 # Directory names excluded from recursive traversal.
 _EXCLUDED_DIRS = frozenset({"scratch", ".git", "__pycache__"})
+
+# Hard cap so a symlink-to-root tree cannot queue the whole disk.
+MAX_DISCOVERED_FILES = 500
 
 
 def _normalize_extensions(extensions: Iterable[str]) -> list[str]:
@@ -62,6 +65,7 @@ def discover_media_files(
     extensions: Iterable[str],
     *,
     recursive: bool = True,
+    max_files: int = MAX_DISCOVERED_FILES,
 ) -> list[Path]:
     """Discover media files under ``root`` matching ``extensions``.
 
@@ -83,6 +87,8 @@ def discover_media_files(
         root: File or directory to inspect.
         extensions: Iterable of accepted extensions (dot optional).
         recursive: Whether to descend into subdirectories.
+        max_files: Maximum number of matches to return. Exceeding the cap
+            raises ``RuntimeError`` rather than silently truncating.
 
     Returns:
         Sorted list of matching :class:`~pathlib.Path` objects.
@@ -90,6 +96,7 @@ def discover_media_files(
     Raises:
         FileNotFoundError: If ``root`` does not exist, is a file with an
             unsupported suffix, or is a directory containing no matches.
+        RuntimeError: If more than ``max_files`` matches are found.
     """
     root = Path(root)
     normalized = _normalize_extensions(extensions)
@@ -97,6 +104,11 @@ def discover_media_files(
     supported_formats = ", ".join(normalized)
 
     if root.is_file():
+        if root.is_symlink():
+            raise FileNotFoundError(
+                f"Unsupported file format: {root}\n"
+                f"Supported formats: {supported_formats}"
+            )
         if root.suffix.lower() in accepted:
             return [root.resolve()]
         raise FileNotFoundError(
@@ -110,22 +122,41 @@ def discover_media_files(
             f"Supported formats: {supported_formats}"
         )
 
+    root_resolved = root.resolve()
+
+    def _accept(path: Path) -> bool:
+        if path.is_symlink() or not path.is_file():
+            return False
+        if path.suffix.lower() not in accepted:
+            return False
+        if recursive and _is_excluded(path, root):
+            return False
+        try:
+            path.resolve().relative_to(root_resolved)
+        except ValueError:
+            return False
+        return True
+
     if recursive:
-        candidates = (
-            p
-            for p in root.rglob("*")
-            if p.is_file()
-            and p.suffix.lower() in accepted
-            and not _is_excluded(p, root)
-        )
+        raw = (p for p in root.rglob("*") if _accept(p))
     else:
-        candidates = (
-            p
-            for p in root.iterdir()
-            if p.is_file() and p.suffix.lower() in accepted
+        raw = (p for p in root.iterdir() if _accept(p))
+
+    matches: list[Path] = []
+    overflow = False
+    for path in raw:
+        if len(matches) >= max_files:
+            overflow = True
+            break
+        matches.append(path)
+
+    if overflow:
+        raise RuntimeError(
+            f"Found more than {max_files} media files under {root}. "
+            "Narrow the folder or pass --no-recursive."
         )
 
-    matches = sorted(candidates)
+    matches = sorted(matches)
 
     if not matches:
         raise FileNotFoundError(

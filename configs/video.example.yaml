@@ -20,6 +20,8 @@ video:
   audio_channels: 1
   # Debug flag: keep extracted WAVs under scratch_dir/audio instead of deleting.
   keep_extracted_audio: false
+  # ffmpeg kill deadline in seconds for audio extraction.
+  audio_timeout_seconds: 1800
   # Directory to cache downloaded Whisper models.
   models_dir: ./models/whisper
 

@@ -27,6 +27,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, runtime_checkable
 
+MAX_WORKERS = 8
+
+
+def clamp_workers(n: object) -> int:
+    """Clamp a worker count to ``[1, MAX_WORKERS]``."""
+    try:
+        value = int(n)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        value = 1
+    return max(1, min(value, MAX_WORKERS))
+
 
 class ModelGates:
     """Process-local mutexes for the two shared, single-instance models.
@@ -115,7 +126,8 @@ def run_transcription_queue(
         transcriber: Shared object with ``transcribe_file(path) -> str``.
         cleaner: Optional shared object with ``clean(text) -> str``.
         skip_clean: If ``True``, never call ``cleaner``.
-        max_workers: Thread pool size. ``1`` is valid (fully serial).
+        max_workers: Thread pool size. Clamped to ``[1, MAX_WORKERS]``.
+            ``1`` is fully serial.
         gates: Optional :class:`ModelGates`. Defaults to the process-local
             singleton so independent components still serialize correctly.
 
@@ -129,8 +141,7 @@ def run_transcription_queue(
         gates = default_gates()
 
     file_list = [Path(f) for f in files]
-    if max_workers < 1:
-        max_workers = 1
+    max_workers = clamp_workers(max_workers)
 
     # Whether the queue itself should take the gate lock. If the component
     # self-locks (real VideoTranscriber/TranscriptCleaner with gates), we must

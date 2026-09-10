@@ -19,7 +19,23 @@ from tools.video import TranscriptCleaner, VideoConfig, VideoTranscriber
 # package) so they stay lightweight and are individually patchable at
 # ``orchestrations.lecture_pipeline.<name>`` in tests.
 from tools.video.discover import discover_media_files
-from tools.video.pipeline_queue import ModelGates, run_transcription_queue
+from tools.video.pipeline_queue import ModelGates, clamp_workers, run_transcription_queue
+
+
+class CourseTranscriptionError(RuntimeError):
+    """Raised when ``process_course`` had per-file transcription failures.
+
+    Successful lectures are still generated; they are on ``results``. Failed
+    queue jobs are on ``failures``.
+    """
+
+    def __init__(self, results: list[dict[str, Any]], failures: list[Any]):
+        self.results = results
+        self.failures = failures
+        n = len(failures)
+        names = ", ".join(str(getattr(f.source, "name", f.source)) for f in failures[:5])
+        extra = "" if n <= 5 else f" (+{n - 5} more)"
+        super().__init__(f"{n} file(s) failed: {names}{extra}")
 
 
 class LecturePipelineOrchestrator:
@@ -258,15 +274,17 @@ class LecturePipelineOrchestrator:
             transcriber=transcriber,
             cleaner=cleaner,
             skip_clean=resolved_skip_clean,
+            max_workers=clamp_workers(self.video_config.max_concurrent_jobs),
             gates=gates,
         )
 
         # Only after the queue finishes: run generators per successful result,
-        # in sorted source order. Failed files are skipped.
+        # in sorted source order. Failed files are reported after successes.
         successful = sorted(
             (r for r in queue_results if r.error is None and r.raw is not None),
             key=lambda r: r.source,
         )
+        failures = [r for r in queue_results if r.error is not None]
 
         results: list[dict[str, Any]] = []
         for lecture_num, job in enumerate(successful, start=1):
@@ -287,6 +305,8 @@ class LecturePipelineOrchestrator:
             )
             results.append(result)
 
+        if failures:
+            raise CourseTranscriptionError(results, failures)
         return results
 
     def format_lecture_materials(self, result: dict[str, Any]) -> str:

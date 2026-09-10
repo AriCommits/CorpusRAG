@@ -64,6 +64,7 @@ def test_transcribes_wav_not_video(tmp_path):
     assert wav_arg.parent == cfg.paths.scratch_dir / "audio"
     assert call.kwargs["sample_rate"] == 16000
     assert call.kwargs["channels"] == 1
+    assert call.kwargs["allowed_root"] == (cfg.paths.scratch_dir / "audio").resolve()
 
     # Whisper ran on the WAV, not the MP4
     assert model.transcribe.call_count == 1
@@ -170,3 +171,55 @@ def test_timestamps_formatting_preserved(tmp_path):
         result = transcriber.transcribe_file(tmp_path / "lecture.mp4")
 
     assert result == "[0.00s - 1.50s] first\n[1.50s - 3.00s] second"
+
+
+def test_load_model_is_serialized_across_workers(tmp_path):
+    import threading
+    import time
+
+    cfg = _make_config(tmp_path)
+    transcriber = VideoTranscriber(cfg)
+
+    current = 0
+    max_current = 0
+    counter_lock = threading.Lock()
+    model = MagicMock()
+    model.transcribe.return_value = (iter([]), MagicMock())
+
+    def slow_load():
+        nonlocal current, max_current
+        with counter_lock:
+            current += 1
+            max_current = max(max_current, current)
+        time.sleep(0.08)
+        with counter_lock:
+            current -= 1
+        return model
+
+    transcriber._load_model = slow_load  # type: ignore[method-assign]
+
+    def fake_extract(video_path, output_wav, **kwargs):
+        return Path(output_wav)
+
+    errors: list[BaseException] = []
+
+    def worker(name: str) -> None:
+        try:
+            with patch(
+                "tools.video.transcribe.audio.extract_audio", side_effect=fake_extract
+            ):
+                transcriber.transcribe_file(tmp_path / f"{name}.mp4")
+        except BaseException as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=worker, args=("a",)),
+        threading.Thread(target=worker, args=("b",)),
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert errors == []
+    assert max_current == 1

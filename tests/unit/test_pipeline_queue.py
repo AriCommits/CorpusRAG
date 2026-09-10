@@ -21,8 +21,10 @@ from pathlib import Path
 import pytest
 
 from tools.video.pipeline_queue import (
+    MAX_WORKERS,
     ModelGates,
     TranscriptJobResult,
+    clamp_workers,
     run_transcription_queue,
 )
 
@@ -346,3 +348,25 @@ def test_model_gates_locks_are_independent():
         acquired = gates.llm.acquire(blocking=False)
         assert acquired
         gates.llm.release()
+
+
+def test_clamp_workers():
+    assert clamp_workers(0) == 1
+    assert clamp_workers(-5) == 1
+    assert clamp_workers(2) == 2
+    assert clamp_workers(50000) == MAX_WORKERS
+    assert clamp_workers("3") == 3
+    assert clamp_workers("nope") == 1
+
+
+def test_queue_clamps_huge_worker_count():
+    log = EventLog()
+    transcriber = FakeTranscriber(log, delay=0.0)
+    results = run_transcription_queue(
+        [Path("A.mp4")],
+        transcriber=transcriber,
+        skip_clean=True,
+        max_workers=50000,
+    )
+    assert len(results) == 1
+    assert results[0].error is None
