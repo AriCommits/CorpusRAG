@@ -1,15 +1,45 @@
 """CLI interface for video tool."""
 
+import sys
 from pathlib import Path
 
 import click
 
-from cli_common import load_cli_config
 
-from .augment import TranscriptAugmenter
-from .clean import TranscriptCleaner
-from .config import VideoConfig
-from .transcribe import VideoTranscriber
+def __getattr__(name: str):
+    """Lazily provide heavy symbols on attribute access.
+
+    Keeps ``corpus tools video --help`` from importing the transcription /
+    cleaning / augmentation stack (Whisper, torch, etc.). Symbols are exposed
+    lazily so patching (e.g. ``patch("tools.video.cli.VideoTranscriber")``) and
+    normal attribute access still resolve the real implementation.
+    """
+    if name == "load_cli_config":
+        from cli_common import load_cli_config
+
+        return load_cli_config
+    if name == "VideoConfig":
+        from .config import VideoConfig
+
+        return VideoConfig
+    if name == "VideoTranscriber":
+        from .transcribe import VideoTranscriber
+
+        return VideoTranscriber
+    if name == "TranscriptCleaner":
+        from .clean import TranscriptCleaner
+
+        return TranscriptCleaner
+    if name == "TranscriptAugmenter":
+        from .augment import TranscriptAugmenter
+
+        return TranscriptAugmenter
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
 
 
 @click.group()
@@ -27,6 +57,9 @@ def video():
 @click.option("--clean", is_flag=True, help="Run LLM cleaning after transcription")
 def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool):
     """Transcribe video files to text."""
+    load_cli_config = _resolve("load_cli_config")
+    VideoConfig = _resolve("VideoConfig")
+    VideoTranscriber = _resolve("VideoTranscriber")
     cfg = load_cli_config(config, VideoConfig)
 
     # Initialize transcriber
@@ -54,7 +87,7 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
 
     if clean:
         click.echo("Cleaning transcript...")
-        cleaner = TranscriptCleaner(cfg)
+        cleaner = _resolve("TranscriptCleaner")(cfg)
         cleaned_path = cleaner.clean_file(output_path)
         click.echo(f"✓ Cleaned transcript written to {cleaned_path}")
 
@@ -65,6 +98,9 @@ def transcribe(input_folder: str, output: str, config: str, course: str, lecture
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def clean(transcript_file: str, output: str, config: str):
     """Clean a raw transcript using LLM."""
+    load_cli_config = _resolve("load_cli_config")
+    VideoConfig = _resolve("VideoConfig")
+    TranscriptCleaner = _resolve("TranscriptCleaner")
     cfg = load_cli_config(config, VideoConfig)
 
     # Initialize cleaner
@@ -84,6 +120,9 @@ def clean(transcript_file: str, output: str, config: str):
 @click.option("--auto", is_flag=True, help="Skip manual editing")
 def augment(transcript_file: str, output: str, config: str, auto: bool):
     """Augment transcript with manual annotations."""
+    load_cli_config = _resolve("load_cli_config")
+    VideoConfig = _resolve("VideoConfig")
+    TranscriptAugmenter = _resolve("TranscriptAugmenter")
     cfg = load_cli_config(config, VideoConfig)
 
     # Initialize augmenter
@@ -118,6 +157,9 @@ def pipeline(
     augment: bool,
 ):
     """Run complete video processing pipeline."""
+    load_cli_config = _resolve("load_cli_config")
+    VideoConfig = _resolve("VideoConfig")
+    VideoTranscriber = _resolve("VideoTranscriber")
     cfg = load_cli_config(config, VideoConfig)
 
     # Derive name from input folder if no course/lecture specified
@@ -143,7 +185,7 @@ def pipeline(
     # Step 2: Clean (optional)
     if not skip_clean:
         click.echo("\nStep 2: Cleaning...")
-        cleaner = TranscriptCleaner(cfg)
+        cleaner = _resolve("TranscriptCleaner")(cfg)
         cleaned_path = scratch / "transcript_cleaned.md"
         current_file = cleaner.clean_file(current_file, cleaned_path)
         click.echo(f"✓ Cleaned transcript: {current_file}")
@@ -151,7 +193,7 @@ def pipeline(
     # Step 3: Augment (only if explicitly requested)
     if augment:
         click.echo("\nStep 3: Augmenting...")
-        augmenter = TranscriptAugmenter(cfg)
+        augmenter = _resolve("TranscriptAugmenter")(cfg)
 
         if output:
             final_path = Path(output)
@@ -192,6 +234,8 @@ def ingest_cmd(
     """Ingest a video file using visual OCR pipeline."""
     from tools.video.ingest import ingest_video
 
+    load_cli_config = _resolve("load_cli_config")
+    VideoConfig = _resolve("VideoConfig")
     cfg = load_cli_config(config, VideoConfig)
 
     click.echo(f"Ingesting {video_path.name} via visual OCR...")
@@ -237,6 +281,8 @@ def ingest_url_cmd(url, collection, threshold, model, config):
     from tools.video.download import download_video
     from tools.video.ingest import ingest_video
 
+    load_cli_config = _resolve("load_cli_config")
+    VideoConfig = _resolve("VideoConfig")
     cfg = load_cli_config(config, VideoConfig)
     dl_dir = cfg.paths.scratch_dir / "downloads"
 

@@ -1,10 +1,27 @@
 """CLI for orchestrations."""
 
+import sys
 from pathlib import Path
 
 import click
 
-from cli_common import load_cli_db
+
+def __getattr__(name: str):
+    """Lazily provide ``load_cli_db`` on attribute access.
+
+    Keeps module import cheap while allowing existing tests to patch
+    ``orchestrations.cli.load_cli_db``.
+    """
+    if name == "load_cli_db":
+        from cli_common import load_cli_db
+
+        return load_cli_db
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
 
 
 @click.group()
@@ -61,6 +78,7 @@ def lecture_pipeline(
     """
     from orchestrations import LecturePipelineOrchestrator
 
+    load_cli_db = _resolve("load_cli_db")
     config_data, db = load_cli_db(config)
     orchestrator = LecturePipelineOrchestrator(config_data, db)
 

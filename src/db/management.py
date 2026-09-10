@@ -10,17 +10,16 @@ from pathlib import Path
 from typing import Any
 
 import click
-import numpy as np
-
-from cli_common import load_cli_config
-
-from . import ChromaDBBackend
 
 
 class NumpyEncoder(json.JSONEncoder):
     """JSON encoder that handles numpy arrays."""
 
     def default(self, obj):
+        # Import numpy lazily so importing this module (e.g. ``corpus --help``)
+        # does not pull in numpy / the Chroma stack.
+        import numpy as np
+
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
@@ -61,6 +60,10 @@ class DatabaseManager:
 
     def __init__(self, config_path: str | None = None):
         """Initialize the database manager."""
+        from cli_common import load_cli_config
+
+        from . import ChromaDBBackend
+
         effective_path = config_path or "configs/base.yaml"
         self.config = load_cli_config(effective_path)
         self.db = ChromaDBBackend(self.config.database)

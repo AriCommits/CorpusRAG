@@ -10,11 +10,23 @@ from cli_lazy import LazyGroup
 @click.group(
     cls=LazyGroup,
     lazy_subcommands={
-        "tools": "tools.cli:tools",
-        "db": "db.management:db",
-        "collections": "db.collections_cli:collections_cmd",
-        "dev": "cli_dev:dev",
-        "orchestrate": "orchestrations.cli:orchestrate",
+        "tools": (
+            "tools.cli:tools",
+            "CorpusRAG tools — RAG, video, handwriting, summaries, and learning.",
+        ),
+        "db": ("db.management:db", "Database management commands."),
+        "collections": (
+            "db.collections_cli:collections_cmd",
+            "Manage vector database collections.",
+        ),
+        "dev": (
+            "cli_dev:dev",
+            "Developer utilities (setup, test, lint, build, clean, completion).",
+        ),
+        "orchestrate": (
+            "orchestrations.cli:orchestrate",
+            "Orchestration workflows for CorpusRAG.",
+        ),
     },
 )
 @click.version_option(package_name="corpusrag")

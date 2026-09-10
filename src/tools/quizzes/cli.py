@@ -1,13 +1,31 @@
 """CLI interface for quizzes tool."""
 
+import sys
 from pathlib import Path
 
 import click
 
-from cli_common import load_cli_db
 
-from .config import QuizConfig
-from .generator import QuizGenerator
+def __getattr__(name: str):
+    """Lazily provide heavy symbols on attribute access (keeps import cheap)."""
+    if name == "load_cli_db":
+        from cli_common import load_cli_db
+
+        return load_cli_db
+    if name == "QuizConfig":
+        from .config import QuizConfig
+
+        return QuizConfig
+    if name == "QuizGenerator":
+        from .generator import QuizGenerator
+
+        return QuizGenerator
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
 
 
 @click.command()
@@ -24,6 +42,9 @@ from .generator import QuizGenerator
 )
 def quizzes(collection: str, output: str, config: str, count: int, format: str):
     """Generate quiz questions from a collection."""
+    load_cli_db = _resolve("load_cli_db")
+    QuizConfig = _resolve("QuizConfig")
+    QuizGenerator = _resolve("QuizGenerator")
     cfg, db = load_cli_db(config, QuizConfig)
     cfg.format = format
 
