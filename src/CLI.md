@@ -24,6 +24,12 @@ corpus
 │   │   ├── chat       # Interactive CLI chat
 │   │   └── ui         # TUI chat interface
 │   ├── video          # Video transcription + OCR
+│   │   ├── transcribe # Batch transcribe a folder (audio → Whisper)
+│   │   ├── pipeline   # Transcribe + clean (+ augment)
+│   │   ├── ingest     # Visual OCR ingest (reads frames)
+│   │   ├── ingest-url # Download + visual OCR ingest
+│   │   ├── jobs       # List active jobs
+│   │   └── status     # Job status
 │   ├── handwriting    # Handwriting OCR ingest
 │   ├── summaries      # Summary generation
 │   └── learning
@@ -140,11 +146,29 @@ Strategies: `hybrid` (default), `semantic`, `keyword`.
 Requires `pip install corpusrag[video]`.
 
 ```bash
+# Visual OCR (reads video frames)
 corpus tools video ingest lecture.mp4 -c cs6301
 corpus tools video ingest-url "https://youtube.com/watch?v=abc" -c ocw_mit
 corpus tools video jobs
 corpus tools video status <job_id>
+
+# Batch transcription (audio → Whisper), recursive by default
+corpus tools video transcribe ./Course --course BIOL101
+corpus tools video transcribe ./Course --no-recursive
+corpus tools video pipeline ./Course --workers 1
+corpus tools video pipeline ./Course --skip-clean
 ```
+
+`transcribe` and `pipeline` discover media recursively (skip `--no-recursive`
+for top-level only) and combine transcripts **per parent directory**, so
+`Course/P1L1/*.mp4` and `Course/P1L2/*.mp4` stay separate. Files run through a
+shared queue sized by `--workers` (default `video.max_concurrent_jobs`, **2**):
+audio extraction runs in parallel, while Whisper and the LLM cleaning step are
+each exclusive. `ingest` / `ingest-url` are the separate visual OCR path and
+read frames, not audio.
+
+> Whisper on CUDA plus Ollama on the **same** GPU can OOM. Use `--workers 1` or
+> set `whisper_device: cpu` in config.
 
 ### Handwriting
 

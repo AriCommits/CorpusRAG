@@ -32,6 +32,11 @@ Transcript:
 {transcript}
 """
 
+    # Audio extraction settings
+    audio_sample_rate: int = 16000
+    audio_channels: int = 1
+    keep_extracted_audio: bool = False
+
     # Output settings
     output_format: str = "markdown"
     include_timestamps: bool = False
@@ -90,6 +95,9 @@ Transcript:
             whisper_compute_type=video_data.get("whisper_compute_type", "float16"),
             whisper_language=video_data.get("whisper_language", "en"),
             models_dir=video_data.get("models_dir", str(Path.home() / "models" / "whisper")),
+            audio_sample_rate=video_data.get("audio_sample_rate", 16000),
+            audio_channels=video_data.get("audio_channels", 1),
+            keep_extracted_audio=video_data.get("keep_extracted_audio", False),
             clean_model=video_data.get("clean_model", "qwen3:8b"),
             clean_ollama_host=base_config.llm.endpoint,
             clean_prompt=video_data.get(

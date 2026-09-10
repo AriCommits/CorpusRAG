@@ -268,12 +268,16 @@ video:
   whisper_device: cpu                # cuda | cpu | mps
   whisper_compute_type: int8         # float32 | float16 | int8
   whisper_language: en               # ISO 639-1 code, or "auto" to auto-detect
+  audio_sample_rate: 16000           # Extracted WAV sample rate in Hz (Whisper expects 16000)
+  audio_channels: 1                  # Extracted WAV channels: 1 = mono, 2 = stereo
+  keep_extracted_audio: false        # Debug: keep WAVs under scratch_dir/audio instead of deleting
   models_dir: ./models/whisper       # Cache directory for downloaded models
   clean_model: gemma4:26b-a4b-it-q4_K_M   # Model used for transcript cleaning
   output_format: markdown            # markdown | text | json
   include_timestamps: false          # Include timestamps in transcript output
   collection_prefix: videos          # Unused for Chroma; lecture pipeline uses rag_
   auto_ingest: true                  # Ingest transcripts into RAG after processing
+  max_concurrent_jobs: 2             # Default --workers for transcribe/pipeline queue
   supported_extensions:              # Recognized video file extensions
     - .mp4
     - .mkv
@@ -283,6 +287,49 @@ video:
     - .m4v
     - .zoom
 ```
+
+#### Audio Extraction (transcription)
+
+`corpus tools video transcribe` does not hand the video container to Whisper
+directly. It first demuxes an **audio-only** track with ffmpeg (`-vn`, video
+disabled) into `scratch_dir/audio/`, then runs Whisper on that WAV. This keeps
+transcription independent of the container's video stream and produces the
+16 kHz mono PCM format speech models expect.
+
+- **ffmpeg must be installed and on your `PATH`.** Extraction fails with a
+  clear error if ffmpeg is not found.
+- `audio_sample_rate` (default `16000`) and `audio_channels` (default `1`,
+  mono) control the extracted WAV format. The defaults match Whisper's
+  expectations; change them only if you have a specific reason.
+- `keep_extracted_audio` (default `false`) is a debug flag. When `true`, the
+  extracted WAVs are left under `scratch_dir/audio/` after transcription
+  instead of being deleted, so you can inspect what Whisper actually received.
+
+Note that `corpus tools video ingest` is a separate, **visual OCR / frame**
+path: it extracts frames and reads slide/chalkboard text with a vision model
+and does not use these audio settings.
+
+#### Batch transcription (discovery, queue, workers)
+
+`corpus tools video transcribe` and `corpus tools video pipeline` accept a
+directory and process many videos together:
+
+- **Recursive discovery (default).** The folder is scanned recursively for
+  supported extensions (`scratch`, `.git`, `__pycache__` are skipped).
+  `--no-recursive` limits the scan to the top level.
+- **Per-parent combine.** Transcripts are combined **per parent directory**, so
+  `Course/P1L1/*.mp4` and `Course/P1L2/*.mp4` yield two separate transcripts
+  rather than one merged document.
+- **Workers.** Files run through a shared queue whose default size is
+  `video.max_concurrent_jobs` (**2**); override per run with `--workers N`
+  (`--workers 1` is fully serial). Per file: ffmpeg audio extraction runs in
+  parallel, Whisper transcription is exclusive (one at a time), and LLM cleaning
+  is exclusive (one at a time). A failed file is reported but does not abort the
+  others.
+
+> **Same-GPU OOM.** Running Whisper on CUDA while Ollama serves the cleaning
+> model on the **same** GPU can exhaust VRAM. Mitigate by lowering concurrency
+> with `--workers 1` or moving Whisper to the CPU with `whisper_device: cpu`.
 
 ### Summaries Configuration
 

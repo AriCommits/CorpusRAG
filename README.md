@@ -46,6 +46,9 @@ corpus-mcp-server --profile simple           # MCP for editors (this is the defa
 # 7. Process video content
 corpus tools video ingest lecture.mp4 -c notes
 corpus tools video ingest-url "https://youtube.com/watch?v=..." -c notes
+
+# Audio-only lecture transcription (recursive folders; OCR ingest above still reads frames)
+corpus tools video transcribe ./lectures --clean --workers 1
 ```
 
 ## What It Does

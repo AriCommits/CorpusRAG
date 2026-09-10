@@ -1,6 +1,5 @@
 """CLI interface for video tool."""
 
-import sys
 from pathlib import Path
 
 import click
@@ -34,12 +33,117 @@ def __getattr__(name: str):
         from .augment import TranscriptAugmenter
 
         return TranscriptAugmenter
+    if name == "discover_media_files":
+        from .discover import discover_media_files
+
+        return discover_media_files
+    if name == "run_transcription_queue":
+        from .pipeline_queue import run_transcription_queue
+
+        return run_transcription_queue
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _resolve(name: str):
-    """Resolve a (possibly patched) module-level symbol at call time."""
-    return getattr(sys.modules[__name__], name)
+    """Resolve a possibly patched symbol without eagerly importing implementations."""
+    try:
+        return globals()[name]
+    except KeyError:
+        return __getattr__(name)
+
+
+def _default_workers(cfg) -> int:
+    """Resolve the default worker count from config (``max_concurrent_jobs``)."""
+    return max(1, int(getattr(cfg, "max_concurrent_jobs", 1) or 1))
+
+
+def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
+    """Construct shared transcriber/cleaner and drain the transcription queue.
+
+    Echoes ``Queued N videos...`` *before* constructing the ``VideoTranscriber``
+    so users see the work size even while the (heavy) Whisper stack loads. A
+    single shared cleaner is built only when cleaning is actually required
+    (``skip_clean`` is False), and the same cleaned payload it produces is what
+    callers persist — the queue never triggers a second cleaner pass.
+
+    Returns the list of ``TranscriptJobResult`` in input order.
+    """
+    VideoTranscriber = _resolve("VideoTranscriber")
+    run_transcription_queue = _resolve("run_transcription_queue")
+
+    click.echo(f"Queued {len(files)} videos...")
+
+    transcriber = VideoTranscriber(cfg)
+    cleaner = None
+    if not skip_clean:
+        cleaner = _resolve("TranscriptCleaner")(cfg)
+
+    return run_transcription_queue(
+        files,
+        transcriber=transcriber,
+        cleaner=cleaner,
+        skip_clean=skip_clean,
+        max_workers=workers,
+    )
+
+
+def _group_by_parent(results):
+    """Group queue results by their ``parent`` directory, preserving order.
+
+    Returns an ordered ``dict`` mapping ``parent -> [result, ...]``. Only the
+    caller decides which results (e.g. successes) to feed in.
+    """
+    grouped: dict = {}
+    for result in results:
+        grouped.setdefault(result.parent, []).append(result)
+    return grouped
+
+
+def _combine_group(transcriber, group, *, use_cleaned: bool, course, lecture) -> str:
+    """Combine a per-parent group of results into one markdown document.
+
+    Reuses ``VideoTranscriber.combine_transcripts`` by building the
+    ``filename -> text`` mapping it expects. When ``use_cleaned`` is True the
+    cleaned payload from the queue is used (falling back to raw if a file was
+    not cleaned); otherwise the raw transcript is used.
+    """
+    transcripts = {}
+    for result in group:
+        text = result.cleaned if use_cleaned else result.raw
+        if text is None:
+            text = result.raw or ""
+        transcripts[result.source.name] = text
+    return transcriber.combine_transcripts(transcripts, course, lecture)
+
+
+def _report_results(results) -> int:
+    """Emit per-file success/failure lines. Returns the count of failures."""
+    failures = 0
+    for result in results:
+        if result.error is None:
+            click.echo(f"  ✓ {result.source.name}")
+        else:
+            failures += 1
+            click.echo(f"  ✗ {result.source.name}: {result.error}")
+    return failures
+
+
+def _is_single_folder(root: Path, grouped) -> bool:
+    """Decide whether legacy single-folder output paths apply.
+
+    Legacy applies when discovery produced at most one parent group *and* that
+    group is the input itself — a single input file, or a directory whose direct
+    children are the discovered media. A nested tree (files living in
+    subdirectories) always uses per-parent output instead.
+    """
+    if len(grouped) > 1:
+        return False
+    if not grouped:
+        return True
+    if root.is_file():
+        return True
+    sole_parent = next(iter(grouped)).resolve()
+    return sole_parent == root.resolve()
 
 
 @click.group()
@@ -50,46 +154,95 @@ def video():
 
 @video.command()
 @click.argument("input_folder", type=click.Path(exists=True))
-@click.option("--output", "-o", default=None, help="Output file")
+@click.option("--output", "-o", default=None, help="Output file (single-folder legacy path)")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 @click.option("--course", "-c", default=None, help="Course identifier (e.g., BIOL101)")
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
 @click.option("--clean", is_flag=True, help="Run LLM cleaning after transcription")
-def transcribe(input_folder: str, output: str, config: str, course: str, lecture: int, clean: bool):
-    """Transcribe video files to text."""
+@click.option(
+    "--no-recursive",
+    "no_recursive",
+    is_flag=True,
+    help="Only scan the top-level folder (default recurses)",
+)
+@click.option(
+    "--workers",
+    default=None,
+    type=int,
+    help="Concurrent workers (defaults to config max_concurrent_jobs)",
+)
+def transcribe(
+    input_folder: str,
+    output: str,
+    config: str,
+    course: str,
+    lecture: int,
+    clean: bool,
+    no_recursive: bool,
+    workers: int,
+):
+    """Transcribe video files to text.
+
+    Discovers media files under ``input_folder`` (recursively by default),
+    transcribes them through the shared, dependency-safe queue, and combines
+    results per parent directory. A single-folder input keeps the legacy output
+    path; a nested tree writes one transcript per parent directory.
+    """
     load_cli_config = _resolve("load_cli_config")
     VideoConfig = _resolve("VideoConfig")
-    VideoTranscriber = _resolve("VideoTranscriber")
+    discover_media_files = _resolve("discover_media_files")
     cfg = load_cli_config(config, VideoConfig)
 
-    # Initialize transcriber
-    transcriber = VideoTranscriber(cfg)
+    root = Path(input_folder)
+    recursive = not no_recursive
+    resolved_workers = workers if workers is not None else _default_workers(cfg)
 
-    # Transcribe
     click.echo(f"Transcribing videos from {input_folder}...")
-    transcripts = transcriber.transcribe_folder(Path(input_folder), course, lecture)
+    files = discover_media_files(root, cfg.supported_extensions, recursive=recursive)
 
-    # Combine transcripts
-    combined = transcriber.combine_transcripts(transcripts, course, lecture)
+    # skip cleaning unless the user asked for it.
+    skip_clean = not clean
+    results = _run_queue(cfg, files, skip_clean=skip_clean, workers=resolved_workers)
 
-    # Write or print
-    if output:
-        output_path = Path(output)
-    elif course and lecture:
-        output_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
-    else:
-        output_path = cfg.paths.output_dir / "transcript.md"
+    failures = _report_results(results)
+    successes = [r for r in results if r.error is None]
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(combined, encoding="utf-8")
+    # Build a transcriber purely for its (pure) combine helper; the queue owns
+    # all model work, so this constructs nothing heavy at combine time.
+    VideoTranscriber = _resolve("VideoTranscriber")
+    combiner = VideoTranscriber(cfg)
 
-    click.echo(f"✓ Transcribed {len(transcripts)} videos to {output_path}")
+    grouped = _group_by_parent(successes)
+    written: list[Path] = []
 
-    if clean:
-        click.echo("Cleaning transcript...")
-        cleaner = _resolve("TranscriptCleaner")(cfg)
-        cleaned_path = cleaner.clean_file(output_path)
-        click.echo(f"✓ Cleaned transcript written to {cleaned_path}")
+    # Single-folder legacy behaviour: exactly one parent group whose parent is
+    # the input directory itself (or the file's own directory).
+    single_folder = _is_single_folder(root, grouped)
+
+    for parent, group in grouped.items():
+        combined = _combine_group(
+            combiner, group, use_cleaned=clean, course=course, lecture=lecture
+        )
+        if single_folder:
+            if output:
+                output_path = Path(output)
+            elif course and lecture:
+                output_path = cfg.paths.output_dir / f"{course}_Lecture{lecture:02d}_transcript.md"
+            else:
+                output_path = cfg.paths.output_dir / "transcript.md"
+        else:
+            # Tree mode: one transcript per parent directory.
+            output_path = parent / "transcript.md"
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(combined, encoding="utf-8")
+        written.append(output_path)
+        click.echo(f"✓ Transcribed {len(group)} videos to {output_path}")
+
+    if failures:
+        click.echo(f"✗ {failures} file(s) failed", err=True)
+        raise SystemExit(1)
+
 
 
 @video.command()
@@ -141,12 +294,24 @@ def augment(transcript_file: str, output: str, config: str, auto: bool):
 
 @video.command()
 @click.argument("input_folder", type=click.Path(exists=True))
-@click.option("--output", "-o", default=None, help="Final output file")
+@click.option("--output", "-o", default=None, help="Final output file (single-folder legacy path)")
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 @click.option("--course", "-c", default=None, help="Course identifier")
 @click.option("--lecture", "-l", default=None, type=int, help="Lecture number")
 @click.option("--skip-clean", is_flag=True, help="Skip cleaning step")
 @click.option("--augment", is_flag=True, help="Open editor for manual augmentation")
+@click.option(
+    "--no-recursive",
+    "no_recursive",
+    is_flag=True,
+    help="Only scan the top-level folder (default recurses)",
+)
+@click.option(
+    "--workers",
+    default=None,
+    type=int,
+    help="Concurrent workers (defaults to config max_concurrent_jobs)",
+)
 def pipeline(
     input_folder: str,
     output: str,
@@ -155,56 +320,102 @@ def pipeline(
     lecture: int,
     skip_clean: bool,
     augment: bool,
+    no_recursive: bool,
+    workers: int,
 ):
-    """Run complete video processing pipeline."""
+    """Run complete video processing pipeline.
+
+    Discovery + the shared queue produce raw (and, unless ``--skip-clean``,
+    cleaned) transcripts in a single drain — the cleaned payload from the queue
+    is what gets written, so no second cleaner pass is triggered. Augmentation,
+    when requested, runs serially per combined output after the queue drains.
+    """
     load_cli_config = _resolve("load_cli_config")
     VideoConfig = _resolve("VideoConfig")
-    VideoTranscriber = _resolve("VideoTranscriber")
+    discover_media_files = _resolve("discover_media_files")
     cfg = load_cli_config(config, VideoConfig)
 
-    # Derive name from input folder if no course/lecture specified
-    folder_name = Path(input_folder).resolve().name
-    if course and lecture:
-        scratch = cfg.paths.scratch_dir / f"{course}_Lecture{lecture:02d}"
-    else:
-        scratch = cfg.paths.scratch_dir / "video" / folder_name
-    scratch.mkdir(parents=True, exist_ok=True)
+    root = Path(input_folder)
+    recursive = not no_recursive
+    resolved_workers = workers if workers is not None else _default_workers(cfg)
 
-    # Step 1: Transcribe
+    # Step 1: Transcribe (+ clean inside the queue unless skipped).
     click.echo("Step 1: Transcribing...")
-    transcriber = VideoTranscriber(cfg)
-    transcripts = transcriber.transcribe_folder(Path(input_folder), course, lecture)
-    combined = transcriber.combine_transcripts(transcripts, course, lecture)
+    files = discover_media_files(root, cfg.supported_extensions, recursive=recursive)
+    results = _run_queue(cfg, files, skip_clean=skip_clean, workers=resolved_workers)
 
-    raw_transcript = scratch / "transcript_raw.md"
-    raw_transcript.write_text(combined, encoding="utf-8")
-    click.echo(f"✓ Raw transcript: {raw_transcript}")
+    failures = _report_results(results)
+    successes = [r for r in results if r.error is None]
 
-    current_file = raw_transcript
+    VideoTranscriber = _resolve("VideoTranscriber")
+    combiner = VideoTranscriber(cfg)
 
-    # Step 2: Clean (optional)
-    if not skip_clean:
-        click.echo("\nStep 2: Cleaning...")
-        cleaner = _resolve("TranscriptCleaner")(cfg)
-        cleaned_path = scratch / "transcript_cleaned.md"
-        current_file = cleaner.clean_file(current_file, cleaned_path)
-        click.echo(f"✓ Cleaned transcript: {current_file}")
+    grouped = _group_by_parent(successes)
+    single_folder = _is_single_folder(root, grouped)
 
-    # Step 3: Augment (only if explicitly requested)
-    if augment:
-        click.echo("\nStep 3: Augmenting...")
-        augmenter = _resolve("TranscriptAugmenter")(cfg)
+    # Derive name from input folder if no course/lecture specified (legacy).
+    folder_name = root.resolve().name
+    if course and lecture:
+        legacy_scratch = cfg.paths.scratch_dir / f"{course}_Lecture{lecture:02d}"
+    else:
+        legacy_scratch = cfg.paths.scratch_dir / "video" / folder_name
 
-        if output:
-            final_path = Path(output)
-        elif course and lecture:
-            final_path = scratch / f"{course}_Lecture{lecture:02d}_final.md"
+    final_outputs: list[Path] = []
+
+    for parent, group in grouped.items():
+        # Where per-parent artifacts live.
+        if single_folder:
+            scratch = legacy_scratch
         else:
-            final_path = scratch / "transcript_final.md"
+            scratch = parent
+        scratch.mkdir(parents=True, exist_ok=True)
 
-        current_file = augmenter.augment(current_file, final_path, auto_save=False)
+        # Raw transcript always written from the queue's raw payload.
+        raw_combined = _combine_group(
+            combiner, group, use_cleaned=False, course=course, lecture=lecture
+        )
+        raw_transcript = scratch / "transcript_raw.md"
+        raw_transcript.write_text(raw_combined, encoding="utf-8")
+        click.echo(f"✓ Raw transcript: {raw_transcript}")
+        current_file = raw_transcript
 
-    click.echo(f"\n✓ Pipeline complete! Final output: {current_file}")
+        # Cleaned transcript uses the queue's cleaned payload — no 2nd cleaner.
+        if not skip_clean:
+            cleaned_combined = _combine_group(
+                combiner, group, use_cleaned=True, course=course, lecture=lecture
+            )
+            cleaned_path = scratch / "transcript_cleaned.md"
+            cleaned_path.write_text(cleaned_combined, encoding="utf-8")
+            click.echo(f"✓ Cleaned transcript: {cleaned_path}")
+            current_file = cleaned_path
+
+        final_outputs.append((parent, scratch, current_file))
+
+    # Step: Augment (serial, per output, after the queue has fully drained).
+    if augment:
+        click.echo("\nAugmenting...")
+        augmenter = _resolve("TranscriptAugmenter")(cfg)
+        augmented: list = []
+        for parent, scratch, current_file in final_outputs:
+            if single_folder and output:
+                final_path = Path(output)
+            elif course and lecture:
+                final_path = scratch / f"{course}_Lecture{lecture:02d}_final.md"
+            else:
+                final_path = scratch / "transcript_final.md"
+            result_path = augmenter.augment(current_file, final_path, auto_save=False)
+            augmented.append((parent, scratch, result_path))
+        final_outputs = augmented
+
+    for _parent, _scratch, out in final_outputs:
+        click.echo(f"✓ Pipeline output: {out}")
+
+    if failures:
+        click.echo(f"✗ {failures} file(s) failed", err=True)
+        raise SystemExit(1)
+
+    click.echo("\n✓ Pipeline complete!")
+
 
 
 @video.command("ingest")

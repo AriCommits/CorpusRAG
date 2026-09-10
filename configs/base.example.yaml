@@ -265,6 +265,26 @@ video:
   # null or "auto" = auto-detect language
   whisper_language: en
 
+  # Audio extraction settings (ffmpeg → WAV before Whisper)
+  # 'corpus tools video transcribe' first demuxes an audio-only track with
+  # ffmpeg (-vn, video disabled) into scratch_dir/audio, then runs Whisper on
+  # that WAV instead of the video container. ffmpeg must be on your PATH.
+  # ('corpus tools video ingest' is the visual OCR / frame path and does not
+  # use these settings.)
+  #
+  # Output sample rate in Hz for the extracted WAV
+  # 16000 = what Whisper and most speech models expect (recommended)
+  audio_sample_rate: 16000
+
+  # Number of audio channels for the extracted WAV
+  # 1 = mono (recommended for speech), 2 = stereo
+  audio_channels: 1
+
+  # Keep the extracted WAV after transcription (debug flag)
+  # false = delete the WAV once transcription finishes (recommended)
+  # true = leave extracted WAVs under scratch_dir/audio for inspection
+  keep_extracted_audio: false
+
   # Directory to cache downloaded Whisper models
   # First run downloads the model (~1-3GB depending on size)
   # Subsequent runs use cached model
