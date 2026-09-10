@@ -8,7 +8,7 @@ concurrently while guaranteeing that:
 * Only **one** LLM cleaning runs at a time (``gates.llm``).
 * Whisper of one file and LLM cleaning of another file **may overlap**
   because they take different locks.
-* Audio extraction (ffmpeg) is never gated, so it overlaps Whisper.
+* Audio extraction (PyAV) is never gated, so it overlaps Whisper.
 
 The queue shares a single ``VideoTranscriber`` and a single
 ``TranscriptCleaner`` across all workers so the Whisper weights are loaded

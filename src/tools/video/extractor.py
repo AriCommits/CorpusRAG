@@ -1,7 +1,8 @@
-"""FFmpeg-based keyframe extraction for video ingestion."""
+"""Keyframe extraction for video ingestion via PyAV (no ffmpeg binary)."""
+
+from __future__ import annotations
 
 import logging
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,85 +28,74 @@ def _validate_threshold(value: float) -> float:
     return max(0.0, min(1.0, val))
 
 
+def _require_av():
+    try:
+        import av
+    except ImportError as exc:
+        raise RuntimeError(
+            "PyAV is required for frame extraction. Install with: pip install corpusrag[video]"
+        ) from exc
+    return av
+
+
 def extract_keyframes(
     video_path: Path,
     output_dir: Path,
     scene_threshold: float = 0.3,
     min_interval_sec: float = 2.0,
 ) -> list[ExtractedFrame]:
+    """Extract scene-change keyframes with PyAV + Pillow.
+
+    Consecutive RGB frames whose mean absolute difference (normalized to 0–1)
+    meets ``scene_threshold`` are written as JPEGs, then filtered by
+    ``min_interval_sec``.
+    """
+    import numpy as np
+    from PIL import Image
+
     scene_threshold = _validate_threshold(scene_threshold)
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_pattern = str(output_dir / "frame_%06d.jpg")
+
+    av = _require_av()
+    try:
+        container = av.open(str(video_path))
+    except Exception as exc:
+        logger.debug("PyAV open failed: %s", exc)
+        raise RuntimeError("frame extraction failed") from exc
 
     try:
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-i",
-                str(video_path),
-                "-vf",
-                f"select=gt(scene\\,{scene_threshold}),setpts=N/FRAME_RATE/TB",
-                "-vsync",
-                "vfr",
-                "-frame_pts",
-                "1",
-                output_pattern,
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError:
-        raise RuntimeError("ffmpeg not found. Install ffmpeg and ensure it is on your PATH.")
+        video_streams = getattr(container.streams, "video", None) or []
+        stream = next(iter(video_streams), None)
+        if stream is None:
+            logger.warning("No video stream in %s", video_path)
+            return []
 
-    frame_paths = sorted(output_dir.glob("frame_*.jpg"))
-    if not frame_paths:
-        logger.warning("No frames extracted from %s", video_path)
-        return []
+        results: list[ExtractedFrame] = []
+        prev = None
+        last_ts = -min_interval_sec
+        idx = 0
 
-    timestamps = _get_timestamps(video_path, len(frame_paths))
+        for frame in container.decode(stream):
+            ts = float(frame.time) if frame.time is not None else 0.0
+            image = frame.to_ndarray(format="rgb24")
+            if prev is not None:
+                diff = float(np.mean(np.abs(image.astype("int16") - prev.astype("int16")))) / 255.0
+                if diff < scene_threshold:
+                    prev = image
+                    continue
+            if ts - last_ts < min_interval_sec:
+                prev = image
+                continue
 
-    # Apply min_interval filter
-    results = []
-    last_ts = -min_interval_sec
-    idx = 0
-    for path, ts in zip(frame_paths, timestamps):
-        if ts - last_ts >= min_interval_sec:
+            path = output_dir / f"frame_{idx + 1:06d}.jpg"
+            Image.fromarray(image).save(path, quality=85)
             results.append(ExtractedFrame(path=path, frame_index=idx, source_timestamp_sec=ts))
             last_ts = ts
             idx += 1
-        else:
-            path.unlink(missing_ok=True)
+            prev = image
+    finally:
+        container.close()
 
+    if not results:
+        logger.warning("No frames extracted from %s", video_path)
     return results
-
-
-def _get_timestamps(video_path: Path, n_frames: int) -> list[float]:
-    try:
-        result = subprocess.run(
-            [
-                "ffprobe",
-                "-v",
-                "quiet",
-                "-select_streams",
-                "v",
-                "-show_entries",
-                "frame=pts_time",
-                "-of",
-                "csv=p=0",
-                str(video_path),
-            ],
-            capture_output=True,
-            text=True,
-        )
-        times = []
-        for line in result.stdout.strip().splitlines():
-            try:
-                times.append(float(line.strip()))
-            except ValueError:
-                continue
-        if len(times) >= n_frames:
-            return times[:n_frames]
-    except FileNotFoundError:
-        pass
-    return [i * 5.0 for i in range(n_frames)]

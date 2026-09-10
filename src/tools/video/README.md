@@ -32,9 +32,10 @@ The video tool has two distinct paths:
 
 - **Transcription** (`corpus tools video transcribe`, and the lecture
   pipeline): converts spoken audio to text with Whisper. Before running
-  Whisper, it demuxes an **audio-only** track with ffmpeg (`-vn`, video
-  disabled) into `scratch_dir/audio/` and transcribes that WAV rather than the
-  video container. This yields the 16 kHz mono PCM format speech models expect.
+  Whisper, **PyAV** (`import av`) demuxes an audio-only track into
+  `scratch_dir/audio/` and transcribes that WAV rather than the video
+  container. This yields the 16 kHz mono PCM format speech models expect.
+  No ffmpeg binary on PATH is required.
 - **Visual OCR** (`corpus tools video ingest` / `ingest-url`): extracts video
   **frames** and reads slide/chalkboard/whiteboard text with a vision model.
   This path does not touch the audio-extraction settings.
@@ -50,10 +51,10 @@ Configured under `video:` in your config (see
 | `audio_sample_rate` | `16000` | Extracted WAV sample rate in Hz (Whisper expects 16000) |
 | `audio_channels` | `1` | Extracted WAV channels (1 = mono, 2 = stereo) |
 | `keep_extracted_audio` | `false` | Debug flag: keep WAVs under `scratch_dir/audio` instead of deleting them after transcription |
-| `audio_timeout_seconds` | `1800` | ffmpeg kill deadline for audio extraction |
+| `audio_timeout_seconds` | `1800` | PyAV decode deadline for audio extraction |
 
-ffmpeg must be installed and on your `PATH`; extraction fails with a clear
-error otherwise.
+PyAV ships with the video extra (`pip install corpusrag[video]`); there is no
+system ffmpeg/ffprobe/yt-dlp binary requirement.
 
 ## Batch transcription: discovery, queue, and workers
 
@@ -87,7 +88,7 @@ size is the `video.max_concurrent_jobs` config value (**2**). Override with
 `--workers N`; `--workers 1` runs fully serially; the hard cap is **8**. Per
 file the pipeline is:
 
-1. **Extract audio** with ffmpeg — *parallel*, never gated.
+1. **Extract audio** with PyAV — *parallel*, never gated.
 2. **Whisper transcription** — *exclusive*, one file at a time.
 3. **LLM clean** (Gemma; `pipeline` without `--skip-clean`) — *exclusive*,
    one at a time.
@@ -142,14 +143,14 @@ and worker settings.
 ```
 video/
 ├── cli.py             # Click CLI commands
-├── audio.py           # ffmpeg audio extract (transcription only)
+├── audio.py           # PyAV audio extract (transcription only)
 ├── discover.py        # Recursive media discovery
 ├── pipeline_queue.py  # Whisper / LLM mutex queue
 ├── transcribe.py      # Whisper transcription
 ├── clean.py           # LLM transcript cleaning
 ├── ingest.py          # Visual OCR ingestion
-├── download.py        # URL download (yt-dlp)
-├── extractor.py       # Frame extraction + scene detection
+├── download.py        # URL download (yt-dlp Python API)
+├── extractor.py       # PyAV frame extraction + scene detection
 ├── ocr.py             # Vision model OCR
 ├── postprocessor.py   # Text cleanup and deduplication
 ├── jobs.py            # OCR job queue
@@ -159,9 +160,8 @@ video/
 ## Requirements
 
 ```bash
-pip install corpusrag[video]  # Installs faster-whisper, Pillow, numpy
+pip install corpusrag[video]  # faster-whisper, PyAV, yt-dlp, Pillow, numpy
 ```
 
 Also requires:
-- ffmpeg on PATH (audio extract for `transcribe` / `pipeline`; frames for `ingest`)
 - Ollama with a vision model (`ollama pull llava`) for visual OCR ingest only

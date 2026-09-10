@@ -108,6 +108,8 @@ class TestOptionalDependencies:
         content = pyproject_path.read_text()
         assert "video =" in content, "Should define video extra"
         assert "faster-whisper" in content, "video extra should include faster-whisper"
+        assert "av>=" in content, "video extra should include PyAV"
+        assert "yt-dlp" in content, "video extra should include yt-dlp"
 
     def test_full_extra_defined(self) -> None:
         """Test full extra is defined and includes other extras."""

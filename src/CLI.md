@@ -164,9 +164,9 @@ for top-level only) and combine transcripts **per parent directory**, so
 `Course/P1L1/*.mp4` and `Course/P1L2/*.mp4` stay separate. Combined files land
 under `output_dir` / `scratch_dir/video`, not in the source folders. Files run
 through a shared queue sized by `--workers` (default `video.max_concurrent_jobs`,
-**2**, hard cap **8**): audio extraction runs in parallel, while Whisper and
-the LLM cleaning step are each exclusive. `ingest` / `ingest-url` are the
-separate visual OCR path and read frames, not audio.
+**2**, hard cap **8**): PyAV audio extraction runs in parallel, while Whisper
+and the LLM cleaning step are each exclusive. `ingest` / `ingest-url` are the
+separate visual OCR path (PyAV frames; yt-dlp Python API for URLs).
 
 > Whisper on CUDA plus Ollama on the **same** GPU can OOM. Use `--workers 1` or
 > set `whisper_device: cpu` in config.

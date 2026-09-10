@@ -1,88 +1,102 @@
-"""Tests for video audio extraction."""
+"""Tests for video audio extraction (PyAV)."""
 
-import subprocess
+from concurrent.futures import TimeoutError as FuturesTimeout
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from tools.video.audio import extract_audio
 
 
+def _pcm_frame(channels: int = 1, samples: int = 4):
+    frame = MagicMock()
+    if channels == 1:
+        frame.to_ndarray.return_value = np.zeros(samples, dtype=np.int16)
+    else:
+        frame.to_ndarray.return_value = np.zeros((channels, samples), dtype=np.int16)
+    return frame
+
+
+def _fake_av(frames=None):
+    av = MagicMock()
+    container = MagicMock()
+    stream = object()
+    container.streams.audio = [stream]
+    container.decode.return_value = list(frames or [_pcm_frame()])
+    av.open.return_value = container
+    resampler = MagicMock()
+    resampler.resample.side_effect = lambda frame: [] if frame is None else [frame]
+    av.AudioResampler.return_value = resampler
+    return av, container
+
+
 def test_extract_audio_happy(tmp_path):
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stderr = ""
-
     out = tmp_path / "nested" / "out.wav"
+    av, container = _fake_av()
 
-    with patch("tools.video.audio.subprocess.run", return_value=mock_result) as run:
+    with patch("tools.video.audio._require_av", return_value=av):
         result = extract_audio(Path("video.mp4"), out, allowed_root=tmp_path)
 
     assert result == out.resolve()
-    assert out.parent.exists()
-
-    argv = run.call_args.args[0]
-    video = str(Path("video.mp4").resolve())
-    wav = str(out.resolve())
-    assert argv == [
-        "ffmpeg",
-        "-y",
-        "-nostdin",
-        "-hide_banner",
-        "-loglevel",
-        "error",
-        "-i",
-        video,
-        "-vn",
-        "-map",
-        "0:a:0",
-        "-ac",
-        "1",
-        "-ar",
-        "16000",
-        "-c:a",
-        "pcm_s16le",
-        wav,
-    ]
-    assert run.call_args.kwargs["timeout"] == 1800.0
+    assert out.exists()
+    av.open.assert_called_once_with(str(Path("video.mp4").resolve()))
+    av.AudioResampler.assert_called_once_with(format="s16", layout="mono", rate=16000)
+    container.close.assert_called()
 
 
-def test_extract_audio_no_binary(tmp_path):
-    with patch("tools.video.audio.subprocess.run", side_effect=FileNotFoundError):
-        with pytest.raises(RuntimeError, match="ffmpeg not found"):
+def test_extract_audio_missing_pyav(tmp_path):
+    with patch(
+        "tools.video.audio._require_av",
+        side_effect=RuntimeError("PyAV is required for audio extraction"),
+    ):
+        with pytest.raises(RuntimeError, match="PyAV is required"):
             extract_audio(Path("video.mp4"), tmp_path / "out.wav", allowed_root=tmp_path)
 
 
-def test_extract_audio_failure_hides_stderr(tmp_path):
-    mock_result = MagicMock()
-    mock_result.returncode = 1
-    mock_result.stderr = "C:\\secret\\path failed"
+def test_extract_audio_no_audio_stream(tmp_path):
+    av, container = _fake_av()
+    container.streams.audio = []
 
-    with patch("tools.video.audio.subprocess.run", return_value=mock_result):
-        with pytest.raises(RuntimeError, match=r"ffmpeg failed \(exit 1\)") as exc:
+    with patch("tools.video.audio._require_av", return_value=av):
+        with pytest.raises(RuntimeError, match="no audio stream"):
+            extract_audio(Path("video.mp4"), tmp_path / "out.wav", allowed_root=tmp_path)
+
+
+def test_extract_audio_open_failure_hides_details(tmp_path):
+    av = MagicMock()
+    av.open.side_effect = OSError("C:\\secret\\path failed")
+
+    with patch("tools.video.audio._require_av", return_value=av):
+        with pytest.raises(RuntimeError, match="audio extraction failed") as exc:
             extract_audio(Path("video.mp4"), tmp_path / "out.wav", allowed_root=tmp_path)
 
     assert "secret" not in str(exc.value)
 
 
 def test_extract_audio_timeout(tmp_path):
-    with patch(
-        "tools.video.audio.subprocess.run",
-        side_effect=subprocess.TimeoutExpired(cmd="ffmpeg", timeout=1),
+    av, _container = _fake_av()
+    future = MagicMock()
+    future.result.side_effect = FuturesTimeout()
+    pool = MagicMock()
+    pool.__enter__.return_value = pool
+    pool.__exit__.return_value = False
+    pool.submit.return_value = future
+
+    with (
+        patch("tools.video.audio._require_av", return_value=av),
+        patch("tools.video.audio.ThreadPoolExecutor", return_value=pool),
     ):
-        with pytest.raises(RuntimeError, match="ffmpeg timed out"):
+        with pytest.raises(RuntimeError, match="audio extraction timed out"):
             extract_audio(Path("video.mp4"), tmp_path / "out.wav", allowed_root=tmp_path)
 
 
-def test_extract_audio_custom_args(tmp_path):
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stderr = ""
-
+def test_extract_audio_custom_rate_and_channels(tmp_path):
     out = tmp_path / "out.wav"
+    av, _container = _fake_av(frames=[_pcm_frame(channels=2)])
 
-    with patch("tools.video.audio.subprocess.run", return_value=mock_result) as run:
+    with patch("tools.video.audio._require_av", return_value=av):
         extract_audio(
             Path("video.mp4"),
             out,
@@ -91,18 +105,14 @@ def test_extract_audio_custom_args(tmp_path):
             allowed_root=tmp_path,
         )
 
-    argv = run.call_args.args[0]
-    assert "-ac" in argv and argv[argv.index("-ac") + 1] == "2"
-    assert "-ar" in argv and argv[argv.index("-ar") + 1] == "44100"
+    av.AudioResampler.assert_called_once_with(format="s16", layout="stereo", rate=44100)
 
 
 def test_extract_audio_clamps_rate_and_channels(tmp_path):
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stderr = ""
     out = tmp_path / "out.wav"
+    av, _container = _fake_av(frames=[_pcm_frame(channels=2)])
 
-    with patch("tools.video.audio.subprocess.run", return_value=mock_result) as run:
+    with patch("tools.video.audio._require_av", return_value=av):
         extract_audio(
             Path("video.mp4"),
             out,
@@ -111,9 +121,7 @@ def test_extract_audio_clamps_rate_and_channels(tmp_path):
             allowed_root=tmp_path,
         )
 
-    argv = run.call_args.args[0]
-    assert argv[argv.index("-ac") + 1] == "2"
-    assert argv[argv.index("-ar") + 1] == "48000"
+    av.AudioResampler.assert_called_once_with(format="s16", layout="stereo", rate=48000)
 
 
 def test_extract_audio_rejects_escape(tmp_path):

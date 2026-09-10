@@ -83,7 +83,7 @@ class VideoTranscriber:
             # faster-whisper yields segments lazily, so the actual compute
             # happens while iterating. Hold the whisper gate across model load
             # AND iteration so two workers cannot both construct WhisperModel.
-            # ffmpeg extraction above stays unlocked and can overlap.
+            # audio extraction above stays unlocked and can overlap.
             lines = []
             with self._gates.whisper:
                 model = self._load_model()

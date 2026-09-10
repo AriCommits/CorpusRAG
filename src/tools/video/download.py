@@ -1,8 +1,8 @@
-"""Video download via yt-dlp."""
+"""Video download via the yt-dlp Python API (no yt-dlp binary)."""
 
-import json
+from __future__ import annotations
+
 import logging
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -38,49 +38,55 @@ def validate_video_url(url: str) -> str:
     return url
 
 
-def download_video(url: str, output_dir: Path) -> DownloadResult:
-    output_dir.mkdir(parents=True, exist_ok=True)
+def _require_yt_dlp():
     try:
-        result = subprocess.run(
-            [
-                "yt-dlp",
-                "-f",
-                "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-                "--merge-output-format",
-                "mp4",
-                "-o",
-                str(output_dir / "%(title)s.%(ext)s"),
-                "--print-json",
-                "--no-simulate",
-                "--restrict-filenames",
-                url,
-            ],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except FileNotFoundError:
+        import yt_dlp
+    except ImportError as exc:
         raise RuntimeError(
-            "yt-dlp not found. Install with: pip install yt-dlp (or system package manager)"
-        )
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"yt-dlp failed: {e.stderr}")
+            "yt-dlp is required for URL downloads. Install with: pip install corpusrag[video]"
+        ) from exc
+    return yt_dlp
 
-    # yt-dlp --print-json outputs one JSON object per line
-    for line in result.stdout.strip().splitlines():
-        try:
-            info = json.loads(line)
-            filepath = info.get("_filename") or info.get("filename", "")
-            resolved = Path(filepath).resolve()
-            if not resolved.is_relative_to(output_dir.resolve()):
-                raise RuntimeError("Downloaded file outside output directory")
-            return DownloadResult(
-                local_path=Path(filepath),
-                title=info.get("title", "Unknown"),
-                duration_sec=float(info.get("duration", 0)),
-                url=url,
-            )
-        except json.JSONDecodeError:
-            continue
 
-    raise RuntimeError("Failed to parse yt-dlp output")
+def download_video(url: str, output_dir: Path) -> DownloadResult:
+    url = validate_video_url(url)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    yt_dlp = _require_yt_dlp()
+    outtmpl = str(output_dir / "%(title)s.%(ext)s")
+    options = {
+        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+        "merge_output_format": "mp4",
+        "outtmpl": outtmpl,
+        "restrictfilenames": True,
+        "quiet": True,
+        "noprogress": True,
+        "noplaylist": True,
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(options) as ydl:
+            info = ydl.extract_info(url, download=True)
+            filepath = ydl.prepare_filename(info)
+    except RuntimeError:
+        raise
+    except Exception as exc:
+        logger.debug("yt-dlp failed: %s", exc)
+        raise RuntimeError("yt-dlp failed") from exc
+
+    if info.get("ext"):
+        merged = Path(filepath).with_suffix(".mp4")
+        if merged.exists():
+            filepath = str(merged)
+
+    resolved = Path(filepath).resolve()
+    if not resolved.is_relative_to(output_dir.resolve()):
+        raise RuntimeError("Downloaded file outside output directory")
+
+    return DownloadResult(
+        local_path=resolved,
+        title=info.get("title", "Unknown"),
+        duration_sec=float(info.get("duration") or 0),
+        url=url,
+    )

@@ -89,9 +89,9 @@ default** (`--no-recursive` scans only the top level) and combine transcripts
 separate transcripts, never one. Combined files are written under `output_dir`
 or `scratch_dir/video`, not next to the MP4s. Files flow through a shared queue
 whose size defaults to `video.max_concurrent_jobs` (**2**), is set with
-`--workers`, and is capped at **8**. Per file: ffmpeg audio extraction runs in
+`--workers`, and is capped at **8**. Per file: PyAV audio extraction runs in
 parallel, Whisper runs exclusively, then LLM cleaning runs exclusively; a failed
-file does not abort the rest.
+file does not abort the rest. No ffmpeg/yt-dlp binary on PATH is required.
 
 If Whisper (CUDA) and Ollama share one GPU you may hit an out-of-memory error;
 use `--workers 1` or `whisper_device: cpu`.

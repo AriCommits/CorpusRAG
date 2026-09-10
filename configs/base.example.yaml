@@ -265,10 +265,10 @@ video:
   # null or "auto" = auto-detect language
   whisper_language: en
 
-  # Audio extraction settings (ffmpeg → WAV before Whisper)
-  # 'corpus tools video transcribe' first demuxes an audio-only track with
-  # ffmpeg (-vn, video disabled) into scratch_dir/audio, then runs Whisper on
-  # that WAV instead of the video container. ffmpeg must be on your PATH.
+  # Audio extraction settings (PyAV → WAV before Whisper)
+  # 'corpus tools video transcribe' demuxes an audio-only track with PyAV
+  # into scratch_dir/audio, then runs Whisper on that WAV. No ffmpeg binary
+  # on PATH is required (pip install corpusrag[video]).
   # ('corpus tools video ingest' is the visual OCR / frame path and does not
   # use these settings.)
   #
@@ -285,7 +285,7 @@ video:
   # true = leave extracted WAVs under scratch_dir/audio for inspection
   keep_extracted_audio: false
 
-  # ffmpeg kill deadline in seconds for audio extraction
+  # PyAV decode deadline in seconds for audio extraction
   audio_timeout_seconds: 1800
 
   # Directory to cache downloaded Whisper models

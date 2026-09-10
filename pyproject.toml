@@ -65,6 +65,8 @@ video = [
   "faster-whisper>=1.0.0",
   "Pillow>=10.0.0",
   "numpy>=1.24.0",
+  "av>=12.0.0",
+  "yt-dlp>=2024.8.0",
 ]
 
 # Handwriting ingestion
@@ -171,7 +173,7 @@ filterwarnings = [
 ]
 
 [tool.deptry]
-package_module_name_map = { "huggingface-hub" = "huggingface_hub", "faster-whisper" = "faster_whisper" }
+package_module_name_map = { "huggingface-hub" = "huggingface_hub", "faster-whisper" = "faster_whisper", "yt-dlp" = "yt_dlp" }
 # Tell deptry these are local modules, not external libraries
 known_first_party = [
   "db", 

@@ -67,7 +67,8 @@ All tools from both `dev` and `learn`.
 
 Video ingest tools return a `job_id` immediately. Poll with `video_job_status` to track progress.
 
-System requirements: `ffmpeg` (frame extraction), `yt-dlp` (URL downloads, optional).
+Video extras (`pip install corpusrag[video]`) pull in PyAV and yt-dlp as Python
+packages; no ffmpeg/yt-dlp binary on PATH is required.
 Optional: `pix2tex` for enhanced math OCR on chalkboard content.
 
 ## Transports

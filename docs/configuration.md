@@ -271,7 +271,7 @@ video:
   audio_sample_rate: 16000           # Extracted WAV sample rate in Hz (Whisper expects 16000)
   audio_channels: 1                  # Extracted WAV channels: 1 = mono, 2 = stereo
   keep_extracted_audio: false        # Debug: keep WAVs under scratch_dir/audio instead of deleting
-  audio_timeout_seconds: 1800        # ffmpeg kill deadline for audio extract
+  audio_timeout_seconds: 1800        # PyAV decode deadline for audio extract
   models_dir: ./models/whisper       # Cache directory for downloaded models
   clean_model: gemma4:26b-a4b-it-q4_K_M   # Model used for transcript cleaning
   output_format: markdown            # markdown | text | json
@@ -292,20 +292,19 @@ video:
 #### Audio Extraction (transcription)
 
 `corpus tools video transcribe` does not hand the video container to Whisper
-directly. It first demuxes an **audio-only** track with ffmpeg (`-vn`, video
-disabled) into `scratch_dir/audio/`, then runs Whisper on that WAV. This keeps
-transcription independent of the container's video stream and produces the
-16 kHz mono PCM format speech models expect.
+directly. **PyAV** (`import av`, from `pip install corpusrag[video]`) demuxes
+an audio-only track into `scratch_dir/audio/`, then Whisper runs on that WAV.
+This keeps transcription independent of the container's video stream and
+produces the 16 kHz mono PCM format speech models expect. No ffmpeg binary on
+PATH is required.
 
-- **ffmpeg must be installed and on your `PATH`.** Extraction fails with a
-  clear error if ffmpeg is not found.
 - `audio_sample_rate` (default `16000`) and `audio_channels` (default `1`,
   mono) control the extracted WAV format. The defaults match Whisper's
   expectations; change them only if you have a specific reason.
 - `keep_extracted_audio` (default `false`) is a debug flag. When `true`, the
   extracted WAVs are left under `scratch_dir/audio/` after transcription
   instead of being deleted, so you can inspect what Whisper actually received.
-- `audio_timeout_seconds` (default `1800`) is the ffmpeg kill deadline. Sample
+- `audio_timeout_seconds` (default `1800`) is the PyAV decode deadline. Sample
   rate is clamped to 8–48 kHz and channels to 1–2. Extracted WAVs must stay
   under `scratch_dir/audio`.
 
@@ -329,7 +328,7 @@ directory and process many videos together:
   into the source lecture folder.
 - **Workers.** Files run through a shared queue whose default size is
   `video.max_concurrent_jobs` (**2**); override per run with `--workers N`
-  (`--workers 1` is fully serial; the hard cap is **8**). Per file: ffmpeg audio
+  (`--workers 1` is fully serial; the hard cap is **8**). Per file: PyAV audio
   extraction runs in parallel, Whisper transcription is exclusive (one at a
   time), and LLM cleaning is exclusive (one at a time). A failed file is
   reported but does not abort the others.

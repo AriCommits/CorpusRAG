@@ -46,7 +46,7 @@ corpus-mcp-server --profile simple           # MCP for editors (this is the defa
 # 7. Lectures — two different paths
 # Visual OCR (reads video frames: slides / chalkboard)
 corpus tools video ingest lecture.mp4 -c notes
-# Audio transcription (ffmpeg extracts audio only, then Whisper; recursive)
+# Audio transcription (PyAV extracts audio only, then Whisper; recursive)
 corpus tools video pipeline ./Course --workers 1
 # cleaned file: scratch/video/P1L1/p1l1_transcript.md  (not next to the MP4s)
 ```
