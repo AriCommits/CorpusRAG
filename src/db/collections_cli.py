@@ -1,14 +1,43 @@
 """CLI commands for managing ChromaDB collections."""
 
+import sys
+
 import click
-from rich.console import Console
-from rich.table import Table
 
-from cli_common import load_cli_db
-from config import BaseConfig
-from db.chroma import ChromaDBBackend
 
-console = Console()
+def __getattr__(name: str):
+    """Lazily provide heavy symbols on attribute access.
+
+    Keeps module import cheap (``click`` only) so ``corpus collections --help``
+    does not import ``rich`` / ``chromadb`` / ``config``. Existing tests that
+    patch ``db.collections_cli.load_cli_db`` still work because the attribute
+    is resolvable on access.
+    """
+    if name == "load_cli_db":
+        from cli_common import load_cli_db
+
+        return load_cli_db
+    if name == "BaseConfig":
+        from config import BaseConfig
+
+        return BaseConfig
+    if name == "ChromaDBBackend":
+        from db.chroma import ChromaDBBackend
+
+        return ChromaDBBackend
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
+
+
+def _console():
+    """Create a rich console lazily (imports ``rich`` on demand)."""
+    from rich.console import Console
+
+    return Console()
 
 
 @click.group(name="collections")
@@ -20,6 +49,11 @@ def collections_cmd() -> None:
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def list_collections(config: str) -> None:
     """List all available collections."""
+    from rich.table import Table
+
+    load_cli_db = _resolve("load_cli_db")
+    BaseConfig = _resolve("BaseConfig")
+    console = _console()
     cfg, db = load_cli_db(config, BaseConfig)
 
     cols = db.list_collections()
@@ -48,6 +82,12 @@ def list_collections(config: str) -> None:
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def info_collection(name: str, config: str) -> None:
     """Show detailed stats for a collection."""
+    from rich.table import Table
+
+    load_cli_db = _resolve("load_cli_db")
+    BaseConfig = _resolve("BaseConfig")
+    ChromaDBBackend = _resolve("ChromaDBBackend")
+    console = _console()
     cfg, db = load_cli_db(config, BaseConfig)
 
     if not isinstance(db, ChromaDBBackend):
@@ -85,6 +125,9 @@ def info_collection(name: str, config: str) -> None:
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def delete_collection(name: str, config: str) -> None:
     """Delete a collection."""
+    load_cli_db = _resolve("load_cli_db")
+    BaseConfig = _resolve("BaseConfig")
+    console = _console()
     cfg, db = load_cli_db(config, BaseConfig)
 
     try:
@@ -118,6 +161,10 @@ def update_path(name: str, path: str, config: str) -> None:
     """Update the stored ingest source path for a collection."""
     from pathlib import Path as P
 
+    load_cli_db = _resolve("load_cli_db")
+    BaseConfig = _resolve("BaseConfig")
+    ChromaDBBackend = _resolve("ChromaDBBackend")
+    console = _console()
     cfg, db = load_cli_db(config, BaseConfig)
 
     if not isinstance(db, ChromaDBBackend):

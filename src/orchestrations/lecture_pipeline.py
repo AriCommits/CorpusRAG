@@ -15,6 +15,28 @@ from tools.rag import RAGConfig, RAGIngester
 from tools.summaries import SummaryConfig, SummaryGenerator
 from tools.video import TranscriptCleaner, VideoConfig, VideoTranscriber
 
+# Imported from the submodules directly (rather than the ``tools.video``
+# package) so they stay lightweight and are individually patchable at
+# ``orchestrations.lecture_pipeline.<name>`` in tests.
+from tools.video.discover import discover_media_files
+from tools.video.pipeline_queue import ModelGates, clamp_workers, run_transcription_queue
+
+
+class CourseTranscriptionError(RuntimeError):
+    """Raised when ``process_course`` had per-file transcription failures.
+
+    Successful lectures are still generated; they are on ``results``. Failed
+    queue jobs are on ``failures``.
+    """
+
+    def __init__(self, results: list[dict[str, Any]], failures: list[Any]):
+        self.results = results
+        self.failures = failures
+        n = len(failures)
+        names = ", ".join(str(getattr(f.source, "name", f.source)) for f in failures[:5])
+        extra = "" if n <= 5 else f" (+{n - 5} more)"
+        super().__init__(f"{n} file(s) failed: {names}{extra}")
+
 
 class LecturePipelineOrchestrator:
     """
@@ -121,6 +143,41 @@ class LecturePipelineOrchestrator:
             cleaner = TranscriptCleaner(self.video_config)
             transcript = cleaner.clean(transcript)
 
+        # Steps 3-6: ingest + generators (shared with process_course).
+        return self._generate_materials(
+            transcript=transcript,
+            course=course,
+            lecture_num=lecture_num,
+            collection_name=collection_name,
+            resolved_flashcard_count=resolved_flashcard_count,
+            resolved_quiz_count=resolved_quiz_count,
+            resolved_summary_length=resolved_summary_length,
+            do_summary=do_summary,
+            do_flashcards=do_flashcards,
+            do_quiz=do_quiz,
+        )
+
+    def _generate_materials(
+        self,
+        *,
+        transcript: str,
+        course: str,
+        lecture_num: int,
+        collection_name: str,
+        resolved_flashcard_count: int | None,
+        resolved_quiz_count: int | None,
+        resolved_summary_length: str,
+        do_summary: bool,
+        do_flashcards: bool,
+        do_quiz: bool,
+    ) -> dict[str, Any]:
+        """Ingest an (already transcribed/cleaned) transcript and build materials.
+
+        This holds the identical ingest -> summary -> flashcards -> quiz
+        semantics used by :meth:`process_lecture`. It is factored out so
+        :meth:`process_course` can reuse it for each queued result **without**
+        re-transcribing or re-cleaning.
+        """
         # Step 3: Ingest into RAG
         # Save transcript to temp file for ingestion
         scratch_dir = self.video_config.paths.scratch_dir
@@ -168,29 +225,88 @@ class LecturePipelineOrchestrator:
         skip_clean: bool | None = None,
     ) -> list[dict[str, Any]]:
         """
-        Process all lecture videos in a folder.
+        Process all lecture videos in a folder (recursively).
+
+        Discovery, transcription and cleaning run through the shared
+        transcription queue so that a single Whisper weight load and a single
+        LLM cleaner are reused across every file, Whisper stays exclusive and
+        audio-extract overlaps Whisper. Only **after** the queue drains does
+        each successful transcript flow through the same ingest / summary /
+        flashcards / quiz steps used by :meth:`process_lecture` — generators
+        never overlap the queue.
 
         Args:
-            video_folder: Folder containing video files
+            video_folder: Folder containing video files (searched recursively)
             course: Course identifier
             skip_clean: Skip transcript cleaning step (config fallback)
 
         Returns:
-            List of lecture processing results
+            List of lecture processing results, one per successfully
+            transcribed file, in sorted source order.
         """
-        results = []
+        # Resolve the same run options process_lecture would use so course
+        # runs honor config-level defaults identically.
+        resolved_skip_clean = bool(self._resolve(skip_clean, "skip_clean", False))
+        resolved_flashcard_count = self._resolve(None, "flashcard_count")
+        resolved_quiz_count = self._resolve(None, "quiz_count")
+        resolved_summary_length = self._resolve(
+            None, "summary_length", self.summary_config.summary_length
+        )
+        do_summary = bool(self._resolve(None, "generate_summary", True))
+        do_flashcards = bool(self._resolve(None, "generate_flashcards", True))
+        do_quiz = bool(self._resolve(None, "generate_quiz", True))
 
-        # Find all video files
-        video_extensions = [".mp4", ".avi", ".mov", ".mkv", ".webm"]
-        video_files = sorted(
-            [f for f in video_folder.iterdir() if f.suffix.lower() in video_extensions]
+        # Discover media files recursively, replacing the old hardcoded list.
+        video_files = discover_media_files(
+            video_folder,
+            self.video_config.supported_extensions,
+            recursive=True,
         )
 
-        # Process each video
-        for idx, video_file in enumerate(video_files, start=1):
-            result = self.process_lecture(video_file, course, idx, skip_clean=skip_clean)
+        # One shared set of models/mutexes for the whole course.
+        gates = ModelGates()
+        transcriber = VideoTranscriber(self.video_config, gates=gates)
+        cleaner = None if resolved_skip_clean else TranscriptCleaner(self.video_config, gates=gates)
+
+        # Transcribe (+ clean) every file. Blocks until the queue drains.
+        queue_results = run_transcription_queue(
+            video_files,
+            transcriber=transcriber,
+            cleaner=cleaner,
+            skip_clean=resolved_skip_clean,
+            max_workers=clamp_workers(self.video_config.max_concurrent_jobs),
+            gates=gates,
+        )
+
+        # Only after the queue finishes: run generators per successful result,
+        # in sorted source order. Failed files are reported after successes.
+        successful = sorted(
+            (r for r in queue_results if r.error is None and r.raw is not None),
+            key=lambda r: r.source,
+        )
+        failures = [r for r in queue_results if r.error is not None]
+
+        results: list[dict[str, Any]] = []
+        for lecture_num, job in enumerate(successful, start=1):
+            # Prefer the cleaned transcript when cleaning ran; otherwise raw.
+            transcript = job.cleaned if job.cleaned is not None else job.raw
+            collection_name = f"{course}_Lecture{lecture_num:02d}"
+            result = self._generate_materials(
+                transcript=transcript,
+                course=course,
+                lecture_num=lecture_num,
+                collection_name=collection_name,
+                resolved_flashcard_count=resolved_flashcard_count,
+                resolved_quiz_count=resolved_quiz_count,
+                resolved_summary_length=resolved_summary_length,
+                do_summary=do_summary,
+                do_flashcards=do_flashcards,
+                do_quiz=do_quiz,
+            )
             results.append(result)
 
+        if failures:
+            raise CourseTranscriptionError(results, failures)
         return results
 
     def format_lecture_materials(self, result: dict[str, Any]) -> str:

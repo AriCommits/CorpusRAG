@@ -1,22 +1,32 @@
 """Video transcription logic."""
 
+import uuid
 from datetime import date
 from pathlib import Path
 
+from . import audio
 from .config import VideoConfig
+from .pipeline_queue import ModelGates, default_gates
 
 
 class VideoTranscriber:
     """Transcribe video files using Whisper."""
 
-    def __init__(self, config: VideoConfig):
+    # Signals to run_transcription_queue that the Whisper call is gated here,
+    # so the queue must not take gates.whisper a second time.
+    locks_internally = True
+
+    def __init__(self, config: VideoConfig, gates: ModelGates | None = None):
         """Initialize video transcriber.
 
         Args:
             config: Video configuration
+            gates: Optional model mutexes. Defaults to the process-local
+                singleton so concurrent transcribers serialize Whisper.
         """
         self.config = config
         self._model = None
+        self._gates = gates if gates is not None else default_gates()
 
     def _load_model(self):
         """Lazy-load the Whisper model."""
@@ -40,25 +50,57 @@ class VideoTranscriber:
     def transcribe_file(self, video_path: Path) -> str:
         """Transcribe a single video file.
 
+        Extracts a WAV audio track into ``scratch/audio`` and runs Whisper on
+        that audio rather than the video container. The extracted WAV is removed
+        afterwards unless ``config.keep_extracted_audio`` is set.
+
         Args:
             video_path: Path to video file
 
         Returns:
             Raw transcript text
         """
-        model = self._load_model()
-        language = self.config.whisper_language or None
-        segments, _ = model.transcribe(str(video_path), language=language)
+        video_path = Path(video_path)
 
-        lines = []
-        for segment in segments:
-            text = segment.text.strip()
-            if self.config.include_timestamps:
-                lines.append(f"[{segment.start:.2f}s - {segment.end:.2f}s] {text}")
-            else:
-                lines.append(text)
+        audio_dir = Path(self.config.paths.scratch_dir) / "audio"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        safe_stem = (
+            video_path.stem.replace("/", "_").replace("\\", "_").replace("..", "_")
+        ) or "audio"
+        wav = audio_dir / f"{safe_stem}_{uuid.uuid4().hex[:8]}.wav"
 
-        return "\n".join(lines)
+        try:
+            audio.extract_audio(
+                video_path,
+                wav,
+                sample_rate=self.config.audio_sample_rate,
+                channels=self.config.audio_channels,
+                allowed_root=audio_dir.resolve(),
+                timeout=float(getattr(self.config, "audio_timeout_seconds", 1800)),
+            )
+
+            language = self.config.whisper_language or None
+            # faster-whisper yields segments lazily, so the actual compute
+            # happens while iterating. Hold the whisper gate across model load
+            # AND iteration so two workers cannot both construct WhisperModel.
+            # ffmpeg extraction above stays unlocked and can overlap.
+            lines = []
+            with self._gates.whisper:
+                model = self._load_model()
+                segments, _ = model.transcribe(str(wav), language=language)
+                for segment in segments:
+                    text = segment.text.strip()
+                    if self.config.include_timestamps:
+                        lines.append(
+                            f"[{segment.start:.2f}s - {segment.end:.2f}s] {text}"
+                        )
+                    else:
+                        lines.append(text)
+
+            return "\n".join(lines)
+        finally:
+            if not self.config.keep_extracted_audio:
+                wav.unlink(missing_ok=True)
 
     def transcribe_folder(
         self,

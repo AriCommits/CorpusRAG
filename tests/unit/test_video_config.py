@@ -10,6 +10,28 @@ def test_from_dict_defaults():
     assert cfg.use_latex_fallback is True
     assert cfg.max_concurrent_jobs == 2
     assert cfg.context_window == 1
+    assert cfg.audio_sample_rate == 16000
+    assert cfg.audio_channels == 1
+    assert cfg.keep_extracted_audio is False
+    assert cfg.audio_timeout_seconds == 1800.0
+
+
+def test_from_dict_audio_overrides():
+    data = {
+        "llm": {},
+        "embedding": {},
+        "database": {},
+        "paths": {},
+        "video": {
+            "audio_sample_rate": 44100,
+            "audio_channels": 2,
+            "keep_extracted_audio": True,
+        },
+    }
+    cfg = VideoConfig.from_dict(data)
+    assert cfg.audio_sample_rate == 44100
+    assert cfg.audio_channels == 2
+    assert cfg.keep_extracted_audio is True
 
 
 def test_from_dict_custom():

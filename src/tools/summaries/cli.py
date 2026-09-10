@@ -1,13 +1,31 @@
 """CLI interface for summaries tool."""
 
+import sys
 from pathlib import Path
 
 import click
 
-from cli_common import load_cli_db
 
-from .config import SummaryConfig
-from .generator import SummaryGenerator
+def __getattr__(name: str):
+    """Lazily provide heavy symbols on attribute access (keeps import cheap)."""
+    if name == "load_cli_db":
+        from cli_common import load_cli_db
+
+        return load_cli_db
+    if name == "SummaryConfig":
+        from .config import SummaryConfig
+
+        return SummaryConfig
+    if name == "SummaryGenerator":
+        from .generator import SummaryGenerator
+
+        return SummaryGenerator
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
 
 
 @click.command()
@@ -30,6 +48,9 @@ from .generator import SummaryGenerator
 )
 def summaries(collection: str, output: str, export: str, config: str, length: str):
     """Generate summary from a collection."""
+    load_cli_db = _resolve("load_cli_db")
+    SummaryConfig = _resolve("SummaryConfig")
+    SummaryGenerator = _resolve("SummaryGenerator")
     cfg, db = load_cli_db(config, SummaryConfig)
     cfg.summary_length = length
 

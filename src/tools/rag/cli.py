@@ -5,11 +5,44 @@ from pathlib import Path
 
 import click
 
-from cli_common import load_cli_db
+# NOTE: Heavy imports (``cli_common.load_cli_db``, ``RAGAgent``, ``RAGApp``,
+# ``RAGConfig``, ``kernel.Corpus``) are deferred so that ``corpus tools rag
+# --help`` does not import the retrieval / Textual stack. They are exposed
+# lazily via ``__getattr__`` below so existing tests that patch
+# ``tools.rag.cli.load_cli_db`` / ``tools.rag.cli.RAGAgent`` continue to work,
+# and are resolved at call time through the module namespace so patches take
+# effect.
 
-from .agent import RAGAgent
-from .config import RAGConfig
-from .tui import RAGApp
+
+def __getattr__(name: str):
+    """Lazily provide heavy symbols on attribute access.
+
+    Keeps module import cheap (only ``click``) while allowing
+    ``patch("tools.rag.cli.<name>")`` and normal attribute access to resolve
+    the real implementation on demand.
+    """
+    if name == "load_cli_db":
+        from cli_common import load_cli_db
+
+        return load_cli_db
+    if name == "RAGConfig":
+        from .config import RAGConfig
+
+        return RAGConfig
+    if name == "RAGAgent":
+        from .agent import RAGAgent
+
+        return RAGAgent
+    if name == "RAGApp":
+        from .tui import RAGApp
+
+        return RAGApp
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
 
 
 def _validate_filter_value(value: str, field_name: str) -> str:
@@ -68,6 +101,8 @@ def ingest(path: str, collection: str, config: str):
 @click.option("--config", "-f", default="configs/base.yaml", help="Config file")
 def sync(path: str | None, collection: str, dry_run: bool, config: str):
     """Sync a directory with a RAG collection (detect new, modified, deleted files)."""
+    load_cli_db = _resolve("load_cli_db")
+    RAGConfig = _resolve("RAGConfig")
     cfg, db = load_cli_db(config, RAGConfig)
 
     # If no path provided, try to read from collection metadata
@@ -131,6 +166,9 @@ def query(
     config: str,
 ):
     """Query a RAG collection with optional metadata filtering."""
+    load_cli_db = _resolve("load_cli_db")
+    RAGConfig = _resolve("RAGConfig")
+    RAGAgent = _resolve("RAGAgent")
     cfg, db = load_cli_db(config, RAGConfig)
 
     # Override strategy if provided
@@ -217,6 +255,9 @@ def chat(
     config: str,
 ):
     """Interactive chat with RAG agent with optional metadata filtering."""
+    load_cli_db = _resolve("load_cli_db")
+    RAGConfig = _resolve("RAGConfig")
+    RAGAgent = _resolve("RAGAgent")
     cfg, db = load_cli_db(config, RAGConfig)
 
     # Override strategy if provided
@@ -296,6 +337,10 @@ def ui(collection: str | None, config: str):
         click.echo("\nSetup complete! Launching TUI...\n")
 
     # Launch the TUI
+    load_cli_db = _resolve("load_cli_db")
+    RAGConfig = _resolve("RAGConfig")
+    RAGAgent = _resolve("RAGAgent")
+    RAGApp = _resolve("RAGApp")
     cfg, db = load_cli_db(config, RAGConfig)
     agent = RAGAgent(cfg, db)
     app = RAGApp(agent, collection)

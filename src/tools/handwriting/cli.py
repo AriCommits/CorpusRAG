@@ -1,16 +1,41 @@
 """CLI interface for handwriting ingestion tool."""
 
+import sys
 from pathlib import Path
 
 import click
 
-from cli_common import load_cli_db
 
-from .config import HandwritingConfig
-from .ingest_handwriting import ingest_handwriting
+def __getattr__(name: str):
+    """Lazily provide heavy symbols on attribute access.
 
-# Import will happen inside function to support lazy loading but be patchable for tests
-RAGAgent = None
+    Keeps module import cheap while allowing existing tests to patch
+    ``tools.handwriting.cli.load_cli_db`` / ``ingest_handwriting`` /
+    ``RAGAgent`` and normal attribute access to resolve the real
+    implementation on demand.
+    """
+    if name == "load_cli_db":
+        from cli_common import load_cli_db
+
+        return load_cli_db
+    if name == "HandwritingConfig":
+        from .config import HandwritingConfig
+
+        return HandwritingConfig
+    if name == "ingest_handwriting":
+        from .ingest_handwriting import ingest_handwriting
+
+        return ingest_handwriting
+    if name == "RAGAgent":
+        from tools.rag.agent import RAGAgent
+
+        return RAGAgent
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _resolve(name: str):
+    """Resolve a (possibly patched) module-level symbol at call time."""
+    return getattr(sys.modules[__name__], name)
 
 
 @click.group()
@@ -113,11 +138,10 @@ def ingest_cmd(
 
       corpus handwriting ingest ./archive/ --collection archive --no-recursive
     """
-    global RAGAgent
-    if RAGAgent is None:
-        from tools.rag.agent import RAGAgent as _RAGAgent
-
-        RAGAgent = _RAGAgent
+    load_cli_db = _resolve("load_cli_db")
+    HandwritingConfig = _resolve("HandwritingConfig")
+    ingest_handwriting = _resolve("ingest_handwriting")
+    RAGAgent = _resolve("RAGAgent")
 
     cfg, db = load_cli_db(config, HandwritingConfig)
     agent = RAGAgent(cfg, db)
