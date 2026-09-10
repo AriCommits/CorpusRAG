@@ -141,15 +141,19 @@ and worker settings.
 
 ```
 video/
-├── cli.py           # Click CLI commands
-├── ingest.py        # Main ingestion orchestrator
-├── download.py      # URL download (yt-dlp)
-├── extractor.py     # Frame extraction + scene detection
-├── ocr.py           # Vision model OCR
-├── postprocessor.py # Text cleanup and deduplication
-├── jobs.py          # Job queue management
-├── config.py        # Video-specific configuration
-└── transcribe.py    # Whisper transcription
+├── cli.py             # Click CLI commands
+├── audio.py           # ffmpeg audio extract (transcription only)
+├── discover.py        # Recursive media discovery
+├── pipeline_queue.py  # Whisper / LLM mutex queue
+├── transcribe.py      # Whisper transcription
+├── clean.py           # LLM transcript cleaning
+├── ingest.py          # Visual OCR ingestion
+├── download.py        # URL download (yt-dlp)
+├── extractor.py       # Frame extraction + scene detection
+├── ocr.py             # Vision model OCR
+├── postprocessor.py   # Text cleanup and deduplication
+├── jobs.py            # OCR job queue
+└── config.py          # Video-specific configuration
 ```
 
 ## Requirements
@@ -159,5 +163,5 @@ pip install corpusrag[video]  # Installs faster-whisper, Pillow, numpy
 ```
 
 Also requires:
-- Ollama with a vision model (`ollama pull llava`)
-- ffmpeg on PATH
+- ffmpeg on PATH (audio extract for `transcribe` / `pipeline`; frames for `ingest`)
+- Ollama with a vision model (`ollama pull llava`) for visual OCR ingest only

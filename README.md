@@ -43,12 +43,12 @@ corpus summarize -c notes
 corpus tools rag ui -c notes                 # TUI
 corpus-mcp-server --profile simple           # MCP for editors (this is the default)
 
-# 7. Process video content
+# 7. Lectures — two different paths
+# Visual OCR (reads video frames: slides / chalkboard)
 corpus tools video ingest lecture.mp4 -c notes
-corpus tools video ingest-url "https://youtube.com/watch?v=..." -c notes
-
-# Audio-only lecture transcription (recursive folders; OCR ingest above still reads frames)
-corpus tools video transcribe ./lectures --clean --workers 1
+# Audio transcription (ffmpeg extracts audio only, then Whisper; recursive)
+corpus tools video pipeline ./Course --workers 1
+# cleaned file: scratch/video/P1L1/p1l1_transcript.md  (not next to the MP4s)
 ```
 
 ## What It Does
@@ -62,7 +62,7 @@ corpus tools video transcribe ./lectures --clean --workers 1
 | **Flashcards** | Generate study cards with Anki export from the same `rag_<collection>` store as ingest |
 | **Summaries** | Multi-length summaries with Markdown export from ingested RAG collections |
 | **Quizzes** | Multiple choice, true/false, short answer — export to JSON/CSV |
-| **Video** | Transcribe lectures with Whisper, extract slide/chalkboard text with vision OCR, auto-ingest |
+| **Video** | Audio-only lecture transcription (recursive folders, Whisper + optional LLM clean) and visual OCR for slides/chalkboards |
 | **Handwriting** | OCR handwritten notes via vision models, chunk and ingest into RAG |
 
 ## CLI Overview
@@ -77,7 +77,7 @@ corpus
 ├── benchmark          # Performance benchmarks
 ├── tools
 │   ├── rag            # RAG pipeline (ingest, sync, query, chat, ui)
-│   ├── video          # Video transcription + visual OCR
+│   ├── video          # Audio transcribe/pipeline + visual OCR ingest
 │   ├── handwriting    # Handwriting OCR ingest
 │   ├── summaries      # Summary generation
 │   └── learning
@@ -96,6 +96,9 @@ pass only the essential inputs and the rest comes from configuration:
 ```bash
 # Turn a lecture video into complete study materials
 corpus orchestrate lecture-pipeline lecture01.mp4 --course BIOL101 --lecture 1
+
+# Batch a course tree (audio only; writes under scratch/video/<lecture>/)
+corpus tools video pipeline ./CS6300_Lectures --workers 1
 ```
 
 Full CLI reference: [`src/CLI.md`](src/CLI.md)
