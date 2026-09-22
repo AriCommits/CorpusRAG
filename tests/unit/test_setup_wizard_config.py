@@ -1,7 +1,6 @@
 """Tests for setup wizard config generation."""
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
@@ -104,5 +103,3 @@ class TestSaveConfig:
         wizard.save_config()
         compose_file = Path(".docker/docker-compose.yml")
         assert not compose_file.exists()
-
-
