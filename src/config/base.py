@@ -81,10 +81,10 @@ class BaseConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    llm: LLMConfig | Any = Field(default_factory=LLMConfig)
-    embedding: EmbeddingConfig | Any = Field(default_factory=EmbeddingConfig)
-    database: DatabaseConfig | Any = Field(default_factory=DatabaseConfig)
-    paths: PathsConfig | Any = Field(default_factory=PathsConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    paths: PathsConfig = Field(default_factory=PathsConfig)
 
     # Full unmodeled configuration dictionary as loaded.
     raw: dict[str, Any] = Field(default_factory=dict, exclude=True, repr=False)
