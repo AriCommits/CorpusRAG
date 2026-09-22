@@ -150,8 +150,8 @@ def page_chat():
 
     # Check if Ollama is running
     if config.llm.backend == "ollama":
-        import urllib.request
         import urllib.error
+        import urllib.request
 
         try:
             # Simple GET request to root endpoint which returns "Ollama is running"
@@ -321,8 +321,10 @@ def page_chat():
                         response = resp.content
                     else:
                         from tools.rag.agent import RAGAgent
+                        from tools.rag.config import RAGConfig
 
-                        agent = RAGAgent(config, db)
+                        rag_config = RAGConfig.from_dict(config.raw or config.to_dict())
+                        agent = RAGAgent(rag_config, db)
                         response = agent.query(
                             prompt, collection, top_k=5, conversation_history=active_messages
                         )
