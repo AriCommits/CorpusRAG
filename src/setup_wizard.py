@@ -410,7 +410,7 @@ Your CorpusRAG is now configured and ready to use.
 
 Or use the unified CLI:
 - `corpus tools rag query "your question" -c notes` for command-line queries
-- `corpus tools rag ui` for the interactive TUI
+- `corpus ui` for the interactive TUI
 
 If you selected HTTP mode, start ChromaDB with:
   `docker compose -f .docker/docker-compose.yml up -d`
@@ -426,7 +426,7 @@ If you selected HTTP mode, start ChromaDB with:
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "launch":
-            self.app.should_launch_tui = True
+            self.app.should_launch_ui = True
             self.app.exit()
         elif event.button.id == "finish":
             self.app.exit()
@@ -437,7 +437,7 @@ class SetupWizardApp:
 
     def __init__(self):
         self.wizard_config = WizardConfig()
-        self.should_launch_tui = False
+        self.should_launch_ui = False
 
     def run_tui(self) -> bool:
         """Run interactive TUI wizard.
@@ -463,7 +463,7 @@ class SetupWizardApp:
             def __init__(self, wizard):
                 super().__init__()
                 self.wizard_config = wizard.wizard_config
-                self.should_launch_tui = False
+                self.should_launch_ui = False
 
             def on_mount(self) -> None:
                 self.push_screen("welcome")
@@ -475,7 +475,7 @@ class SetupWizardApp:
             logger.error(f"TUI wizard error: {e}")
             return False
 
-        self.should_launch_tui = app.should_launch_tui
+        self.should_launch_ui = app.should_launch_ui
         return True
 
     def save_config(self) -> bool:
@@ -607,8 +607,8 @@ class SetupWizardApp:
             return False
 
 
-def launch_rag_tui(config_path: str = "configs/base.yaml", collection: str | None = None) -> None:
-    """Start the RAG TUI the same way ``corpus tools rag ui`` does."""
+def launch_rag_ui(config_path: str = "configs/base.yaml", collection: str | None = None) -> None:
+    """Start the RAG TUI the same way ``corpus ui`` does."""
     from cli_common import load_cli_db
     from tools.rag.agent import RAGAgent
     from tools.rag.config import RAGConfig
@@ -652,13 +652,13 @@ def run_setup_wizard() -> int:
     print(f"✓ Vault created at {wizard.wizard_config.vault_path}")
 
     # Launch TUI if requested
-    if wizard.should_launch_tui:
-        print("\nLaunching TUI...")
+    if wizard.should_launch_ui:
+        print("\nLaunching Web UI...")
         try:
-            launch_rag_tui()
+            launch_rag_ui()
         except Exception as e:
             logger.error(f"Failed to launch TUI: {e}")
-            print("You can launch the TUI manually with: corpus tools rag ui")
+            print("You can launch the Web UI manually with: corpus ui")
 
     return 0
 
