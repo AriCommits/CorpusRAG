@@ -5,6 +5,9 @@ This module provides a Streamlit-based web interface for CorpusRAG.
 
 import sys
 from pathlib import Path
+import json
+import uuid
+from datetime import datetime
 
 # Ensure src is in python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -109,13 +112,40 @@ def page_settings():
             st.error(f"Failed to save configuration: {e}")
 
 
+
+
+def get_sessions_dir():
+    d = Path(".corpus_sessions")
+    d.mkdir(exist_ok=True)
+    return d
+
+
+def load_all_sessions():
+    sessions = []
+    for f in get_sessions_dir().glob("*.json"):
+        try:
+            with open(f, "r") as file:
+                sessions.append(json.load(file))
+        except Exception:
+            pass
+    sessions.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+    return sessions
+
+
+def save_session(session_data):
+    sid = session_data["session_id"]
+    with open(get_sessions_dir() / f"{sid}.json", "w") as f:
+        json.dump(session_data, f)
+
+
 def page_chat():
     """Chat and Interaction page."""
     st.header("💬 Chat & Query")
-    
+
     config = st.session_state.config
     try:
         from db.chroma import ChromaDBBackend
+
         db = ChromaDBBackend(config.database)
         collections = db.list_collections()
     except Exception as e:
@@ -126,32 +156,139 @@ def page_chat():
         st.warning("No collections found. Please go to the Ingestion page to add documents.")
         return
 
-    collection = st.selectbox("Select a Collection", collections)
+    # Sidebar for Sessions
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Chat Sessions")
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = {}
-        
-    if collection not in st.session_state.messages:
-        st.session_state.messages[collection] = []
+    all_sessions = load_all_sessions()
 
-    for msg in st.session_state.messages[collection]:
+    if st.sidebar.button("➕ New Chat"):
+        st.session_state.current_session_id = None
+        st.rerun()
+
+    session_opts = {
+        s[
+            "session_id"
+        ]: f"{s.get('collection', 'Unknown')} - {s.get('updated_at', '')[:16].replace('T', ' ')}"
+        for s in all_sessions
+    }
+    current_sid = st.session_state.get("current_session_id")
+
+    if all_sessions:
+        try:
+            default_index = (
+                list(session_opts.keys()).index(current_sid) if current_sid in session_opts else 0
+            )
+        except ValueError:
+            default_index = 0
+
+        selected_sid = st.sidebar.radio(
+            "Recent Chats",
+            list(session_opts.keys()),
+            format_func=lambda x: session_opts[x],
+            index=default_index,
+        )
+
+        if selected_sid != current_sid:
+            st.session_state.current_session_id = selected_sid
+            st.rerun()
+
+    if not current_sid:
+        current_sid = str(uuid.uuid4())
+        st.session_state.current_session_id = current_sid
+        st.session_state.current_session_data = {
+            "session_id": current_sid,
+            "collection": collections[0],
+            "updated_at": datetime.now().isoformat(),
+            "messages": [],
+        }
+        save_session(st.session_state.current_session_data)
+        st.rerun()
+
+    session_file = get_sessions_dir() / f"{current_sid}.json"
+    if session_file.exists():
+        with open(session_file, "r") as f:
+            session_data = json.load(f)
+    else:
+        session_data = st.session_state.current_session_data
+
+    collection = st.selectbox(
+        "Collection",
+        collections,
+        index=collections.index(session_data["collection"])
+        if session_data["collection"] in collections
+        else 0,
+    )
+
+    if collection != session_data["collection"]:
+        session_data["collection"] = collection
+        save_session(session_data)
+        st.rerun()
+
+    # Token counting logic (1 token = ~4 chars)
+    total_tokens = sum(
+        len(m["content"]) // 4 for m in session_data["messages"] if m.get("included", True)
+    )
+    MAX_TOKENS = config.llm.max_tokens or 4096
+    usage_pct = min(1.0, total_tokens / MAX_TOKENS)
+
+    st.progress(
+        usage_pct,
+        text=f"Context Window Usage: {total_tokens} / {MAX_TOKENS} tokens ({int(usage_pct * 100)}%)",
+    )
+    if usage_pct > 0.8:
+        st.warning("⚠️ Context window is getting full. Exclude some messages below to save tokens.")
+
+    st.markdown("---")
+
+    for idx, msg in enumerate(session_data["messages"]):
         with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+            cols = st.columns([0.85, 0.15])
+            with cols[0]:
+                if not msg.get("included", True):
+                    st.caption("*(Excluded from context)*")
+                st.markdown(msg["content"])
+            with cols[1]:
+                included = msg.get("included", True)
+                if (
+                    st.toggle("Include", value=included, key=f"toggle_{current_sid}_{idx}")
+                    != included
+                ):
+                    session_data["messages"][idx]["included"] = not included
+                    save_session(session_data)
+                    st.rerun()
 
-    if prompt := st.chat_input("Ask a question about your documents..."):
-        st.session_state.messages[collection].append({"role": "user", "content": prompt})
-        
+    if prompt := st.chat_input("Ask a question..."):
+        active_messages = [
+            {"role": m["role"], "content": m["content"]}
+            for m in session_data["messages"]
+            if m.get("included", True)
+        ]
+
+        new_user_msg = {"role": "user", "content": prompt, "included": True}
+        session_data["messages"].append(new_user_msg)
+        session_data["updated_at"] = datetime.now().isoformat()
+        save_session(session_data)
+
         with st.chat_message("user"):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    from kernel import Corpus
-                    corpus_app = Corpus.from_loaded(config, db)
-                    response = corpus_app.ask(prompt, collection, top_k=5)
+                    from tools.rag.agent import RAGAgent
+
+                    agent = RAGAgent(config, db)
+                    response = agent.query(
+                        prompt, collection, top_k=5, conversation_history=active_messages
+                    )
                     st.markdown(response)
-                    st.session_state.messages[collection].append({"role": "assistant", "content": response})
+                    session_data["messages"].append(
+                        {"role": "assistant", "content": response, "included": True}
+                    )
+                    session_data["updated_at"] = datetime.now().isoformat()
+                    save_session(session_data)
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Error querying backend: {e}")
 
@@ -159,10 +296,11 @@ def page_chat():
 def page_ingestion():
     """Document Ingestion page."""
     st.header("📄 Document Ingestion")
-    
+
     config = st.session_state.config
     try:
         from db.chroma import ChromaDBBackend
+
         db = ChromaDBBackend(config.database)
         existing_collections = db.list_collections()
     except Exception as e:
@@ -174,7 +312,7 @@ def page_ingestion():
     col1, col2 = st.columns(2)
     with col1:
         collection_mode = st.radio("Collection", ["Existing", "New"], horizontal=True)
-        
+
         if collection_mode == "Existing":
             if not existing_collections:
                 st.warning("No existing collections.")
@@ -185,7 +323,9 @@ def page_ingestion():
             collection_name = st.text_input("New Collection Name")
 
     with col2:
-        source_path = st.text_input("Source Directory or File Path", placeholder="/path/to/my/documents")
+        source_path = st.text_input(
+            "Source Directory or File Path", placeholder="/path/to/my/documents"
+        )
 
     if st.button("Ingest Documents", type="primary"):
         if not collection_name or not str(collection_name).strip():
@@ -195,19 +335,30 @@ def page_ingestion():
             st.error("Please specify a source path.")
             return
 
-        with st.spinner(f"Ingesting documents into '{collection_name}'... This may take a while depending on size."):
+        with st.spinner(
+            f"Ingesting documents into '{collection_name}'... This may take a while depending on size."
+        ):
             try:
                 from kernel import Corpus
+
                 corpus_app = Corpus.from_loaded(config, db)
-                result = corpus_app.ingest_path(str(source_path).strip(), str(collection_name).strip())
-                st.success(f"Successfully indexed {result.files_indexed} files and {result.chunks_indexed} chunks!")
+                result = corpus_app.ingest_path(
+                    str(source_path).strip(), str(collection_name).strip()
+                )
+                st.success(
+                    f"Successfully indexed {result.files_indexed} files and {result.chunks_indexed} chunks!"
+                )
                 if collection_mode == "New":
                     import time
+
                     time.sleep(2)
                     st.rerun()
             except Exception as e:
                 import traceback
+
                 st.error(f"Ingestion failed: {e}\n\n{traceback.format_exc()}")
+
+
 def main():
     st.set_page_config(
         page_title="CorpusRAG",
