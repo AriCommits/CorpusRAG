@@ -307,8 +307,6 @@ def chat(
     click.echo("\nGoodbye!")
 
 
-
-
 def main():
     """Entry point for corpus-rag CLI."""
     rag()
