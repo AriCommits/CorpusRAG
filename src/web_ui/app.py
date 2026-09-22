@@ -336,8 +336,10 @@ def page_chat():
                     session_data["updated_at"] = datetime.now().isoformat()
                     save_session(session_data)
                     st.rerun()
-                except Exception as e:
-                    st.error(f"Error querying backend: {e}")
+                except Exception:
+                    import traceback
+
+                    st.error(f"Error querying backend: {traceback.format_exc()}")
 
 
 def page_ingestion():

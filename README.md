@@ -40,7 +40,7 @@ corpus ask "What is X?" -c notes
 corpus summarize -c notes
 
 # 6. Also available
-corpus tools rag ui -c notes                 # TUI
+corpus ui                                    # Web UI
 corpus-mcp-server --profile simple           # MCP for editors (this is the default)
 
 # 7. Lectures — two different paths
@@ -58,7 +58,7 @@ corpus tools video pipeline ./Course --workers 1
 | **RAG Pipeline** | Hybrid / semantic / keyword retrieval (one staged pipeline: vector, BM25, RRF, rerank), parent-child chunking, incremental sync |
 | **MCP Server** | Expose RAG tools to Claude, Kiro, Neovim, OpenCode, or any MCP-compatible editor |
 | **store_text** | Let AI agents push plans, summaries, and context into your knowledge base |
-| **TUI** | Rich terminal chat with slash commands, collection management, context controls |
+| **Web UI** | Streamlit browser interface for chat, collection management, and configuration |
 | **Flashcards** | Generate study cards with Anki export from the same `rag_<collection>` store as ingest |
 | **Summaries** | Multi-length summaries with Markdown export from ingested RAG collections |
 | **Quizzes** | Multiple choice, true/false, short answer — export to JSON/CSV |

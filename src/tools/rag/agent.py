@@ -118,8 +118,10 @@ class RAGAgent:
 
             return result_text
 
-        except Exception as e:
-            return f"Error generating response: {e}"
+        except Exception:
+            import traceback
+
+            return f"Error generating response: {traceback.format_exc()}"
 
     def chat(
         self,

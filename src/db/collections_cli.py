@@ -137,22 +137,6 @@ def delete_collection(name: str, config: str) -> None:
         console.print(f"[red]Error:[/red] {e}")
 
 
-@collections_cmd.command(name="manage")
-@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
-def manage_collections(config: str) -> None:
-    """Launch TUI for managing collections."""
-    from textual.app import App
-
-    from tools.rag.tui_collections import CollectionManagerScreen
-
-    class CollectionManagerApp(App[None]):
-        def on_mount(self) -> None:
-            self.push_screen(CollectionManagerScreen(config_path=config))
-
-    app = CollectionManagerApp()
-    app.run()
-
-
 @collections_cmd.command(name="update-path")
 @click.argument("name")
 @click.argument("path", type=click.Path(exists=True))
