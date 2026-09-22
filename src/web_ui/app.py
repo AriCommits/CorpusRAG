@@ -147,6 +147,21 @@ def page_chat():
     st.header("💬 Chat & Query")
 
     config = st.session_state.config
+
+    # Check if Ollama is running
+    if config.llm.backend == "ollama":
+        import urllib.request
+        import urllib.error
+
+        try:
+            # Simple GET request to root endpoint which returns "Ollama is running"
+            req = urllib.request.Request(config.llm.endpoint)
+            urllib.request.urlopen(req, timeout=0.5)
+        except Exception:
+            st.warning(
+                f"⚠️ **Ollama does not appear to be running!** \n\nCorpusRAG is configured to use Ollama at `{config.llm.endpoint}`. Please make sure you have [downloaded Ollama](https://ollama.com) and it is currently running on your machine."
+            )
+
     collections = []
     try:
         from db.chroma import ChromaDBBackend
@@ -166,7 +181,15 @@ def page_chat():
     all_sessions = load_all_sessions()
 
     if st.sidebar.button("➕ New Chat"):
-        st.session_state.current_session_id = None
+        new_sid = str(uuid.uuid4())
+        st.session_state.current_session_id = new_sid
+        st.session_state.current_session_data = {
+            "session_id": new_sid,
+            "collection": collection_opts[0],
+            "updated_at": datetime.now().isoformat(),
+            "messages": [],
+        }
+        save_session(st.session_state.current_session_data)
         st.rerun()
 
     session_opts = {
