@@ -45,12 +45,30 @@ def page_settings():
                 ["ollama", "openai", "anthropic"], 
                 index=["ollama", "openai", "anthropic"].index(config.llm.backend) if config.llm.backend in ["ollama", "openai", "anthropic"] else 0
             )
-            model = st.text_input("Primary Model", value=config.llm.model)
+            
+            # Detect if the user changed the backend provider to reset dependent fields
+            is_new_backend = backend != config.llm.backend
+            
+            # Primary model blanked out if backend changes
+            default_model = "" if is_new_backend else config.llm.model
+            model = st.text_input("Primary Model", value=default_model)
+            
         with col2:
-            endpoint = st.text_input("Endpoint (e.g., http://localhost:11434)", value=config.llm.endpoint)
-            api_key = st.text_input("API Key (leave blank if local)", value=config.llm.api_key or "", type="password")
+            if is_new_backend:
+                if backend == "ollama":
+                    default_endpoint = "http://localhost:11434"
+                elif backend == "openai":
+                    default_endpoint = "https://api.openai.com/v1"
+                else:
+                    default_endpoint = ""
+            else:
+                default_endpoint = config.llm.endpoint
+                
+            endpoint = st.text_input("Endpoint (e.g., http://localhost:11434)", value=default_endpoint)
+            api_key = st.text_input("API Key (leave blank if local)", value="" if is_new_backend else (config.llm.api_key or ""), type="password")
 
-        temperature = st.slider("Temperature", 0.0, 2.0, float(config.llm.temperature), 0.1)
+        # Slider limited to 0 to 1
+        temperature = st.slider("Temperature", 0.0, 1.0, min(1.0, float(config.llm.temperature)), 0.1)
 
     with st.expander("📚 Database Settings"):
         db_mode = st.radio("ChromaDB Mode", ["persistent", "http"], index=0 if config.database.mode == "persistent" else 1)
@@ -70,6 +88,7 @@ def page_settings():
         try:
             config.save_to_yaml(Path("configs/base.yaml"))
             st.success("Configuration saved successfully!")
+            st.rerun() # Refresh the page state to lock in changes
         except Exception as e:
             st.error(f"Failed to save configuration: {e}")
 
@@ -93,6 +112,21 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    
+    # Increase base text size via custom CSS
+    st.markdown("""
+        <style>
+            html, body, [class*="css"]  {
+                font-size: 1.15rem !important;
+            }
+            h1 { font-size: 2.5rem !important; }
+            h2 { font-size: 2rem !important; }
+            .stButton > button {
+                font-size: 1.15rem !important;
+                padding: 0.5rem 1rem !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
     init_session_state()
 

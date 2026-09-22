@@ -13,8 +13,8 @@ class TestFlashcardConfig:
 
     def test_default_values(self) -> None:
         """Test default flashcard config values."""
-        config = FlashcardConfig(
-            llm=MagicMock(),
+        config = FlashcardConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -27,8 +27,8 @@ class TestFlashcardConfig:
 
     def test_custom_values(self) -> None:
         """Test custom flashcard config values."""
-        config = FlashcardConfig(
-            llm=MagicMock(),
+        config = FlashcardConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -56,8 +56,8 @@ class TestFlashcardConfig:
 
     def test_prompt_template_formatting(self) -> None:
         """Test flashcard prompt template renders with config values."""
-        config = FlashcardConfig(
-            llm=MagicMock(),
+        config = FlashcardConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -76,8 +76,8 @@ class TestQuizConfig:
 
     def test_default_values(self) -> None:
         """Test default quiz config values."""
-        config = QuizConfig(
-            llm=MagicMock(),
+        config = QuizConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -90,8 +90,8 @@ class TestQuizConfig:
 
     def test_custom_values(self) -> None:
         """Test custom quiz config values."""
-        config = QuizConfig(
-            llm=MagicMock(),
+        config = QuizConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -118,8 +118,8 @@ class TestQuizConfig:
 
     def test_question_types_available(self) -> None:
         """Test that question types are configured."""
-        config = QuizConfig(
-            llm=MagicMock(),
+        config = QuizConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -135,8 +135,8 @@ class TestSummaryConfig:
 
     def test_default_values(self) -> None:
         """Test default summary config values."""
-        config = SummaryConfig(
-            llm=MagicMock(),
+        config = SummaryConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -148,8 +148,8 @@ class TestSummaryConfig:
 
     def test_custom_values(self) -> None:
         """Test custom summary config values."""
-        config = SummaryConfig(
-            llm=MagicMock(),
+        config = SummaryConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -173,8 +173,8 @@ class TestSummaryConfig:
         """Test that all summary length options are valid."""
         valid_lengths = ["short", "medium", "long"]
         for length in valid_lengths:
-            config = SummaryConfig(
-                llm=MagicMock(),
+            config = SummaryConfig.model_construct(
+        llm=MagicMock(),
                 embedding=MagicMock(),
                 database=MagicMock(),
                 paths=MagicMock(),
@@ -249,8 +249,8 @@ class TestToolConfigValidation:
 
     def test_flashcard_count_positive(self) -> None:
         """Test flashcard count is positive."""
-        config = FlashcardConfig(
-            llm=MagicMock(),
+        config = FlashcardConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -259,8 +259,8 @@ class TestToolConfigValidation:
         # Should allow 0 (even if not meaningful)
         assert config.cards_per_topic == 0
 
-        config = FlashcardConfig(
-            llm=MagicMock(),
+        config = FlashcardConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),
@@ -273,8 +273,8 @@ class TestToolConfigValidation:
         """Test quiz format validation."""
         valid_formats = ["markdown", "json", "csv"]
         for fmt in valid_formats:
-            config = QuizConfig(
-                llm=MagicMock(),
+            config = QuizConfig.model_construct(
+        llm=MagicMock(),
                 embedding=MagicMock(),
                 database=MagicMock(),
                 paths=MagicMock(),
@@ -286,8 +286,8 @@ class TestToolConfigValidation:
         """Test summary length uses valid values."""
         valid_lengths = ["short", "medium", "long"]
         for length in valid_lengths:
-            config = SummaryConfig(
-                llm=MagicMock(),
+            config = SummaryConfig.model_construct(
+        llm=MagicMock(),
                 embedding=MagicMock(),
                 database=MagicMock(),
                 paths=MagicMock(),

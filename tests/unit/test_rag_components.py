@@ -222,8 +222,8 @@ class TestRAGIngester:
         embedding_config = EmbeddingConfig()
         paths_config = PathsConfig()
 
-        rag_config = RAGConfig(
-            llm=MagicMock(),
+        rag_config = RAGConfig.model_construct(
+        llm=MagicMock(),
             embedding=embedding_config,
             database=db_config,
             paths=paths_config,
@@ -252,8 +252,8 @@ class TestRAGRetriever:
         embedding_config = EmbeddingConfig()
         paths_config = PathsConfig()
 
-        rag_config = RAGConfig(
-            llm=MagicMock(),
+        rag_config = RAGConfig.model_construct(
+        llm=MagicMock(),
             embedding=embedding_config,
             database=db_config,
             paths=paths_config,
@@ -284,8 +284,8 @@ class TestRAGConfig:
 
     def test_rag_config_defaults(self) -> None:
         """Test RAGConfig default values."""
-        config = RAGConfig(
-            llm=MagicMock(),
+        config = RAGConfig.model_construct(
+        llm=MagicMock(),
             embedding=MagicMock(),
             database=MagicMock(),
             paths=MagicMock(),

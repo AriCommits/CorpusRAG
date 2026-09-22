@@ -12,15 +12,8 @@ from tools.video.jobs import JobManager
 
 
 def _mock_config():
-    cfg = MagicMock()
-    cfg.to_dict.return_value = {
-        "llm": {"endpoint": "http://localhost:11434"},
-        "embedding": {},
-        "database": {},
-        "paths": {"scratch_dir": "./scratch", "output_dir": "./output"},
-        "video": {},
-    }
-    return cfg
+    from config.base import BaseConfig
+    return BaseConfig()
 
 
 def test_video_ingest_local_file_not_found():
