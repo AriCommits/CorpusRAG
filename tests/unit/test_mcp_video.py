@@ -13,6 +13,7 @@ from tools.video.jobs import JobManager
 
 def _mock_config():
     from config.base import BaseConfig
+
     return BaseConfig()
 
 
