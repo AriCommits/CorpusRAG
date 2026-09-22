@@ -3,11 +3,11 @@
 This module provides a Streamlit-based web interface for CorpusRAG.
 """
 
-import sys
-from pathlib import Path
 import json
+import sys
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 # Ensure src is in python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -93,6 +93,10 @@ def page_settings():
             "Persist Directory", value=str(config.database.persist_directory)
         )
 
+    with st.expander("📁 Paths Settings"):
+        scratch_dir = st.text_input("Scratch Directory", value=str(config.paths.scratch_dir))
+        output_dir = st.text_input("Output Directory", value=str(config.paths.output_dir))
+
     if st.button("Save Configuration", type="primary"):
         # Update session state config
         config.llm.backend = backend
@@ -103,6 +107,8 @@ def page_settings():
 
         config.database.mode = "persistent" if "persistent" in db_mode else "http"
         config.database.persist_directory = Path(persist_dir)
+        config.paths.scratch_dir = Path(scratch_dir)
+        config.paths.output_dir = Path(output_dir)
 
         try:
             config.save_to_yaml(Path("configs/base.yaml"))
@@ -110,8 +116,6 @@ def page_settings():
             st.rerun()  # Refresh the page state to lock in changes
         except Exception as e:
             st.error(f"Failed to save configuration: {e}")
-
-
 
 
 def get_sessions_dir():
@@ -143,18 +147,17 @@ def page_chat():
     st.header("💬 Chat & Query")
 
     config = st.session_state.config
+    collections = []
     try:
         from db.chroma import ChromaDBBackend
 
         db = ChromaDBBackend(config.database)
         collections = db.list_collections()
     except Exception as e:
-        st.error(f"Failed to connect to Database: {e}")
-        return
+        db = None
+        st.error(f"Database connection failed. RAG features will be disabled. Error: {e}")
 
-    if not collections:
-        st.warning("No collections found. Please go to the Ingestion page to add documents.")
-        return
+    collection_opts = ["No Collection (Direct Chat)"] + collections
 
     # Sidebar for Sessions
     st.sidebar.markdown("---")
@@ -198,7 +201,7 @@ def page_chat():
         st.session_state.current_session_id = current_sid
         st.session_state.current_session_data = {
             "session_id": current_sid,
-            "collection": collections[0],
+            "collection": collection_opts[0],
             "updated_at": datetime.now().isoformat(),
             "messages": [],
         }
@@ -276,12 +279,31 @@ def page_chat():
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 try:
-                    from tools.rag.agent import RAGAgent
+                    if collection == "No Collection (Direct Chat)" or db is None:
+                        from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-                    agent = RAGAgent(config, db)
-                    response = agent.query(
-                        prompt, collection, top_k=5, conversation_history=active_messages
-                    )
+                        from tools.rag.pipeline.llm import create_llm
+
+                        llm = create_llm(config.llm)
+
+                        lc_messages = [SystemMessage(content="You are a helpful AI assistant.")]
+                        for m in active_messages:
+                            if m["role"] == "user":
+                                lc_messages.append(HumanMessage(content=m["content"]))
+                            else:
+                                lc_messages.append(AIMessage(content=m["content"]))
+                        lc_messages.append(HumanMessage(content=prompt))
+
+                        resp = llm.invoke(lc_messages)
+                        response = resp.content
+                    else:
+                        from tools.rag.agent import RAGAgent
+
+                        agent = RAGAgent(config, db)
+                        response = agent.query(
+                            prompt, collection, top_k=5, conversation_history=active_messages
+                        )
+
                     st.markdown(response)
                     session_data["messages"].append(
                         {"role": "assistant", "content": response, "included": True}
@@ -372,13 +394,27 @@ def main():
         """
         <style>
             html, body, [class*="css"]  {
-                font-size: 1.15rem !important;
+                font-size: 1.25rem !important;
             }
-            h1 { font-size: 2.5rem !important; }
-            h2 { font-size: 2rem !important; }
+            p, span, div {
+                font-weight: 500 !important;
+            }
+            h1 { font-size: 2.8rem !important; font-weight: 800 !important; }
+            h2 { font-size: 2.2rem !important; font-weight: 700 !important; }
+            h3 { font-size: 1.8rem !important; font-weight: 600 !important; }
             .stButton > button {
-                font-size: 1.15rem !important;
-                padding: 0.5rem 1rem !important;
+                font-size: 1.25rem !important;
+                padding: 0.6rem 1.2rem !important;
+                font-weight: 600 !important;
+            }
+            .stMarkdown p {
+                font-size: 1.25rem !important;
+                line-height: 1.6 !important;
+            }
+            .stChatMessage p {
+                font-size: 1.3rem !important;
+                font-weight: 500 !important;
+                line-height: 1.6 !important;
             }
         </style>
     """,
