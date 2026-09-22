@@ -1,33 +1,22 @@
 """Dependency-safe transcription queue with model mutexes.
 
-This module provides a small boss-worker style queue that runs
-transcription (Whisper) and cleaning (LLM) across multiple files
-concurrently while guaranteeing that:
-
-* Only **one** Whisper transcription runs at a time (``gates.whisper``).
-* Only **one** LLM cleaning runs at a time (``gates.llm``).
-* Whisper of one file and LLM cleaning of another file **may overlap**
-  because they take different locks.
-* Audio extraction (PyAV) is never gated, so it overlaps Whisper.
-
-The queue shares a single ``VideoTranscriber`` and a single
-``TranscriptCleaner`` across all workers so the Whisper weights are loaded
-once. Per-file failures are isolated: a raising file records an ``error``
-and its siblings still run and are returned.
-
-Discovery is intentionally *not* part of this module — the caller passes an
-explicit list of files (see ``discover_media_files``).
+Whisper workers only transcribe. As soon as a file's transcript is ready it
+is pushed to a dedicated LLM worker, so Gemma can clean lecture 1 while
+Whisper is already on lecture 2. Whisper is exclusive; the LLM is exclusive;
+audio extract stays ungated.
 """
 
 from __future__ import annotations
 
+import queue
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Callable, Protocol, runtime_checkable
 
 MAX_WORKERS = 8
+
+ProgressFn = Callable[[str, int, int, Path], None]
 
 
 def clamp_workers(n: object) -> int:
@@ -60,9 +49,6 @@ class ModelGates:
         self.llm: threading.Lock = threading.Lock()
 
 
-# A single process-local default so that independently constructed
-# transcribers/cleaners still serialize against the same models when the
-# caller does not pass an explicit ``ModelGates``.
 _DEFAULT_GATES = ModelGates()
 
 
@@ -73,16 +59,7 @@ def default_gates() -> ModelGates:
 
 @dataclass
 class TranscriptJobResult:
-    """Result of transcribing (and optionally cleaning) a single file.
-
-    Attributes:
-        source: The input media file.
-        parent: ``source.parent`` — used by callers to group per folder.
-        raw: Raw transcript text, or ``None`` if transcription failed.
-        cleaned: Cleaned transcript text, or ``None`` if cleaning was
-            skipped or failed.
-        error: ``str(exception)`` if the job failed, otherwise ``None``.
-    """
+    """Result of transcribing (and optionally cleaning) a single file."""
 
     source: Path
     parent: Path
@@ -93,21 +70,34 @@ class TranscriptJobResult:
 
 @runtime_checkable
 class _SelfLocking(Protocol):
-    """Components that already take the appropriate gate lock internally.
-
-    A ``VideoTranscriber`` / ``TranscriptCleaner`` that has been given a
-    ``ModelGates`` locks the model call itself. The queue must not wrap that
-    call in the same lock again (that would deadlock a non-reentrant Lock or
-    at best redundantly serialize). Such components advertise this by setting
-    ``locks_internally = True``. Fake test doubles that do *not* self-lock
-    leave it falsey (the default), so the queue applies the gate for them.
-    """
-
     locks_internally: bool
 
 
 def _locks_internally(component: object) -> bool:
     return bool(getattr(component, "locks_internally", False))
+
+
+def _emit(on_progress: ProgressFn | None, stage: str, index: int, total: int, path: Path) -> None:
+    if on_progress is None:
+        return
+    try:
+        on_progress(stage, index, total, path)
+    except Exception:
+        return
+
+
+def _join_interruptible(threads: list[threading.Thread]) -> None:
+    """Join workers in short slices so Ctrl+C can reach the main thread.
+
+    A blocking ``Thread.join()`` (or ``ThreadPoolExecutor.shutdown(wait=True)``)
+    swallows SIGINT until the current Whisper/Ollama call in a worker returns.
+    Waking every 200ms lets KeyboardInterrupt abort the pipeline.
+    """
+    remaining = list(threads)
+    while remaining:
+        remaining = [thread for thread in remaining if thread.is_alive()]
+        for thread in remaining:
+            thread.join(timeout=0.2)
 
 
 def run_transcription_queue(
@@ -118,60 +108,121 @@ def run_transcription_queue(
     skip_clean: bool = False,
     max_workers: int = 2,
     gates: ModelGates | None = None,
+    on_progress: ProgressFn | None = None,
 ) -> list[TranscriptJobResult]:
-    """Transcribe (and optionally clean) many files concurrently.
+    """Transcribe files, then clean each one as soon as Whisper finishes.
 
-    Args:
-        files: Iterable of media file paths. One job per file.
-        transcriber: Shared object with ``transcribe_file(path) -> str``.
-        cleaner: Optional shared object with ``clean(text) -> str``.
-        skip_clean: If ``True``, never call ``cleaner``.
-        max_workers: Thread pool size. Clamped to ``[1, MAX_WORKERS]``.
-            ``1`` is fully serial.
-        gates: Optional :class:`ModelGates`. Defaults to the process-local
-            singleton so independent components still serialize correctly.
-
-    Returns:
-        A ``TranscriptJobResult`` per input file, in input order. Failures
-        are recorded via ``error`` and never abort sibling jobs. This
-        function never raises for a per-file failure; the caller (CLI)
-        decides the exit code.
+    Whisper workers never wait on the LLM. They push ``(index, path, raw)``
+    onto a clean queue and pick up the next file. A single LLM worker drains
+    that queue, so cleaning of file *n* overlaps transcription of file *n+1*.
     """
     if gates is None:
         gates = default_gates()
 
     file_list = [Path(f) for f in files]
-    max_workers = clamp_workers(max_workers)
-
-    # Whether the queue itself should take the gate lock. If the component
-    # self-locks (real VideoTranscriber/TranscriptCleaner with gates), we must
-    # not lock again. Test fakes do not self-lock, so the queue gates them.
-    transcriber_self_locks = _locks_internally(transcriber)
-    cleaner_self_locks = _locks_internally(cleaner) if cleaner is not None else False
-
-    def _process(path: Path) -> TranscriptJobResult:
-        result = TranscriptJobResult(source=path, parent=path.parent)
-        try:
-            if transcriber_self_locks:
-                raw = transcriber.transcribe_file(path)
-            else:
-                with gates.whisper:
-                    raw = transcriber.transcribe_file(path)
-            result.raw = raw
-
-            if not skip_clean and cleaner is not None:
-                if cleaner_self_locks:
-                    result.cleaned = cleaner.clean(raw)
-                else:
-                    with gates.llm:
-                        result.cleaned = cleaner.clean(raw)
-        except Exception as exc:  # noqa: BLE001 - isolate per-file failures
-            result.error = str(exc)
-        return result
-
-    if not file_list:
+    total = len(file_list)
+    if total == 0:
         return []
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # executor.map preserves input order and shares one transcriber/cleaner.
-        return list(executor.map(_process, file_list))
+    max_workers = clamp_workers(max_workers)
+    transcriber_self_locks = _locks_internally(transcriber)
+    cleaner_self_locks = _locks_internally(cleaner) if cleaner is not None else False
+    do_clean = bool(cleaner is not None and not skip_clean)
+
+    results: list[TranscriptJobResult] = [
+        TranscriptJobResult(source=path, parent=path.parent) for path in file_list
+    ]
+    stop = threading.Event()
+    whisper_q: queue.Queue[tuple[int, Path] | None] = queue.Queue()
+    clean_q: queue.Queue[tuple[int, Path, str] | None] = queue.Queue()
+
+    for index, path in enumerate(file_list):
+        whisper_q.put((index, path))
+    for _ in range(max_workers):
+        whisper_q.put(None)
+
+    def _transcribe(path: Path) -> str:
+        if transcriber_self_locks:
+            return transcriber.transcribe_file(path)
+        with gates.whisper:
+            return transcriber.transcribe_file(path)
+
+    def _clean_text(raw: str) -> str:
+        if cleaner_self_locks:
+            return cleaner.clean(raw)
+        with gates.llm:
+            return cleaner.clean(raw)
+
+    def whisper_worker() -> None:
+        while not stop.is_set():
+            try:
+                item = whisper_q.get(timeout=0.2)
+            except queue.Empty:
+                continue
+            try:
+                if item is None or stop.is_set():
+                    return
+                index, path = item
+                _emit(on_progress, "whisper", index, total, path)
+                try:
+                    raw = _transcribe(path)
+                except Exception as exc:  # noqa: BLE001
+                    results[index].error = str(exc)
+                    _emit(on_progress, "error", index, total, path)
+                    continue
+                if stop.is_set():
+                    return
+                results[index].raw = raw
+                if do_clean:
+                    clean_q.put((index, path, raw))
+                else:
+                    _emit(on_progress, "done", index, total, path)
+            finally:
+                whisper_q.task_done()
+
+    def llm_worker() -> None:
+        while not stop.is_set():
+            try:
+                item = clean_q.get(timeout=0.2)
+            except queue.Empty:
+                continue
+            try:
+                if item is None or stop.is_set():
+                    return
+                index, path, raw = item
+                _emit(on_progress, "clean", index, total, path)
+                try:
+                    results[index].cleaned = _clean_text(raw)
+                except Exception as exc:  # noqa: BLE001
+                    results[index].error = str(exc)
+                    _emit(on_progress, "error", index, total, path)
+                    continue
+                _emit(on_progress, "done", index, total, path)
+            finally:
+                clean_q.task_done()
+
+    whisper_threads = [
+        threading.Thread(target=whisper_worker, name=f"whisper-{i}", daemon=True)
+        for i in range(max_workers)
+    ]
+    for thread in whisper_threads:
+        thread.start()
+
+    llm_thread = None
+    if do_clean:
+        llm_thread = threading.Thread(target=llm_worker, name="llm-clean", daemon=True)
+        llm_thread.start()
+
+    try:
+        _join_interruptible(whisper_threads)
+        if llm_thread is not None:
+            clean_q.put(None)
+            _join_interruptible([llm_thread])
+    except KeyboardInterrupt:
+        stop.set()
+        for _ in range(max_workers):
+            whisper_q.put(None)
+        clean_q.put(None)
+        raise
+
+    return results

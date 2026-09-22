@@ -1,0 +1,388 @@
+Folder PATH listing for volume Windows
+Volume serial number is CCFB-0EFC
+C:\USERS\ARIAN\DOWNLOADS\CS6300_LECTURES
++---P1L1_Introduction_and_Overview
+¦       0 - Introduction.mp4
+¦       1 - Importance of Software Engineering.mp4
+¦       10 - Software Process.mp4
+¦       11 - Preliminary Questions Question.mp4
+¦       12 - Preliminary Questions Solution.mp4
+¦       13 - Preliminary Questions Question.mp4
+¦       14 - Preliminary Questions Solution.mp4
+¦       15 - Software Phases.mp4
+¦       16 - Tools of the Trade.mp4
+¦       2 - Software Failure Quiz Question.mp4
+¦       3 - Software Failure Quiz Solution.mp4
+¦       4 - Discipline of Software Engineering.mp4
+¦       5 - The Software Crisis.mp4
+¦       6 - The Software Crisis Quiz Question.mp4
+¦       7 - The Software Crisis Quiz Solution.mp4
+¦       8 - Evidence of the Software Crisis.mp4
+¦       9 - Software Development.mp4
+¦       
++---P1L2_Life_Cycle_Models
+¦       17 - Introduction with Barry Boehm.mp4
+¦       18 - Traditional Software Phases.mp4
+¦       19 - Requirements Engineering.mp4
+¦       20 - Design.mp4
+¦       21 - Implementation.mp4
+¦       22 - Verification & Validation.mp4
+¦       23 - Maintenance.mp4
+¦       24 - Software Phases Quiz Question.mp4
+¦       25 - Software Phases Quiz Solution.mp4
+¦       26 - Software Process Model Introduction.mp4
+¦       27 - Waterfall Process.mp4
+¦       28 - Spiral Process.mp4
+¦       29 - Evolutionary Prototyping Process.mp4
+¦       30 - Rational Unified Process.mp4
+¦       31 - Agile Process.mp4
+¦       32 - Choosing a Model.mp4
+¦       33 - Choosing a Model Quiz Question.mp4
+¦       34 - Choosing a Model Quiz Solution.mp4
+¦       35 - Choosing a Model Quiz Question.mp4
+¦       36 - Choosing a Model Quiz Solution.mp4
+¦       37 - Lifecycle Documents.mp4
+¦       38 - Classic Mistakes_ People.mp4
+¦       39 - Classic Mistakes_ Process.mp4
+¦       40 - Classic Mistakes_ Product.mp4
+¦       41 - Classic Mistakes_ Technology.mp4
+¦       42 - Classic Mistakes Quiz Question.mp4
+¦       43 - Classic Mistakes Quiz Solution.mp4
+¦       
++---P1L3_Integrated_Development_Environment
+¦       44 - Lesson Overview.mp4
+¦       45 - Eclipse Introduction.mp4
+¦       46 - IDE Overview.mp4
+¦       47 - Plug-Ins.mp4
+¦       48 - Eclipse Demo_ Create Java Project.mp4
+¦       49 - Eclipse Demo_ Create a Class.mp4
+¦       50 - Eclipse Demo_ Run Configuration.mp4
+¦       51 - Eclipse Demo_ Debugging.mp4
+¦       
++---P1L4_Version_Control
+¦       52 - Lesson Overview.mp4
+¦       53 - Interview with John Britton.mp4
+¦       54 - Version Control System Introduction.mp4
+¦       55 - VCS Quiz Question.mp4
+¦       56 - VCS Quiz Solution.mp4
+¦       57 - Essential Actions.mp4
+¦       58 - Example Workflow.mp4
+¦       59 - Donts in VCS.mp4
+¦       60 - Two Main Types of VCS.mp4
+¦       61 - Introduction to GIT.mp4
+¦       62 - Installing GIT Question.mp4
+¦       64 - GIT Workflow.mp4
+¦       65 - GIT Demo_ Intro to Git.mp4
+¦       66 - GIT Demo_ Git + Eclipse.mp4
+¦       67 - GIT Demo_ Github.mp4
+¦       68 - GIT Recap.mp4
+¦       69 - GIT Recap_ Local Repositories.mp4
+¦       70 - GIT Recap_ Remote Repositories.mp4
+¦       71 - GitHub Setup Assignment Question.mp4
+¦       
++---P1L5__Requirements_Gathering
+¦       73 - Gathering Requirements Question.mp4
+¦       75 - Choosing Good Questions Question.mp4
+¦       76 - Choosing Good Questions Solution.mp4
+¦       77 - Requirements Interview.mp4
+¦       78 - Average Sentence Length Requirements.mp4
+¦       
++---P2L1_Requirements_Engineering
+¦       100 - Requirements Quiz Solution.mp4
+¦       101 - Requirement Origins.mp4
+¦       102 - Elicitation Problems.mp4
+¦       103 - Traditional Techniques.mp4
+¦       104 - Other Techniques.mp4
+¦       105 - Modeling Requirements.mp4
+¦       106 - Analyzing Requirements.mp4
+¦       107 - Requirements Prioritization.mp4
+¦       108 - Requirements Prioritization Quiz Question.mp4
+¦       109 - Requirements Prioritization Quiz Solution.mp4
+¦       110 - Requirements Engineering Process.mp4
+¦       111 - SRS.mp4
+¦       79 - Lesson Overview.mp4
+¦       80 - Interview with Jane Cleland-Huang.mp4
+¦       81 - General RE Definition.mp4
+¦       82 - Software Intensive Systems.mp4
+¦       83 - Software Quality.mp4
+¦       84 - Identifying Purpose.mp4
+¦       85 - Completeness and Pertinence.mp4
+¦       86 - Pertinence Quiz Question.mp4
+¦       87 - Pertinence Quiz Solution.mp4
+¦       88 - Completeness Quiz Question.mp4
+¦       89 - Completeness Quiz Solution.mp4
+¦       90 - Irrelevant Requirements Quiz Question.mp4
+¦       91 - Irrelevant Requirements Quiz Solution.mp4
+¦       92 - Best Practices.mp4
+¦       93 - RE Definition Breakdown.mp4
+¦       94 - Defining Requirements.mp4
+¦       95 - Defining Requirements Quiz Question.mp4
+¦       96 - Defining Requirements Quiz Solution.mp4
+¦       97 - Functional and Nonfunctional Requirements.mp4
+¦       98 - User and System Requirements.mp4
+¦       99 - Requirements Quiz Question.mp4
+¦       
++---P2L2_OO_Software_Engineering_and_UML
+¦       112 - Lesson Overview.mp4
+¦       113 - Object Orientation Introduction.mp4
+¦       114 - Objects and Classes.mp4
+¦       115 - Benefits of OO.mp4
+¦       116 - OO Benefits Quiz Question.mp4
+¦       117 - OO Benefits Quiz Solution.mp4
+¦       118 - OO Analysis History.mp4
+¦       119 - OO Analysis Overview.mp4
+¦       120 - Modeling Classes Quiz Question.mp4
+¦       121 - Modeling Classes Quiz Solution.mp4
+¦       122 - Running Example Explanation.mp4
+¦       123 - UML Structural Diagrams_  Class Diagram.mp4
+¦       124 - Class Diagram_ Class.mp4
+¦       125 - Class Diagram_ Attributes.mp4
+¦       126 - Class Diagram_ Operations.mp4
+¦       127 - Class Diagram_ Relationships.mp4
+¦       128 - Class Diagram Relationships Quiz Question.mp4
+¦       129 - Class Diagram Relationships Quiz Solution.mp4
+¦       130 - Class Diagram_ Dependency Relationship.mp4
+¦       131 - Class Diagram_ Association & Aggregation Relationships.mp4
+¦       132 - Class Diagram_ Generalization Relationship.mp4
+¦       133 - Class Diagram_ Creation Tips.mp4
+¦       134 - UML Structural Diagrams_ Component Diagram.mp4
+¦       135 - UML Structural Diagrams_ Deployment.mp4
+¦       136 - UML Behavioral Diagrams_ Use Case.mp4
+¦       137 - Use Case Diagram_ Actors.mp4
+¦       138 - Building a Use Case Diagram.mp4
+¦       139 - Use Case Example.mp4
+¦       140 - Role of Use Cases.mp4
+¦       141 - Use Case Diagram_ Creation Tips.mp4
+¦       142 - UML Behavioral Diagrams_ Sequence.mp4
+¦       143 - UML Behavioral Diagrams_ State Transition Diagram.mp4
+¦       144 - State Transition Diagram Example.mp4
+¦       145 - Recap Quiz Question.mp4
+¦       146 - Recap Quiz Solution.mp4
+¦       147 - Recap Quiz Question.mp4
+¦       148 - Recap Quiz Solution.mp4
+¦       
++---P2L3_Android
+¦       149 - Lesson Overview.mp4
+¦       150 - Android Introduction.mp4
+¦       151 - Basic Architecture of Android.mp4
+¦       152 - Android App Components.mp4
+¦       153 - Activity.mp4
+¦       154 - Service.mp4
+¦       155 - Content Provider.mp4
+¦       156 - Broadcast Receiver.mp4
+¦       157 - Intents.mp4
+¦       158 - Manifest.mp4
+¦       159 - Android Activity Lifecycle.mp4
+¦       160 - Android Demo_ Download & Install SDK.mp4
+¦       161 - Android Demo_ Download & Install Plugin.mp4
+¦       162 - Android Demo_ Create an AVD.mp4
+¦       163 - Android Demo_ Create & Run an App.mp4
+¦       
++---P3L1_Software_Architecture
+¦       164 - Lesson Overview.mp4
+¦       165 - Interview with Nenad Medvidovic.mp4
+¦       166 - What is Software Architecture.mp4
+¦       167 - General Definition of SWA.mp4
+¦       168 - Prescriptive vs Descriptive Architecture.mp4
+¦       169 - Architectural Evolution.mp4
+¦       170 - Architectural Degradation.mp4
+¦       171 - Architectural Recovery.mp4
+¦       172 - Architectural Recovery Quiz Question.mp4
+¦       173 - Architectural Recovery Quiz Solution.mp4
+¦       174 - Real World Example.mp4
+¦       175 - More Examples.mp4
+¦       176 - Final Example.mp4
+¦       177 - Architectural Design Quiz Question.mp4
+¦       178 - Architectural Design Quiz Solution.mp4
+¦       179 - Architectural Elements.mp4
+¦       180 - Components -  Connectors -  and Configurations.mp4
+¦       181 - Configuration Example.mp4
+¦       182 - Deployment Architectural Perspective.mp4
+¦       183 - Architectural Styles.mp4
+¦       184 - Types of Architectural Styles.mp4
+¦       185 - Architectural Styles Quiz Question.mp4
+¦       186 - Architectural Styles Quiz Solution.mp4
+¦       187 - P2P Architectures.mp4
+¦       188 - Napster Example.mp4
+¦       189 - Skype Example.mp4
+¦       190 - Takeaway Message.mp4
+¦       
++---P3L2_A_Tale_of_Analysis_and_Design
+¦       191 - Introduction.mp4
+¦       192 - Analyzing Requirements.mp4
+¦       193 - Refining Classes and Attributes.mp4
+¦       194 - Adding Attributes.mp4
+¦       195 - Identifying Operations.mp4
+¦       196 - Adding Relationships.mp4
+¦       197 - Refining Relationships.mp4
+¦       198 - Refining the Class Diagram.mp4
+¦       199 - Final Considerations.mp4
+¦       200 - Debriefing.mp4
+¦       
++---P3L3_Design_Patterns
+¦       201 - Lesson Overview.mp4
+¦       202 - History of Design Patterns.mp4
+¦       203 - Patterns Catalogue.mp4
+¦       204 - Pattern Format.mp4
+¦       205 - Factory Method Pattern.mp4
+¦       206 - Factory Method Pattern Example.mp4
+¦       207 - Strategy Pattern.mp4
+¦       208 - Strategy Pattern Example & Demo.mp4
+¦       209 - Other Common Patterns.mp4
+¦       210 - Choosing a Pattern.mp4
+¦       211 - Choosing a Pattern Quiz Question.mp4
+¦       212 - Choosing a Pattern Quiz Solution.mp4
+¦       213 - Negative Design Patterns.mp4
+¦       
++---P3L4_Unified_Software_Process
+¦       214 - Lesson Overview.mp4
+¦       215 - History of RUP.mp4
+¦       216 - Key Features of RUP.mp4
+¦       217 - UML Quiz Question.mp4
+¦       218 - UML Quiz Solution.mp4
+¦       219 - UML Quiz Question.mp4
+¦       220 - UML Quiz Solution.mp4
+¦       221 - Use Case Driven.mp4
+¦       222 - Architecture Centric.mp4
+¦       223 - Iterative and Incremental.mp4
+¦       224 - Cycle Example.mp4
+¦       225 - Phases within a Cycle.mp4
+¦       226 - Iterations.mp4
+¦       227 - Iterative Approach Quiz Question.mp4
+¦       228 - Iterative Approach Quiz Solution.mp4
+¦       229 - Inception Phase.mp4
+¦       230 - Elaboration Phase.mp4
+¦       231 - Construction Phase.mp4
+¦       232 - Transition Phase.mp4
+¦       233 - Phases and Iterations.mp4
+¦       
++---P4L1_General_Concepts
+¦       234 - Lesson Overview.mp4
+¦       235 - Introduction.mp4
+¦       236 - Failure -  Fault -  and Error.mp4
+¦       237 - Failure -  Fault -  and Error Quiz Question.mp4
+¦       238 - Failure -  Fault -  and Error Quiz Solution.mp4
+¦       239 - Failure -  Fault -  and Error Quiz Question.mp4
+¦       240 - Failure -  Fault -  and Error Quiz Solution.mp4
+¦       241 - Failure -  Fault -  and Error Quiz Question.mp4
+¦       242 - Failure -  Fault -  and Error Quiz Solution.mp4
+¦       243 - Verification Approaches.mp4
+¦       244 - Pros and Cons of Approaches.mp4
+¦       245 - Verification Approaches Quiz Question.mp4
+¦       246 - Verification Approaches Quiz Solution.mp4
+¦       247 - Testing Introduction.mp4
+¦       248 - Testing Granularity Levels.mp4
+¦       249 - Alpha and Beta Testing.mp4
+¦       250 - Black and White Box Testing Introduction.mp4
+¦       251 - Black Box Testing Example.mp4
+¦       252 - White Box Testing Example.mp4
+¦       
++---P4L2_Black_Box_Testing
+¦       253 - Lesson Overview.mp4
+¦       254 - Overview.mp4
+¦       255 - Systematic Functional Testing Approach.mp4
+¦       256 - Overview Quiz Question.mp4
+¦       257 - Overview Quiz Solution.mp4
+¦       258 - Overview Quiz Question.mp4
+¦       259 - Overview Quiz Solution.mp4
+¦       260 - Test Data Selection.mp4
+¦       261 - Test Data Selection Quiz Question.mp4
+¦       262 - Test Data Selection Quiz Solution.mp4
+¦       263 - Why Not Random Testing.mp4
+¦       264 - Partition Testing.mp4
+¦       265 - Partition Testing Example.mp4
+¦       266 - Boundary Values.mp4
+¦       267 - Boundary Values Example.mp4
+¦       268 - Deriving Test Case Specifications.mp4
+¦       269 - Category Partition Method.mp4
+¦       270 - Identify Categories.mp4
+¦       271 - Partition Categories into Choices.mp4
+¦       272 - Identify Constraints Among Choices.mp4
+¦       273 - Produce and Evaluate Test Case Specifications.mp4
+¦       274 - Generate Test Cases from Test Case Specifications.mp4
+¦       275 - Category Partition Demo.mp4
+¦       276 - Model Based Testing.mp4
+¦       277 - Finite State Machines.mp4
+¦       278 - Finite State Machines Example.mp4
+¦       279 - Finite State Machines Considerations.mp4
+¦       280 - Summary.mp4
+¦       
++---P4L3_White_Box_Testing
+¦       281 - Lesson Overview.mp4
+¦       282 - Overview.mp4
+¦       283 - Coverage Criteria Intro.mp4
+¦       284 - Coverage Criteria Intro Quiz Question.mp4
+¦       285 - Coverage Criteria Intro Quiz Solution.mp4
+¦       286 - Coverage Criteria Intro Quiz Question.mp4
+¦       287 - Coverage Criteria Intro Quiz Solution.mp4
+¦       288 - Statement Coverage.mp4
+¦       289 - Statement Coverage Quiz Question.mp4
+¦       290 - Statement Coverage Quiz Solution.mp4
+¦       291 - Control Flow Graphs.mp4
+¦       292 - Branch Coverage.mp4
+¦       293 - Condition Coverage.mp4
+¦       294 - Subsumption Quiz Question.mp4
+¦       295 - Subsumption Quiz Solution.mp4
+¦       296 - Branch and Condition Coverage.mp4
+¦       297 - Subsumption Quiz Question.mp4
+¦       298 - Subsumption Quiz Solution.mp4
+¦       299 - Test Criteria Subsumption.mp4
+¦       300 - B&C Coverage Quiz Question.mp4
+¦       301 - B&C Coverage Quiz Solution.mp4
+¦       302 - MCDC Coverage.mp4
+¦       303 - Other Criteria.mp4
+¦       304 - Review Quiz Question.mp4
+¦       305 - Review Quiz Solution.mp4
+¦       306 - Review Quiz Question.mp4
+¦       307 - Review Quiz Solution.mp4
+¦       308 - Review Quiz Question.mp4
+¦       309 - Review Quiz Solution.mp4
+¦       310 - Summary.mp4
+¦       
++---P4L4_Agile_Development_Methods
+¦       311 - Lesson Overview.mp4
+¦       312 - Cost of Change.mp4
+¦       313 - Agile Software Development.mp4
+¦       314 - Extreme Programming (XP).mp4
+¦       315 - XPs Values -  Principles -  and Practices.mp4
+¦       316 - Incremental Planning.mp4
+¦       317 - Small Releases.mp4
+¦       318 - Simple Design.mp4
+¦       319 - Test First Development.mp4
+¦       320 - Refactoring.mp4
+¦       321 - Pair Programming.mp4
+¦       322 - Continuous Integration.mp4
+¦       323 - On Site Customer.mp4
+¦       324 - Requirements Engineering.mp4
+¦       325 - Testing Strategy.mp4
+¦       326 - Testing Strategy Quiz Question.mp4
+¦       327 - Testing Strategy Quiz Solution.mp4
+¦       328 - Scrum Intro.mp4
+¦       329 - High Level Scrum Process.mp4
+¦       
++---P4L5_Software_Refactoring
+        330 - Lesson Overview.mp4
+        331 - Introduction.mp4
+        332 - Introduction Question.mp4
+        333 - Introduction Solution.mp4
+        334 - Reasons to Refactor.mp4
+        335 - History of Refactoring.mp4
+        336 - Types of Refactorings.mp4
+        337 - Collapse Hierarchy.mp4
+        338 - Consolidate Conditional Expression Question.mp4
+        339 - Consolidate Conditional Expression Solution.mp4
+        340 - Decompose Conditionals.mp4
+        341 - Extract Class.mp4
+        342 - Inline Class.mp4
+        343 - Extract Method.mp4
+        344 - Refactoring Demo.mp4
+        345 - Extract Method Refactoring Quiz Question.mp4
+        346 - Extract Method Refactoring Quiz Solution.mp4
+        347 - Refactoring Risks.mp4
+        348 - Cost of Refactoring.mp4
+        349 - When Not To Refactor.mp4
+        350 - Bad Smells.mp4
+        351 - Bad Smell Examples.mp4
+        352 - Bad Smell Quiz Question.mp4
+        353 - Bad Smell Quiz Solution.mp4
+        

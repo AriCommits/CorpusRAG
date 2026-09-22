@@ -105,6 +105,14 @@ def _cleaned_transcript_name(lecture_dir: Path) -> str:
     return f"{stem}_transcript.md"
 
 
+def _progress(stage: str, index: int, total: int, path: Path) -> None:
+    """One-line progress for whisper / clean / error (skip noisy 'done')."""
+    if stage not in ("whisper", "clean", "error"):
+        return
+    label = {"whisper": "whisper", "clean": "clean  ", "error": "error  "}[stage]
+    click.echo(f"  [{index + 1}/{total}] {label}  {Path(path).name}")
+
+
 def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
     """Construct shared transcriber/cleaner and drain the transcription queue.
 
@@ -114,7 +122,8 @@ def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
     (``skip_clean`` is False), and the same cleaned payload it produces is what
     callers persist — the queue never triggers a second cleaner pass.
 
-    Returns the list of ``TranscriptJobResult`` in input order.
+    Whisper workers push each transcript to a dedicated LLM worker immediately,
+    so cleaning of file n overlaps transcription of file n+1.
     """
     VideoTranscriber = _resolve("VideoTranscriber")
     run_transcription_queue = _resolve("run_transcription_queue")
@@ -127,13 +136,21 @@ def _run_queue(cfg, files, *, skip_clean: bool, workers: int):
     if not skip_clean:
         cleaner = _resolve("TranscriptCleaner")(cfg)
 
-    return run_transcription_queue(
-        files,
-        transcriber=transcriber,
-        cleaner=cleaner,
-        skip_clean=skip_clean,
-        max_workers=clamp_workers(workers),
-    )
+    try:
+        return run_transcription_queue(
+            files,
+            transcriber=transcriber,
+            cleaner=cleaner,
+            skip_clean=skip_clean,
+            max_workers=clamp_workers(workers),
+            on_progress=_progress,
+        )
+    except KeyboardInterrupt:
+        click.echo("\nInterrupted — stopping pipeline.", err=True)
+        # Hard-exit: Whisper/PyAV/httpx in worker threads ignore SIGINT.
+        import os
+
+        os._exit(130)
 
 
 def _group_by_parent(results):
@@ -293,7 +310,6 @@ def transcribe(
     if failures:
         click.echo(f"✗ {failures} file(s) failed", err=True)
         raise SystemExit(1)
-
 
 
 @video.command()
@@ -468,7 +484,6 @@ def pipeline(
         raise SystemExit(1)
 
     click.echo("\n✓ Pipeline complete!")
-
 
 
 @video.command("ingest")

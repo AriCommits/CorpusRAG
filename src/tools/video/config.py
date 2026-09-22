@@ -27,6 +27,7 @@ Clean this lecture transcript into structured markdown notes.
 - Use ## headers to separate distinct topics as they appear
 - Preserve the segment markers (e.g. ## Segment 1: filename) exactly as they are
 - Do not summarize away any detail — only remove noise
+- Reply with only the cleaned transcript, not a restatement of these rules
 
 Transcript:
 {transcript}

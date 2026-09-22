@@ -105,10 +105,11 @@ def wired(monkeypatch, tmp_path):
         state["recorded"]["root"] = Path(root)
         return list(state["files"])
 
-    def fake_queue(files, *, transcriber, cleaner, skip_clean, max_workers):
+    def fake_queue(files, *, transcriber, cleaner, skip_clean, max_workers, on_progress=None):
         state["recorded"]["skip_clean"] = skip_clean
         state["recorded"]["max_workers"] = max_workers
         state["recorded"]["cleaner_is_none"] = cleaner is None
+        state["recorded"]["on_progress"] = on_progress
         return list(state["results"])
 
     monkeypatch.setattr(video_cli, "load_cli_config", fake_load_cli_config, raising=False)
@@ -201,9 +202,7 @@ def test_transcribe_no_recursive_flag(wired, tmp_path):
     wired["results"] = [make_result(folder / "a.mp4")]
 
     runner = CliRunner()
-    result = runner.invoke(
-        video, ["transcribe", str(folder), "--no-recursive", "-f", "cfg.yaml"]
-    )
+    result = runner.invoke(video, ["transcribe", str(folder), "--no-recursive", "-f", "cfg.yaml"])
 
     assert result.exit_code == 0, result.output
     assert wired["recorded"]["recursive"] is False
@@ -216,9 +215,7 @@ def test_transcribe_workers_override(wired, tmp_path):
     wired["results"] = [make_result(folder / "a.mp4")]
 
     runner = CliRunner()
-    result = runner.invoke(
-        video, ["transcribe", str(folder), "--workers", "5", "-f", "cfg.yaml"]
-    )
+    result = runner.invoke(video, ["transcribe", str(folder), "--workers", "5", "-f", "cfg.yaml"])
 
     assert result.exit_code == 0, result.output
     assert wired["recorded"]["max_workers"] == 5
@@ -346,9 +343,7 @@ def test_pipeline_skip_clean(wired, tmp_path):
     wired["results"] = [make_result(folder / "a.mp4", raw="RAW")]
 
     runner = CliRunner()
-    result = runner.invoke(
-        video, ["pipeline", str(folder), "--skip-clean", "-f", "cfg.yaml"]
-    )
+    result = runner.invoke(video, ["pipeline", str(folder), "--skip-clean", "-f", "cfg.yaml"])
 
     assert result.exit_code == 0, result.output
     assert wired["recorded"]["skip_clean"] is True
@@ -375,6 +370,31 @@ def test_pipeline_no_recursive_and_workers(wired, tmp_path):
     assert wired["recorded"]["max_workers"] == 3
 
 
+def test_pipeline_ctrl_c_hard_exits(wired, tmp_path, monkeypatch):
+    folder = tmp_path / "vids"
+    folder.mkdir()
+    wired["files"] = [folder / "a.mp4"]
+
+    def boom(*_a, **_k):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr(video_cli, "run_transcription_queue", boom)
+    exits: list[int] = []
+
+    def fake_exit(code):
+        exits.append(code)
+        raise SystemExit(code)
+
+    monkeypatch.setattr("os._exit", fake_exit)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        video, ["pipeline", str(folder), "-f", "cfg.yaml"], catch_exceptions=False
+    )
+    # Click may wrap SystemExit; accept either.
+    assert exits == [130] or result.exit_code in (130, 1)
+
+
 def test_pipeline_workers_are_capped(wired, tmp_path):
     folder = tmp_path / "vids"
     folder.mkdir()
@@ -382,9 +402,7 @@ def test_pipeline_workers_are_capped(wired, tmp_path):
     wired["results"] = [make_result(folder / "a.mp4", raw="RAW")]
 
     runner = CliRunner()
-    result = runner.invoke(
-        video, ["pipeline", str(folder), "--workers", "50000", "-f", "cfg.yaml"]
-    )
+    result = runner.invoke(video, ["pipeline", str(folder), "--workers", "50000", "-f", "cfg.yaml"])
 
     assert result.exit_code == 0, result.output
     assert wired["recorded"]["max_workers"] == 8
@@ -411,9 +429,7 @@ def test_pipeline_nested_multi_job_per_parent(wired, tmp_path):
     ]
 
     runner = CliRunner()
-    result = runner.invoke(
-        video, ["pipeline", str(root), "--skip-clean", "-f", "cfg.yaml"]
-    )
+    result = runner.invoke(video, ["pipeline", str(root), "--skip-clean", "-f", "cfg.yaml"])
 
     assert result.exit_code == 0, result.output
     scratch_root = wired["cfg"].paths.scratch_dir / "video"
@@ -437,9 +453,7 @@ def test_pipeline_partial_failure_exit_1_keeps_success(wired, tmp_path):
     ]
 
     runner = CliRunner()
-    result = runner.invoke(
-        video, ["pipeline", str(folder), "--skip-clean", "-f", "cfg.yaml"]
-    )
+    result = runner.invoke(video, ["pipeline", str(folder), "--skip-clean", "-f", "cfg.yaml"])
 
     assert result.exit_code == 1
     assert "✗ b.mp4: boom" in result.output

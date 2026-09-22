@@ -7,12 +7,15 @@ Simple test to verify the LLM backend works correctly.
 import sys
 from pathlib import Path
 
+import pytest
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from llm import LLMBackendType, LLMConfig, PromptTemplates, create_backend
 
 
+@pytest.mark.live
 def test_ollama_backend():
     """Test Ollama backend connection and generation."""
     print("Testing Ollama backend...")
@@ -23,74 +26,68 @@ def test_ollama_backend():
         model="llama3.2",  # Fallback to available model
     )
 
-    try:
-        backend = create_backend(config)
-        print("✓ Backend created successfully")
+    backend = create_backend(config)
+    print("✓ Backend created successfully")
 
-        # Test simple completion
-        response = backend.complete("What is the capital of France?")
-        print(f"✓ Simple completion works. Response: {response.text[:100]}...")
+    # Test simple completion
+    response = backend.complete("What is the capital of France?")
+    assert response is not None
+    assert response.text
+    print(f"✓ Simple completion works. Response: {response.text[:100]}...")
 
-        # Test flashcard generation
-        documents = [
-            "Paris is the capital and largest city of France. It is located on the Seine River.",
-            "The Eiffel Tower is a famous landmark in Paris, built in 1889 for the World's Fair.",
-        ]
+    # Test flashcard generation
+    documents = [
+        "Paris is the capital and largest city of France. It is located on the Seine River.",
+        "The Eiffel Tower is a famous landmark in Paris, built in 1889 for the World's Fair.",
+    ]
 
-        flashcard_prompt = PromptTemplates.flashcard_generation(
-            documents=documents, difficulty="beginner", count=2, topic="Paris"
-        )
+    flashcard_prompt = PromptTemplates.flashcard_generation(
+        documents=documents, difficulty="beginner", count=2, topic="Paris"
+    )
 
-        flashcard_response = backend.complete(flashcard_prompt)
-        print(f"✓ Flashcard generation works. Response: {flashcard_response.text[:200]}...")
-
-        return True
-
-    except Exception as e:
-        print(f"✗ Error testing Ollama backend: {e}")
-        return False
+    flashcard_response = backend.complete(flashcard_prompt)
+    assert flashcard_response is not None
+    assert flashcard_response.text
+    print(f"✓ Flashcard generation works. Response: {flashcard_response.text[:200]}...")
 
 
 def test_prompt_templates():
     """Test prompt template generation."""
     print("\nTesting prompt templates...")
 
-    try:
-        # Test flashcard prompt
-        PromptTemplates.flashcard_generation(
-            documents=["Test document content"],
-            difficulty="intermediate",
-            count=3,
-        )
-        print("✓ Flashcard prompt template works")
+    # Test flashcard prompt
+    flashcard_prompt = PromptTemplates.flashcard_generation(
+        documents=["Test document content"],
+        difficulty="intermediate",
+        count=3,
+    )
+    assert flashcard_prompt
+    print("✓ Flashcard prompt template works")
 
-        # Test summary prompt
-        PromptTemplates.summary_generation(
-            documents=["Test document content"],
-            length="medium",
-        )
-        print("✓ Summary prompt template works")
+    # Test summary prompt
+    summary_prompt = PromptTemplates.summary_generation(
+        documents=["Test document content"],
+        length="medium",
+    )
+    assert summary_prompt
+    print("✓ Summary prompt template works")
 
-        # Test quiz prompt
-        PromptTemplates.quiz_generation(
-            documents=["Test document content"],
-            difficulty="intermediate",
-            count=3,
-        )
-        print("✓ Quiz prompt template works")
+    # Test quiz prompt
+    quiz_prompt = PromptTemplates.quiz_generation(
+        documents=["Test document content"],
+        difficulty="intermediate",
+        count=3,
+    )
+    assert quiz_prompt
+    print("✓ Quiz prompt template works")
 
-        # Test RAG prompt
-        PromptTemplates.rag_response(
-            query="What is this about?",
-            context_chunks=[{"text": "Test content", "source": "test.txt", "score": 0.9}],
-        )
-        print("✓ RAG prompt template works")
-
-        return True
-
-    except Exception as e:
-        print(f"✗ Error testing prompt templates: {e}")
-        return False
+    # Test RAG prompt
+    rag_prompt = PromptTemplates.rag_response(
+        query="What is this about?",
+        context_chunks=[{"text": "Test content", "source": "test.txt", "score": 0.9}],
+    )
+    assert rag_prompt
+    print("✓ RAG prompt template works")
 
 
 def main():
@@ -99,12 +96,22 @@ def main():
     print("=" * 40)
 
     # Test prompt templates (no network needed)
-    templates_ok = test_prompt_templates()
+    try:
+        test_prompt_templates()
+        templates_ok = True
+    except Exception as e:
+        print(f"✗ Error testing prompt templates: {e}")
+        templates_ok = False
 
     # Test Ollama backend (needs Ollama running)
     print("\nNote: Ollama backend test requires Ollama to be running locally")
     print("If you don't have Ollama installed, this test will fail")
-    ollama_ok = test_ollama_backend()
+    try:
+        test_ollama_backend()
+        ollama_ok = True
+    except Exception as e:
+        print(f"✗ Error testing Ollama backend: {e}")
+        ollama_ok = False
 
     print("\n" + "=" * 40)
     print("Test Results:")

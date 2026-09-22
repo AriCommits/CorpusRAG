@@ -166,6 +166,8 @@ def test_skips_symlink_file(tmp_path):
     outside.write_bytes(b"fake")
     inside = tmp_path / "in"
     inside.mkdir()
+    real = inside / "real.mp4"
+    real.write_bytes(b"fake")
     link = inside / "alias.mp4"
     try:
         link.symlink_to(outside)
@@ -174,7 +176,57 @@ def test_skips_symlink_file(tmp_path):
 
     result = discover_media_files(inside, EXTS)
 
-    assert result == []
+    assert result == [real]
+
+
+def test_directory_with_only_symlinks_raises(tmp_path):
+    outside = tmp_path / "outside.mp4"
+    outside.write_bytes(b"fake")
+    inside = tmp_path / "in"
+    inside.mkdir()
+    link = inside / "alias.mp4"
+    try:
+        link.symlink_to(outside)
+    except OSError:
+        pytest.skip("symlinks not permitted")
+
+    with pytest.raises(FileNotFoundError):
+        discover_media_files(inside, EXTS)
+
+
+def test_symlink_file_as_root_raises(tmp_path):
+    target = tmp_path / "target.mp4"
+    target.write_bytes(b"fake")
+    link = tmp_path / "link.mp4"
+    try:
+        link.symlink_to(target)
+    except OSError:
+        pytest.skip("symlinks not permitted")
+
+    with pytest.raises(FileNotFoundError, match="Unsupported file format"):
+        discover_media_files(link, EXTS)
+
+
+def test_skips_symlink_file_mocked(tmp_path, monkeypatch):
+    inside = tmp_path / "in"
+    inside.mkdir()
+    real = inside / "real.mp4"
+    real.write_bytes(b"fake")
+    fake_link = inside / "alias.mp4"
+    fake_link.write_bytes(b"fake")
+
+    from pathlib import Path
+
+    orig_is_symlink = Path.is_symlink
+    monkeypatch.setattr(
+        Path,
+        "is_symlink",
+        lambda self: True if self.name == "alias.mp4" else orig_is_symlink(self),
+    )
+
+    result = discover_media_files(inside, EXTS)
+
+    assert result == [real]
 
 
 def test_skips_symlink_directory_outside_tree(tmp_path):

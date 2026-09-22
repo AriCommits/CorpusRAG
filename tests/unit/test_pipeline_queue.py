@@ -28,7 +28,6 @@ from tools.video.pipeline_queue import (
     run_transcription_queue,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Fakes
 # --------------------------------------------------------------------------- #
@@ -47,12 +46,8 @@ class EventLog:
 
     def interval(self, label, action):
         """Return (start, end) for a given label/action pair."""
-        start = next(
-            t for (lbl, ph, t) in self.events if lbl == label and ph == f"{action}:start"
-        )
-        end = next(
-            t for (lbl, ph, t) in self.events if lbl == label and ph == f"{action}:end"
-        )
+        start = next(t for (lbl, ph, t) in self.events if lbl == label and ph == f"{action}:start")
+        end = next(t for (lbl, ph, t) in self.events if lbl == label and ph == f"{action}:end")
         return start, end
 
 
@@ -108,7 +103,7 @@ class FakeCleaner:
 
 
 def test_clean_of_A_overlaps_transcribe_of_B():
-    """Different locks: LLM clean(A) can run while Whisper transcribe(B) runs."""
+    """LLM clean(A) runs while Whisper transcribe(B) runs — even with 1 whisper worker."""
     log = EventLog()
     transcriber = FakeTranscriber(log, delay=0.15)
     cleaner = FakeCleaner(log, delay=0.15)
@@ -118,7 +113,7 @@ def test_clean_of_A_overlaps_transcribe_of_B():
         files,
         transcriber=transcriber,
         cleaner=cleaner,
-        max_workers=2,
+        max_workers=1,
     )
 
     assert [r.source.stem for r in results] == ["A", "B"]
@@ -128,8 +123,7 @@ def test_clean_of_A_overlaps_transcribe_of_B():
     clean_a = log.interval("A", "clean")
     transcribe_b = log.interval("B", "transcribe")
     assert _overlaps(clean_a, transcribe_b), (
-        "clean(A) should overlap transcribe(B): "
-        f"clean_a={clean_a}, transcribe_b={transcribe_b}"
+        f"clean(A) should overlap transcribe(B): clean_a={clean_a}, transcribe_b={transcribe_b}"
     )
 
 
@@ -357,6 +351,44 @@ def test_clamp_workers():
     assert clamp_workers(50000) == MAX_WORKERS
     assert clamp_workers("3") == 3
     assert clamp_workers("nope") == 1
+
+
+def test_keyboard_interrupt_reraises(monkeypatch):
+    transcriber = FakeTranscriber(EventLog(), delay=0.0)
+
+    def boom(_threads):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("tools.video.pipeline_queue._join_interruptible", boom)
+    with pytest.raises(KeyboardInterrupt):
+        run_transcription_queue(
+            [Path("A.mp4")],
+            transcriber=transcriber,
+            skip_clean=True,
+            max_workers=1,
+        )
+
+
+def test_progress_callback_sees_whisper_then_clean():
+    log = EventLog()
+    transcriber = FakeTranscriber(log, delay=0.0)
+    cleaner = FakeCleaner(log, delay=0.0)
+    events: list[tuple[str, str]] = []
+
+    def on_progress(stage, index, total, path):
+        events.append((stage, Path(path).stem))
+
+    run_transcription_queue(
+        [Path("A.mp4")],
+        transcriber=transcriber,
+        cleaner=cleaner,
+        max_workers=1,
+        on_progress=on_progress,
+    )
+    stages = [stage for stage, _ in events]
+    assert stages[0] == "whisper"
+    assert "clean" in stages
+    assert "done" in stages
 
 
 def test_queue_clamps_huge_worker_count():

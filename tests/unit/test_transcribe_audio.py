@@ -47,9 +47,7 @@ def test_transcribes_wav_not_video(tmp_path):
 
     video = tmp_path / "lecture.mp4"
 
-    with model_patch, patch(
-        "tools.video.transcribe.audio.extract_audio"
-    ) as extract:
+    with model_patch, patch("tools.video.transcribe.audio.extract_audio") as extract:
         result = transcriber.transcribe_file(video)
 
     assert result == "hello world"
@@ -78,9 +76,7 @@ def test_uses_custom_audio_settings(tmp_path):
     transcriber = VideoTranscriber(cfg)
     model_patch, _ = _patch_transcriber(transcriber, [_make_segment("hi")])
 
-    with model_patch, patch(
-        "tools.video.transcribe.audio.extract_audio"
-    ) as extract:
+    with model_patch, patch("tools.video.transcribe.audio.extract_audio") as extract:
         transcriber.transcribe_file(tmp_path / "clip.mkv")
 
     assert extract.call_args.kwargs["sample_rate"] == 44100
@@ -101,9 +97,7 @@ def test_cleans_up_wav_by_default(tmp_path):
         created["wav"] = wav
         return wav
 
-    with model_patch, patch(
-        "tools.video.transcribe.audio.extract_audio", side_effect=fake_extract
-    ):
+    with model_patch, patch("tools.video.transcribe.audio.extract_audio", side_effect=fake_extract):
         transcriber.transcribe_file(tmp_path / "lecture.mp4")
 
     assert not created["wav"].exists()
@@ -123,9 +117,7 @@ def test_keeps_wav_when_configured(tmp_path):
         created["wav"] = wav
         return wav
 
-    with model_patch, patch(
-        "tools.video.transcribe.audio.extract_audio", side_effect=fake_extract
-    ):
+    with model_patch, patch("tools.video.transcribe.audio.extract_audio", side_effect=fake_extract):
         transcriber.transcribe_file(tmp_path / "lecture.mp4")
 
     assert created["wav"].exists()
@@ -147,8 +139,9 @@ def test_cleans_up_wav_on_transcribe_error(tmp_path):
         created["wav"] = wav
         return wav
 
-    with patch.object(transcriber, "_load_model", return_value=model), patch(
-        "tools.video.transcribe.audio.extract_audio", side_effect=fake_extract
+    with (
+        patch.object(transcriber, "_load_model", return_value=model),
+        patch("tools.video.transcribe.audio.extract_audio", side_effect=fake_extract),
     ):
         try:
             transcriber.transcribe_file(tmp_path / "lecture.mp4")
@@ -205,9 +198,7 @@ def test_load_model_is_serialized_across_workers(tmp_path):
 
     def worker(name: str) -> None:
         try:
-            with patch(
-                "tools.video.transcribe.audio.extract_audio", side_effect=fake_extract
-            ):
+            with patch("tools.video.transcribe.audio.extract_audio", side_effect=fake_extract):
                 transcriber.transcribe_file(tmp_path / f"{name}.mp4")
         except BaseException as exc:  # noqa: BLE001
             errors.append(exc)

@@ -91,9 +91,7 @@ class VideoTranscriber:
                 for segment in segments:
                     text = segment.text.strip()
                     if self.config.include_timestamps:
-                        lines.append(
-                            f"[{segment.start:.2f}s - {segment.end:.2f}s] {text}"
-                        )
+                        lines.append(f"[{segment.start:.2f}s - {segment.end:.2f}s] {text}")
                     else:
                         lines.append(text)
 

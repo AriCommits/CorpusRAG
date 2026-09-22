@@ -106,20 +106,17 @@ def discover_media_files(
     if root.is_file():
         if root.is_symlink():
             raise FileNotFoundError(
-                f"Unsupported file format: {root}\n"
-                f"Supported formats: {supported_formats}"
+                f"Unsupported file format: {root}\nSupported formats: {supported_formats}"
             )
         if root.suffix.lower() in accepted:
             return [root.resolve()]
         raise FileNotFoundError(
-            f"Unsupported file format: {root}\n"
-            f"Supported formats: {supported_formats}"
+            f"Unsupported file format: {root}\nSupported formats: {supported_formats}"
         )
 
     if not root.is_dir():
         raise FileNotFoundError(
-            f"No supported media files found in {root}\n"
-            f"Supported formats: {supported_formats}"
+            f"No supported media files found in {root}\nSupported formats: {supported_formats}"
         )
 
     root_resolved = root.resolve()
@@ -160,8 +157,7 @@ def discover_media_files(
 
     if not matches:
         raise FileNotFoundError(
-            f"No supported media files found in {root}\n"
-            f"Supported formats: {supported_formats}"
+            f"No supported media files found in {root}\nSupported formats: {supported_formats}"
         )
 
     return matches

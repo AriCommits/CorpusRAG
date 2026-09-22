@@ -178,6 +178,7 @@ def test_process_course_generators_run_after_queue(tmp_path):
         patch(f"{MOD}.FlashcardGenerator") as MockFlashcard,
         patch(f"{MOD}.QuizGenerator") as MockQuiz,
     ):
+
         def _record(name):
             def _factory(*_a, **_k):
                 call_order.append(name)
