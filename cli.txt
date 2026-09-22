@@ -1,6 +1,6 @@
 Usage: corpus [OPTIONS] COMMAND [ARGS]...
 
-  CorpusRAG — unified learning and knowledge management toolkit.
+  CorpusRAG â€” unified learning and knowledge management toolkit.
 
   Run any subcommand with --help for details.
 
@@ -21,5 +21,5 @@ Commands:
   dev          Developer utilities (setup, test, lint, build, clean,
                completion).
   orchestrate  Orchestration workflows for CorpusRAG.
-  tools        CorpusRAG tools — RAG, video, handwriting, summaries, and
+  tools        CorpusRAG tools â€” RAG, video, handwriting, summaries, and
                learning.

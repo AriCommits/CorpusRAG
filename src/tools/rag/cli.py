@@ -32,10 +32,6 @@ def __getattr__(name: str):
         from .agent import RAGAgent
 
         return RAGAgent
-    if name == "RAGApp":
-        from .tui import RAGApp
-
-        return RAGApp
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
@@ -228,6 +224,89 @@ def query(
 
     click.echo("Response:")
     click.echo(response)
+
+
+@rag.command()
+@click.option("--collection", "-c", required=True, help="Collection name")
+@click.option("--tag", "-t", multiple=True, help="Filter by tag (can be used multiple times)")
+@click.option(
+    "--section",
+    "-s",
+    multiple=True,
+    help="Filter by section header (can be used multiple times)",
+)
+@click.option(
+    "--strategy",
+    type=click.Choice(["hybrid", "semantic", "keyword"]),
+    default=None,
+    help="Retrieval strategy override",
+)
+@click.option("--config", "-f", default="configs/base.yaml", help="Config file")
+def chat(
+    collection: str,
+    tag: tuple[str, ...],
+    section: tuple[str, ...],
+    strategy: str | None,
+    config: str,
+):
+    """Interactive chat with RAG agent with optional metadata filtering."""
+    load_cli_db = _resolve("load_cli_db")
+    RAGConfig = _resolve("RAGConfig")
+    RAGAgent = _resolve("RAGAgent")
+    cfg, db = load_cli_db(config, RAGConfig)
+
+    # Override strategy if provided
+    if strategy:
+        cfg.strategy = strategy
+
+    agent = RAGAgent(cfg, db)
+
+    # Build where filter for metadata
+    where = None
+    if tag or section:
+        tag_filter = None
+        if tag:
+            if len(tag) == 1:
+                tag_filter = {"tags": {"$contains": tag[0]}}
+            else:
+                tag_filter = {"$or": [{"tags": {"$contains": t}} for t in tag]}
+
+        section_filter = None
+        if section:
+            # Only use keys that actually exist in the metadata
+            section_filter = {
+                "$or": [
+                    {"Document Title": {"$in": list(section)}},
+                    {"Subsection": {"$in": list(section)}},
+                ]
+            }
+
+        if tag_filter and section_filter:
+            where = {"$and": [tag_filter, section_filter]}
+        elif tag_filter:
+            where = tag_filter
+        else:
+            where = section_filter
+
+    click.echo(f"RAG Chat - Collection: {collection}")
+    if where:
+        click.echo(f"Filters: tags={tag}, sections={section}")
+    click.echo("Type 'exit' or 'quit' to end the session\n")
+
+    while True:
+        try:
+            message = click.prompt("You", type=str)
+            if message.lower() in ["exit", "quit"]:
+                break
+
+            response = agent.chat(message, collection, where=where)
+            click.echo(f"Agent: {response}\n")
+        except (KeyboardInterrupt, EOFError):
+            break
+
+    click.echo("\nGoodbye!")
+
+
 
 
 def main():
