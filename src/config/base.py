@@ -81,10 +81,10 @@ class BaseConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    llm: LLMConfig = Field(default_factory=LLMConfig)
-    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
-    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
-    paths: PathsConfig = Field(default_factory=PathsConfig)
+    llm: LLMConfig | Any = Field(default_factory=LLMConfig)
+    embedding: EmbeddingConfig | Any = Field(default_factory=EmbeddingConfig)
+    database: DatabaseConfig | Any = Field(default_factory=DatabaseConfig)
+    paths: PathsConfig | Any = Field(default_factory=PathsConfig)
 
     # Full unmodeled configuration dictionary as loaded.
     raw: dict[str, Any] = Field(default_factory=dict, exclude=True, repr=False)
@@ -133,7 +133,9 @@ class BaseConfig(BaseModel):
 
     def save_to_yaml(self, path: Path) -> None:
         """Save the configuration back to a YAML file."""
-        # Using mode='json' so paths and other objects are serialized to standard types
         dumped = self.model_dump(mode="json", exclude={"raw"})
+        # Merge updated core config back into the raw config to preserve tool settings
+        final_data = self.raw.copy()
+        final_data.update(dumped)
         with open(path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(dumped, f, default_flow_style=False, sort_keys=False)
+            yaml.safe_dump(final_data, f, default_flow_style=False, sort_keys=False)
