@@ -1,13 +1,14 @@
 """RAG tool configuration."""
 
-from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 from config.base import BaseConfig
 
 
-@dataclass
-class ChunkingConfig:
+class ChunkingConfig(BaseModel):
     """Text chunking configuration."""
 
     # Parent chunks come from MarkdownHeaderTextSplitter (full sections)
@@ -16,8 +17,7 @@ class ChunkingConfig:
     adaptive: bool = True
 
 
-@dataclass
-class RetrievalConfig:
+class RetrievalConfig(BaseModel):
     """Retrieval configuration."""
 
     top_k_semantic: int = 50
@@ -26,70 +26,42 @@ class RetrievalConfig:
     rrf_k: int = 80  # Reciprocal Rank Fusion parameter
 
 
-@dataclass
-class RerankingConfig:
+class RerankingConfig(BaseModel):
     """Reranking configuration."""
 
     enabled: bool = True
     model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 
-@dataclass
-class ParentStoreConfig:
+class ParentStoreConfig(BaseModel):
     """Parent document store configuration."""
 
-    path: Path = field(default_factory=lambda: Path("./parent_store"))
+    path: Path = Field(default_factory=lambda: Path("./parent_store"))
 
 
-@dataclass
 class RAGConfig(BaseConfig):
     """RAG tool configuration."""
 
     strategy: str = "hybrid"  # hybrid | semantic | keyword
-    chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
-    retrieval: RetrievalConfig = field(default_factory=RetrievalConfig)
-    reranking: RerankingConfig = field(default_factory=RerankingConfig)
-    parent_store: ParentStoreConfig = field(default_factory=ParentStoreConfig)
+    chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
+    retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
+    reranking: RerankingConfig = Field(default_factory=RerankingConfig)
+    parent_store: ParentStoreConfig = Field(default_factory=ParentStoreConfig)
     collection_prefix: str = "rag"
 
     @classmethod
-    def from_dict(cls, data: dict) -> "RAGConfig":
-        """Create RAG config from dictionary.
+    def from_dict(cls, data: dict[str, Any]) -> "RAGConfig":
+        """Create ragconfig from dictionary."""
+        base_config, tool_data = BaseConfig.split_section(data, "rag")
+        merged = base_config.model_dump(mode="json", exclude={"raw"})
 
-        Args:
-            data: Dictionary with config values
+        # Merge dictionary data correctly for nested dicts (like chunking, retrieval)
+        for k, v in tool_data.items():
+            if isinstance(v, dict) and k in merged and isinstance(merged[k], dict):
+                merged[k].update(v)
+            else:
+                merged[k] = v
 
-        Returns:
-            RAGConfig instance
-        """
-        # Get base config
-        base_config = super().from_dict(data)
-
-        # Get RAG-specific config
-        rag_data = data.get("rag", {})
-        strategy = rag_data.get("strategy", "hybrid")
-        chunking_data = rag_data.get("chunking", {})
-        retrieval_data = rag_data.get("retrieval", {})
-        reranking_data = rag_data.get("reranking", {})
-        parent_store_data = dict(rag_data.get("parent_store", {}) or {})
-        collection_prefix = rag_data.get("collection_prefix", "rag")
-
-        # Ignore removed knobs so older YAML still loads.
-        parent_store_data.pop("type", None)
-        if "path" in parent_store_data and isinstance(parent_store_data["path"], str):
-            parent_store_data["path"] = Path(parent_store_data["path"])
-
-        return cls(
-            llm=base_config.llm,
-            embedding=base_config.embedding,
-            database=base_config.database,
-            paths=base_config.paths,
-            strategy=strategy,
-            chunking=(ChunkingConfig(**chunking_data) if chunking_data else ChunkingConfig()),
-            retrieval=(RetrievalConfig(**retrieval_data) if retrieval_data else RetrievalConfig()),
-            reranking=(RerankingConfig(**reranking_data) if reranking_data else RerankingConfig()),
-            parent_store=(
-                ParentStoreConfig(**parent_store_data) if parent_store_data else ParentStoreConfig()
-            ),
-            collection_prefix=collection_prefix,
-        )
+        inst = cls.model_validate(merged)
+        inst.raw = data
+        return inst

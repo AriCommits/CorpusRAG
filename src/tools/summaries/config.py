@@ -1,11 +1,10 @@
 """Summary tool configuration."""
 
-from dataclasses import dataclass
+from typing import Any
 
 from config.base import BaseConfig
 
 
-@dataclass
 class SummaryConfig(BaseConfig):
     """Summary tool configuration."""
 
@@ -16,27 +15,17 @@ class SummaryConfig(BaseConfig):
     max_context_chars: int = 15000
 
     @classmethod
-    def from_dict(cls, data: dict) -> "SummaryConfig":
-        """Create summary config from dictionary.
+    def from_dict(cls, data: dict[str, Any]) -> "SummaryConfig":
+        """Create summaryconfig from dictionary."""
+        base_config, tool_data = BaseConfig.split_section(data, "summaries")
+        merged = base_config.model_dump(exclude={"raw"})
+        merged.update(tool_data)
 
-        Args:
-            data: Dictionary with config values
+        # Preserve specific backward-compatibility logic for video
+        if "summaries" == "video":
+            if "clean_ollama_host" not in merged:
+                merged["clean_ollama_host"] = base_config.llm.endpoint
 
-        Returns:
-            SummaryConfig instance
-        """
-        base_config, summary_data = BaseConfig.split_section(data, "summaries")
-
-        inst = cls(
-            llm=base_config.llm,
-            embedding=base_config.embedding,
-            database=base_config.database,
-            paths=base_config.paths,
-            summary_length=summary_data.get("summary_length", "medium"),
-            include_keywords=summary_data.get("include_keywords", True),
-            include_outline=summary_data.get("include_outline", True),
-            collection_prefix=summary_data.get("collection_prefix", "rag"),
-            max_context_chars=summary_data.get("max_context_chars", 15000),
-        )
+        inst = cls.model_validate(merged)
         inst.raw = data
         return inst

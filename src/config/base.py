@@ -1,14 +1,18 @@
-"""Base configuration dataclasses for CorpusRAG."""
+"""Base configuration models for CorpusRAG."""
 
-from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+import yaml
+from pydantic import BaseModel, ConfigDict, Field
 
 from llm import LLMConfig as LLMBackendConfig
 
 
-@dataclass
-class LLMConfig:
+class LLMConfig(BaseModel):
     """Shared LLM configuration with enhanced backend support."""
+
+    model_config = ConfigDict(extra="ignore")
 
     # Legacy fields for compatibility
     endpoint: str = "http://localhost:11434"
@@ -20,7 +24,7 @@ class LLMConfig:
     # New backend configuration
     backend: str = "ollama"
     api_key: str | None = None
-    fallback_models: list[str] = field(default_factory=list)
+    fallback_models: list[str] = Field(default_factory=list)
 
     # Rate limiting configuration
     rate_limit_rpm: int | None = None
@@ -40,51 +44,53 @@ class LLMConfig:
         )
 
 
-@dataclass
-class EmbeddingConfig:
+class EmbeddingConfig(BaseModel):
     """Shared embedding configuration."""
+
+    model_config = ConfigDict(extra="ignore")
 
     backend: str = "ollama"  # ollama | sentence-transformers
     model: str = "embeddinggemma"
     dimensions: int | None = None
 
 
-@dataclass
-class DatabaseConfig:
+class DatabaseConfig(BaseModel):
     """Shared database configuration."""
+
+    model_config = ConfigDict(extra="ignore")
 
     backend: str = "chromadb"
     mode: str = "persistent"  # persistent | http
     host: str = "localhost"
     port: int = 8000
-    persist_directory: Path = field(default_factory=lambda: Path("./chroma_store"))
+    persist_directory: Path = Field(default_factory=lambda: Path("./chroma_store"))
 
 
-@dataclass
-class PathsConfig:
+class PathsConfig(BaseModel):
     """Shared paths configuration."""
 
-    vault: Path = field(default_factory=lambda: Path("./vault"))
-    scratch_dir: Path = field(default_factory=lambda: Path("./scratch"))
-    output_dir: Path = field(default_factory=lambda: Path("./output"))
+    model_config = ConfigDict(extra="ignore")
+
+    vault: Path = Field(default_factory=lambda: Path("./vault"))
+    scratch_dir: Path = Field(default_factory=lambda: Path("./scratch"))
+    output_dir: Path = Field(default_factory=lambda: Path("./output"))
 
 
-@dataclass
-class BaseConfig:
+class BaseConfig(BaseModel):
     """Base configuration inherited by all tools."""
 
-    llm: LLMConfig = field(default_factory=LLMConfig)
-    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
-    database: DatabaseConfig = field(default_factory=DatabaseConfig)
-    paths: PathsConfig = field(default_factory=PathsConfig)
+    model_config = ConfigDict(extra="ignore")
 
-    # Full unmodeled configuration dictionary as loaded (retains keys not
-    # represented by the typed sub-configs above). Excluded from equality
-    # comparisons and repr so it does not affect config identity or logging.
-    raw: dict = field(default_factory=dict, compare=False, repr=False)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    embedding: EmbeddingConfig = Field(default_factory=EmbeddingConfig)
+    database: DatabaseConfig = Field(default_factory=DatabaseConfig)
+    paths: PathsConfig = Field(default_factory=PathsConfig)
+
+    # Full unmodeled configuration dictionary as loaded.
+    raw: dict[str, Any] = Field(default_factory=dict, exclude=True, repr=False)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "BaseConfig":
+    def from_dict(cls, data: dict[str, Any]) -> "BaseConfig":
         """Create config from dictionary.
 
         Args:
@@ -93,73 +99,41 @@ class BaseConfig:
         Returns:
             BaseConfig instance
         """
-        llm_data = data.get("llm", {})
-        embedding_data = data.get("embedding", {})
-        database_data = data.get("database", {})
-        paths_data = data.get("paths", {})
-
-        # Convert string paths to Path objects
-        if "persist_directory" in database_data and isinstance(
-            database_data["persist_directory"], str
-        ):
-            database_data["persist_directory"] = Path(database_data["persist_directory"])
-
-        for key in ["vault", "scratch_dir", "output_dir"]:
-            if key in paths_data and isinstance(paths_data[key], str):
-                paths_data[key] = Path(paths_data[key])
-
-        inst = cls(
-            llm=LLMConfig(**llm_data),
-            embedding=EmbeddingConfig(**embedding_data),
-            database=DatabaseConfig(**database_data),
-            paths=PathsConfig(**paths_data),
-        )
-
-        # Retain the full input dictionary (including keys not modeled by the
-        # typed sub-configs) so downstream consumers can access extra sections.
+        inst = cls.model_validate(data)
         inst.raw = data
-
         return inst
 
     @classmethod
-    def split_section(cls, data: dict, section: str) -> tuple["BaseConfig", dict]:
+    def split_section(
+        cls, data: dict[str, Any], section: str
+    ) -> tuple["BaseConfig", dict[str, Any]]:
         """Return ``(base, section_dict)`` for tool config ``from_dict`` helpers."""
         return cls.from_dict(data), dict(data.get(section) or {})
 
-    def to_dict(self) -> dict:
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, BaseConfig):
+            return self.model_dump() == other.model_dump()
+        return super().__eq__(other)
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
 
         Returns:
             Dictionary representation of config
         """
-        return {
-            "llm": {
-                "endpoint": self.llm.endpoint,
-                "model": self.llm.model,
-                "timeout_seconds": self.llm.timeout_seconds,
-                "temperature": self.llm.temperature,
-                "max_tokens": self.llm.max_tokens,
-                "backend": self.llm.backend,
-                "api_key": "***" if self.llm.api_key else None,
-                "fallback_models": self.llm.fallback_models,
-                "rate_limit_rpm": self.llm.rate_limit_rpm,
-                "rate_limit_concurrent": self.llm.rate_limit_concurrent,
-            },
-            "embedding": {
-                "backend": self.embedding.backend,
-                "model": self.embedding.model,
-                "dimensions": self.embedding.dimensions,
-            },
-            "database": {
-                "backend": self.database.backend,
-                "mode": self.database.mode,
-                "host": self.database.host,
-                "port": self.database.port,
-                "persist_directory": str(self.database.persist_directory),
-            },
-            "paths": {
-                "vault": str(self.paths.vault),
-                "scratch_dir": str(self.paths.scratch_dir),
-                "output_dir": str(self.paths.output_dir),
-            },
-        }
+        # Dump using mode="json" so Paths become strings, keeping it
+        # structurally identical to the old dataclass output.
+        data = self.model_dump(mode="json")
+
+        # Keep API key masking logic from the previous to_dict
+        if "llm" in data and "api_key" in data["llm"] and data["llm"]["api_key"] is not None:
+            data["llm"]["api_key"] = "***"
+
+        return data
+
+    def save_to_yaml(self, path: Path) -> None:
+        """Save the configuration back to a YAML file."""
+        # Using mode='json' so paths and other objects are serialized to standard types
+        dumped = self.model_dump(mode="json", exclude={"raw"})
+        with open(path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(dumped, f, default_flow_style=False, sort_keys=False)

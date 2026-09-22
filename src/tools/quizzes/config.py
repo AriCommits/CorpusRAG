@@ -1,19 +1,20 @@
 """Quiz tool configuration."""
 
-from dataclasses import dataclass, field
+from typing import Any
+
+from pydantic import Field
 
 from config.base import BaseConfig
 
 
-@dataclass
 class QuizConfig(BaseConfig):
     """Quiz tool configuration."""
 
     questions_per_topic: int = 15
-    question_types: list[str] = field(
+    question_types: list[str] = Field(
         default_factory=lambda: ["multiple_choice", "true_false", "short_answer"]
     )
-    difficulty_distribution: dict[str, float] = field(
+    difficulty_distribution: dict[str, float] = Field(
         default_factory=lambda: {"easy": 0.3, "medium": 0.5, "hard": 0.2}
     )
     format: str = "markdown"  # markdown | json | csv
@@ -22,36 +23,17 @@ class QuizConfig(BaseConfig):
     max_context_chars: int = 12000
 
     @classmethod
-    def from_dict(cls, data: dict) -> "QuizConfig":
-        """Create quiz config from dictionary.
+    def from_dict(cls, data: dict[str, Any]) -> "QuizConfig":
+        """Create quizconfig from dictionary."""
+        base_config, tool_data = BaseConfig.split_section(data, "quizzes")
+        merged = base_config.model_dump(exclude={"raw"})
+        merged.update(tool_data)
 
-        Args:
-            data: Dictionary with config values
+        # Preserve specific backward-compatibility logic for video
+        if "quizzes" == "video":
+            if "clean_ollama_host" not in merged:
+                merged["clean_ollama_host"] = base_config.llm.endpoint
 
-        Returns:
-            QuizConfig instance
-        """
-        base_config, quiz_data = BaseConfig.split_section(data, "quizzes")
-
-        # Build difficulty distribution with defaults
-        difficulty_dist = quiz_data.get("difficulty_distribution")
-        if difficulty_dist is None:
-            difficulty_dist = {"easy": 0.3, "medium": 0.5, "hard": 0.2}
-
-        inst = cls(
-            llm=base_config.llm,
-            embedding=base_config.embedding,
-            database=base_config.database,
-            paths=base_config.paths,
-            questions_per_topic=quiz_data.get("questions_per_topic", 15),
-            question_types=quiz_data.get(
-                "question_types", ["multiple_choice", "true_false", "short_answer"]
-            ),
-            difficulty_distribution=difficulty_dist,
-            format=quiz_data.get("format", "markdown"),
-            include_explanations=quiz_data.get("include_explanations", True),
-            collection_prefix=quiz_data.get("collection_prefix", "rag"),
-            max_context_chars=quiz_data.get("max_context_chars", 12000),
-        )
+        inst = cls.model_validate(merged)
         inst.raw = data
         return inst

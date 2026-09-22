@@ -1,12 +1,13 @@
 """Video tool configuration."""
 
-from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+from pydantic import Field
 
 from config.base import BaseConfig
 
 
-@dataclass
 class VideoConfig(BaseConfig):
     """Video transcription and processing configuration."""
 
@@ -15,7 +16,7 @@ class VideoConfig(BaseConfig):
     whisper_device: str = "cuda"  # cuda | cpu
     whisper_compute_type: str = "float16"
     whisper_language: str = "en"
-    models_dir: str = field(default_factory=lambda: str(Path.home() / "models" / "whisper"))
+    models_dir: str = Field(default_factory=lambda: str(Path.home() / "models" / "whisper"))
 
     # Cleaning settings
     clean_model: str = "qwen3:8b"
@@ -45,7 +46,7 @@ Transcript:
     collection_prefix: str = "videos"
 
     # Supported video extensions
-    supported_extensions: list[str] = field(
+    supported_extensions: list[str] = Field(
         default_factory=lambda: [
             ".mp4",
             ".mkv",
@@ -72,55 +73,17 @@ Transcript:
     job_expiry_seconds: int = 3600
 
     @classmethod
-    def from_dict(cls, data: dict) -> "VideoConfig":
-        """Create video config from dictionary.
+    def from_dict(cls, data: dict[str, Any]) -> "VideoConfig":
+        """Create videoconfig from dictionary."""
+        base_config, tool_data = BaseConfig.split_section(data, "video")
+        merged = base_config.model_dump(exclude={"raw"})
+        merged.update(tool_data)
 
-        Args:
-            data: Dictionary with config values
+        # Preserve specific backward-compatibility logic for video
+        if "video" == "video":
+            if "clean_ollama_host" not in merged:
+                merged["clean_ollama_host"] = base_config.llm.endpoint
 
-        Returns:
-            VideoConfig instance
-        """
-        # Get base config
-        base_config = super().from_dict(data)
-
-        # Get video-specific config
-        video_data = data.get("video", {})
-
-        return cls(
-            llm=base_config.llm,
-            embedding=base_config.embedding,
-            database=base_config.database,
-            paths=base_config.paths,
-            whisper_model=video_data.get("whisper_model", "medium.en"),
-            whisper_device=video_data.get("whisper_device", "cuda"),
-            whisper_compute_type=video_data.get("whisper_compute_type", "float16"),
-            whisper_language=video_data.get("whisper_language", "en"),
-            models_dir=video_data.get("models_dir", str(Path.home() / "models" / "whisper")),
-            audio_sample_rate=video_data.get("audio_sample_rate", 16000),
-            audio_channels=video_data.get("audio_channels", 1),
-            keep_extracted_audio=video_data.get("keep_extracted_audio", False),
-            audio_timeout_seconds=video_data.get("audio_timeout_seconds", 1800.0),
-            clean_model=video_data.get("clean_model", "qwen3:8b"),
-            clean_ollama_host=base_config.llm.endpoint,
-            clean_prompt=video_data.get(
-                "clean_prompt", cls.__dataclass_fields__["clean_prompt"].default
-            ),
-            output_format=video_data.get("output_format", "markdown"),
-            include_timestamps=video_data.get("include_timestamps", False),
-            collection_prefix=video_data.get("collection_prefix", "videos"),
-            supported_extensions=video_data.get(
-                "supported_extensions",
-                [".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".zoom"],
-            ),
-            vision_model=video_data.get("vision_model", "llava"),
-            scene_threshold=video_data.get("scene_threshold", 0.3),
-            min_frame_interval=video_data.get("min_frame_interval", 2.0),
-            use_latex_fallback=video_data.get("use_latex_fallback", True),
-            dedup_threshold=video_data.get("dedup_threshold", 0.85),
-            context_window=video_data.get("context_window", 1),
-            slide_ocr_prompt=video_data.get("slide_ocr_prompt", ""),
-            chalkboard_ocr_prompt=video_data.get("chalkboard_ocr_prompt", ""),
-            max_concurrent_jobs=video_data.get("max_concurrent_jobs", 2),
-            job_expiry_seconds=video_data.get("job_expiry_seconds", 3600),
-        )
+        inst = cls.model_validate(merged)
+        inst.raw = data
+        return inst

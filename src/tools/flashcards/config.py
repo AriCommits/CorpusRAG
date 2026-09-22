@@ -1,16 +1,17 @@
 """Flashcard tool configuration."""
 
-from dataclasses import dataclass, field
+from typing import Any
+
+from pydantic import Field
 
 from config.base import BaseConfig
 
 
-@dataclass
 class FlashcardConfig(BaseConfig):
     """Flashcard tool configuration."""
 
     cards_per_topic: int = 10
-    difficulty_levels: list[str] = field(
+    difficulty_levels: list[str] = Field(
         default_factory=lambda: ["basic", "intermediate", "advanced"]
     )
     format: str = "anki"  # anki | quizlet | plain
@@ -18,29 +19,17 @@ class FlashcardConfig(BaseConfig):
     max_context_chars: int = 12000
 
     @classmethod
-    def from_dict(cls, data: dict) -> "FlashcardConfig":
-        """Create flashcard config from dictionary.
+    def from_dict(cls, data: dict[str, Any]) -> "FlashcardConfig":
+        """Create flashcardconfig from dictionary."""
+        base_config, tool_data = BaseConfig.split_section(data, "flashcards")
+        merged = base_config.model_dump(exclude={"raw"})
+        merged.update(tool_data)
 
-        Args:
-            data: Dictionary with config values
+        # Preserve specific backward-compatibility logic for video
+        if "flashcards" == "video":
+            if "clean_ollama_host" not in merged:
+                merged["clean_ollama_host"] = base_config.llm.endpoint
 
-        Returns:
-            FlashcardConfig instance
-        """
-        base_config, flashcard_data = BaseConfig.split_section(data, "flashcards")
-
-        inst = cls(
-            llm=base_config.llm,
-            embedding=base_config.embedding,
-            database=base_config.database,
-            paths=base_config.paths,
-            cards_per_topic=flashcard_data.get("cards_per_topic", 10),
-            difficulty_levels=flashcard_data.get(
-                "difficulty_levels", ["basic", "intermediate", "advanced"]
-            ),
-            format=flashcard_data.get("format", "anki"),
-            collection_prefix=flashcard_data.get("collection_prefix", "rag"),
-            max_context_chars=flashcard_data.get("max_context_chars", 12000),
-        )
+        inst = cls.model_validate(merged)
         inst.raw = data
         return inst
